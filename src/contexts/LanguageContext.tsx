@@ -164,7 +164,6 @@ const translations: Record<Language, Record<string, string>> = {
     yes: "Тийм",
     no: "Үгүй",
     fields: "Чиглэл",
-    // availableCities: "Ажиллах боломжтой хотууд", // Replaced by canWorkInOtherCitiesLabel
     price: "Үнэ",
     // Hospitals Page
     hospitalsPageTitle: "Эмнэлэг",
@@ -240,23 +239,6 @@ const translations: Record<Language, Record<string, string>> = {
     registerAsTranslatorPageTitle: "Орчуулагчаар бүртгүүлэх",
     translatorRegistrationFormTitle: "Орчуулагчийн мэдээлэл",
     translatorRegistrationFormDescription: "Орчуулагчийн мэдээллээ оруулж бүртгүүлнэ үү.",
-    // photoUrl: "Зураг (URL)", // Removed as per new plan
-    // photoUrlPlaceholder: "Таны зургийн URL", // Removed
-    // primaryCity: "Үндсэн хот", // Removed
-    selectCity: "Хот сонгоно уу",
-    // examLevel: "Шалгалтын түвшин", // Removed as per new plan
-    // examLevelPlaceholder: "Жишээ нь: HSK 6", // Removed
-    // speakingLevel: "Ярианы чадвар", // Replaced by speakingLevelLabel
-    // speakingLevelPlaceholder: "Жишээ нь: Монгол (Төрөлх), Хятад (Чөлөөтэй)", // Removed
-    // writingLevel: "Бичгийн чадвар", // Replaced by writingLevelLabel
-    // writingLevelPlaceholder: "Жишээ нь: Монгол (Төрөлх), Хятад (Сайн)", // Removed
-    // haveWorkedBefore: "Өмнө нь орчуулга хийж байсан уу?", // Replaced by workedAsTranslatorLabel
-    // specializedFields: "Мэргэшсэн чиглэлүүд (таслалаар тусгаарлана уу)", // Replaced by translationFieldsLabel
-    // specializedFieldsPlaceholder: "Жишээ нь: Анагаах, Техник, Хууль", // Removed
-    // serviceCities: "Үйлчилгээ үзүүлэх хотууд (таслалаар тусгаарлана уу)", // Replaced by canWorkInOtherCitiesLabel
-    // serviceCitiesPlaceholder: "Жишээ нь: Бээжин, Шанхай", // Removed
-    // priceOrRate: "Үнэ / Ханш (цагаар эсвэл үгээр)", // Replaced by dailyRateLabel
-    // priceOrRatePlaceholder: "Жишээ нь: 150000₮/цаг", // Removed
     submitRegistration: "Бүртгүүлэх",
     registrationSuccessful: "Амжилттай бүртгүүллээ!",
     registrationFailedGeneral: "Бүртгэл амжилтгүй боллоо. Дахин оролдоно уу.",
@@ -361,7 +343,26 @@ const translations: Record<Language, Record<string, string>> = {
     save: "Хадгалах",
     personalInfoUpdateSuccess: "Хувийн мэдээлэл амжилттай шинэчлэгдлээ.",
     personalInfoUpdateError: "Хувийн мэдээлэл шинэчлэхэд алдаа гарлаа.",
-    fillRequiredFields: "Заавал бөглөх талбарыг оруулна уу."
+    fillRequiredFields: "Заавал бөглөх талбарыг оруулна уу.",
+    // Translator Detail Page
+    translatorDetailTitle: "Орчуулагчийн мэдээлэл",
+    translatorNotFound: "Орчуулагч олдсонгүй.",
+    getContactInfoButton: "Холбоо барих мэдээлэл авах",
+    contactInfoPaymentPlaceholder: "Төлбөр төлсний дараа холбоо барих мэдээлэл харагдана.",
+    paymentModalTitle: "Төлбөр хийх",
+    paymentModalDescription: "{{rate}} юанийн төлбөр хийснээр орчуулагчийн холбоо барих мэдээллийг авах боломжтой.",
+    payButton: "Төлөх",
+    orderCreatedSuccess: "Захиалга амжилттай үүслээ!",
+    orderCreationFailed: "Захиалга үүсгэхэд алдаа гарлаа.",
+    contactInformation: "Холбоо барих мэдээлэл",
+    overallRating: "Ерөнхий үнэлгээ",
+    views: "үзэлт",
+    ratingOutOf10: "{{rating}}/10",
+    basedOnReviews: "({{reviewCount}} үнэлгээ)",
+    noReviewsYet: "Одоогоор үнэлгээ байхгүй",
+    registeredAt: "Бүртгүүлсэн огноо",
+    translatorDescription: "Орчуулагчийн танилцуулга",
+    notProvided: "Оруулаагүй"
 
   },
   cn: {
@@ -379,7 +380,7 @@ const translations: Record<Language, Record<string, string>> = {
     notifications: "通知",
     user: "用户", // For BottomNav
     // Service Groups
-    flights: "机票", // Updated from 航班 to 机票 as it's more common for orders
+    flights: "机票", 
     hotels: "酒店",
     translators: "翻译",
     wechat: "微信服务",
@@ -412,13 +413,12 @@ const translations: Record<Language, Record<string, string>> = {
     banner_promo1_alt: "促销1",
     banner_promo2_alt: "特色服务",
     // Dummy page titles
-    myOrders: "我的订单", // This key is used for "Захиалга" page title
+    myOrders: "我的订单", 
     mySavedItems: "我保存的项目",
     myNotifications: "我的通知",
-    // No myProfile, using profilePageTitle instead
-    noOrdersPlaceholder: "您目前没有订单。", // This is old, new one is ordersNoPurchasesMade
+    noOrdersPlaceholder: "您目前没有订单。", 
     ordersNoPurchasesMade: "您还没有购买任何商品",
-    ordersNeedsTab: "需求", // For "Хэрэгцээ" tab
+    ordersNeedsTab: "需求", 
     ordersPaymentFilter: "付款",
     ordersTicketFilter: "票务",
     ordersRefundFilter: "退款",
@@ -513,7 +513,6 @@ const translations: Record<Language, Record<string, string>> = {
     yes: "是",
     no: "否",
     fields: "领域",
-    // availableCities: "服务城市", // Replaced by canWorkInOtherCitiesLabel
     price: "价格",
     // Hospitals Page
     hospitalsPageTitle: "医院",
@@ -589,24 +588,7 @@ const translations: Record<Language, Record<string, string>> = {
     registerAsTranslatorPageTitle: "注册成为翻译员",
     translatorRegistrationFormTitle: "翻译员信息",
     translatorRegistrationFormDescription: "请填写您的翻译员信息以完成注册。",
-    // photoUrl: "照片 (URL)", // Removed
-    // photoUrlPlaceholder: "您的照片链接", // Removed
-    // primaryCity: "主要城市", // Removed
-    selectCity: "选择城市",
-    // examLevel: "考试等级", // Removed
-    // examLevelPlaceholder: "例如: HSK 6", // Removed
-    // speakingLevel: "口语能力", // Replaced
-    // speakingLevelPlaceholder: "例如: 蒙古语 (母语), 中文 (流利)", // Removed
-    // writingLevel: "书写能力", // Replaced
-    // writingLevelPlaceholder: "例如: 蒙古语 (母语), 中文 (良好)", // Removed
-    // haveWorkedBefore: "以前做过翻译工作吗？", // Replaced
-    // specializedFields: "擅长领域 (用逗号分隔)", // Replaced
-    // specializedFieldsPlaceholder: "例如: 医学, 技术, 法律", // Removed
-    // serviceCities: "服务城市 (用逗号分隔)", // Replaced
-    // serviceCitiesPlaceholder: "例如: 北京, 上海", // Removed
-    // priceOrRate: "价格/费率 (按小时或按字数)", // Replaced
-    // priceOrRatePlaceholder: "例如: 150元/小时", // Removed
-    submitRegistration: "提交注册", // This will be used for the final step's button
+    submitRegistration: "提交注册", 
     registrationSuccessful: "注册成功！",
     registrationFailedGeneral: "注册失败，请重试。",
     fillAllFields: "请填写所有必填字段。",
@@ -710,7 +692,26 @@ const translations: Record<Language, Record<string, string>> = {
     save: "保存",
     personalInfoUpdateSuccess: "个人信息更新成功。",
     personalInfoUpdateError: "更新个人信息时出错。",
-    fillRequiredFields: "请输入必填项。"
+    fillRequiredFields: "请输入必填项。",
+    // Translator Detail Page
+    translatorDetailTitle: "翻译员详情",
+    translatorNotFound: "未找到翻译员。",
+    getContactInfoButton: "获取联系方式",
+    contactInfoPaymentPlaceholder: "支付后可查看联系方式。",
+    paymentModalTitle: "支付",
+    paymentModalDescription: "支付 {{rate}} 元后即可获取翻译员联系方式。",
+    payButton: "支付",
+    orderCreatedSuccess: "订单创建成功！",
+    orderCreationFailed: "订单创建失败。",
+    contactInformation: "联系信息",
+    overallRating: "综合评分",
+    views: "次查看",
+    ratingOutOf10: "{{rating}}/10",
+    basedOnReviews: "({{reviewCount}} 条评价)",
+    noReviewsYet: "暂无评价",
+    registeredAt: "注册日期",
+    translatorDescription: "翻译员简介",
+    notProvided: "未提供"
   },
 };
 
@@ -754,6 +755,3 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
-
-
-    

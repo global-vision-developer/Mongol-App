@@ -1,119 +1,119 @@
+
 "use client";
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MapPin, Star } from "lucide-react";
-import type { RecommendedItem } from '@/types';
-import { useState } from 'react';
+import { Heart, MapPin, Star, LanguagesIcon } from "lucide-react";
+import type { Translator } from '@/types'; // Changed from RecommendedItem to Translator
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
+import { CITIES } from '@/lib/constants';
 
 interface TranslatorCardProps {
-  item: RecommendedItem;
+  item: Translator; // Ensure item is of type Translator
   className?: string;
 }
 
 export function TranslatorCard({ item, className }: TranslatorCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+   const [isMounted, setIsMounted] = useState(false);
 
-  const toggleFavorite = () => {
+  useEffect(() => {
+    setIsMounted(true);
+    // Here you could check if the item is already a favorite, e.g., from user's saved items
+    // For now, it defaults to false
+  }, []);
+
+
+  const toggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent link navigation when clicking favorite button
+    e.stopPropagation();
     setIsFavorite(!isFavorite);
-    // TODO: Send to backend
+    // TODO: Send to backend (add/remove from user's saved translators)
   };
+  
+  const cityLabel = item.currentCityInChina 
+    ? (CITIES.find(c => c.value === item.currentCityInChina) || {label: item.currentCityInChina, label_cn: item.currentCityInChina})
+    : (item.city ? (CITIES.find(c => c.value === item.city) || {label: item.city, label_cn: item.city}) : null);
+
+  const displayCity = cityLabel ? (language === 'cn' && cityLabel.label_cn ? cityLabel.label_cn : cityLabel.label) : t('n_a');
+
+
+  // For client components that might render differently on server vs client (like favorites),
+  // ensure it's only rendered client-side or state is managed carefully.
+  if (!isMounted) {
+    // You can return a skeleton or null here to avoid hydration mismatch for favorite icon
+    return null; 
+  }
+
 
   return (
-    <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group", className)}>
-      <div className="relative aspect-[3/4] w-full">
-        <Image
-          src={item.imageUrl || `https://placehold.co/300x400.png?text=${encodeURIComponent(item.name)}`}
-          alt={item.name}
-          fill
-          className="object-cover rounded-t-lg"
-        />
-        {item.primaryLanguage && (
-          <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-            {t(item.primaryLanguage.toLowerCase())}
-          </div>
-        )}
-        <Button
-          size="icon"
-          variant="ghost"
-          className={cn(
-            "absolute bottom-2 right-2 h-8 w-8 rounded-full bg-background/70 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity",
-            isFavorite ? "text-destructive" : "text-muted-foreground"
-          )}
-          onClick={toggleFavorite}
-          aria-label={isFavorite ? t('removeFromFavorites') : t('addToFavorites')}
-        >
-          <Heart className={cn("h-5 w-5", isFavorite && "fill-destructive")} />
-        </Button>
-      </div>
-
-      <CardContent className="p-3 space-y-1 text-sm">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-md font-semibold truncate">{item.name}</h3>
-            {item.gender && (
-              <p className="text-muted-foreground text-xs">{item.gender}</p>
+    <Link href={`/services/translators/${item.id}`} className="block group">
+      <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg h-full", className)}>
+        <div className="relative aspect-[3/4] w-full">
+          <Image
+            src={item.photoUrl || `https://placehold.co/300x400.png?text=${encodeURIComponent(item.name || 'T')}`}
+            alt={item.name || t('serviceUnnamed')}
+            fill
+            className="object-cover rounded-t-lg"
+            data-ai-hint="translator person"
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "absolute top-2 right-2 h-8 w-8 rounded-full bg-background/70 hover:bg-background opacity-0 group-hover:opacity-100 transition-opacity z-10",
+              isFavorite ? "text-destructive" : "text-muted-foreground"
             )}
-          </div>
-          {item.rating && (
-            <div className="flex items-center gap-1 text-yellow-500">
-              <Star className="h-4 w-4 fill-yellow-400" />
-              <span className="text-xs font-semibold">{item.rating.toFixed(1)}</span>
-            </div>
-          )}
+            onClick={toggleFavorite}
+            aria-label={isFavorite ? t('removeFromFavorites') : t('addToFavorites')}
+          >
+            <Heart className={cn("h-5 w-5", isFavorite && "fill-destructive")} />
+          </Button>
         </div>
 
-        {item.city && (
-          <div className="flex items-center text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3 mr-1" />
-            {item.city}
+        <CardContent className="p-3 space-y-1 text-sm flex-grow flex flex-col justify-between">
+          <div>
+            <h3 className="text-md font-semibold truncate group-hover:text-primary">{item.name || t('serviceUnnamed')}</h3>
+            
+            {item.rating !== undefined && (
+              <div className="flex items-center gap-1 text-xs text-amber-500 mt-0.5">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+                <span>{item.rating.toFixed(1)}</span>
+                {item.reviewCount !== undefined && <span className="text-muted-foreground">({item.reviewCount})</span>}
+              </div>
+            )}
+
+            {displayCity !== t('n_a') && (
+              <div className="flex items-center text-xs text-muted-foreground mt-1">
+                <MapPin className="h-3.5 w-3.5 mr-1 shrink-0" />
+                <span className="truncate">{displayCity}</span>
+              </div>
+            )}
+
+            {(item.speakingLevel || item.writingLevel) && (
+              <div className="flex items-center text-xs text-muted-foreground mt-1">
+                <LanguagesIcon className="h-3.5 w-3.5 mr-1 shrink-0" />
+                <span className="truncate">
+                  {item.speakingLevel && `${t('speaking')}: ${t(`languageLevel${item.speakingLevel.charAt(0).toUpperCase() + item.speakingLevel.slice(1)}`)}`}
+                  {item.speakingLevel && item.writingLevel && ", "}
+                  {item.writingLevel && `${t('writing')}: ${t(`languageLevel${item.writingLevel.charAt(0).toUpperCase() + item.writingLevel.slice(1)}`)}`}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-
-        {item.testLevel && (
-          <p className="text-xs text-muted-foreground">
-            📘 {t('testLevel')}: {item.testLevel}
-          </p>
-        )}
-
-        {item.speakingLevel && item.writingLevel && (
-          <p className="text-xs text-muted-foreground">
-            🗣️ {t('speaking')}: {item.speakingLevel}, ✍️ {t('writing')}: {item.writingLevel}
-          </p>
-        )}
-
-        {item.hasWorkedBefore !== undefined && (
-          <p className="text-xs text-muted-foreground">
-            🧑‍💼 {t('workedBefore')}: {item.hasWorkedBefore ? t('yes') : t('no')}
-          </p>
-        )}
-
-        {item.possibleFields && (
-          <p className="text-xs text-muted-foreground">
-            🏢 {t('fields')}: {item.possibleFields.join(', ')}
-          </p>
-        )}
-
-{item.availableCities && (
-  <p className="text-xs text-muted-foreground">
-    🌍 {t('availableCities')}: {
-      Array.isArray(item.availableCities)
-        ? item.availableCities.join(', ')
-        : item.availableCities
-    }
-  </p>
-)}
-
-        {item.price && (
-          <p className="text-xs text-muted-foreground">
-            💰 {t('price')}: {item.price}₮
-          </p>
-        )}
-      </CardContent>
-    </Card>
+          
+          {item.dailyRate && (
+            <p className="text-sm font-semibold text-primary mt-2 self-end">
+              {t(`rate${item.dailyRate.replace('-', 'to').replace('+', 'plus')}`)}/{t('day')}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
   );
 }

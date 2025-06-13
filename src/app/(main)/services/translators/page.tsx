@@ -12,7 +12,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { TranslatorCard } from "@/components/services/TranslatorCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
-import { collection, getDocs, query, where, Query } from "firebase/firestore"; // Added Query
+import { collection, getDocs, query, where, type Query, orderBy } from "firebase/firestore"; 
 import { db } from "@/lib/firebase";
 import type { Translator } from "@/types";
 
@@ -21,7 +21,7 @@ export default function TranslatorsPage() {
   const router = useRouter();
   const { selectedCity } = useCity();
 
-  const [recommendations, setRecommendations] = useState<Translator[]>([]);
+  const [translators, setTranslators] = useState<Translator[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,9 +33,9 @@ export default function TranslatorsPage() {
         const ref = collection(db, "translators");
         let q: Query;
         if (selectedCity && selectedCity.value !== "all") {
-          q = query(ref, where("city", "==", selectedCity.value));
+          q = query(ref, where("city", "==", selectedCity.value), where("isActive", "==", true), orderBy("registeredAt", "desc"));
         } else {
-          q = query(ref); // Fetch all if "all" or no city selected
+          q = query(ref, where("isActive", "==", true), orderBy("registeredAt", "desc")); 
         }
         const snapshot = await getDocs(q);
         const translatorsData: Translator[] = snapshot.docs.map((doc) => ({
@@ -43,7 +43,7 @@ export default function TranslatorsPage() {
           ...doc.data(),
         })) as Translator[];
         
-        setRecommendations(translatorsData);
+        setTranslators(translatorsData);
       } catch (err) {
         console.error("Error fetching translators:", err);
         setError(t('fetchErrorGeneric') || "Алдаа гарлаа. Түр хүлээнэ үү.");
@@ -52,11 +52,11 @@ export default function TranslatorsPage() {
       }
     };
 
-    if(selectedCity){ // Fetch only if selectedCity is defined
+    if(selectedCity){ 
         fetchTranslators();
     } else {
-        setLoading(false); // If no city (e.g. initial load), don't load anything yet
-        setRecommendations([]);
+        setLoading(false); 
+        setTranslators([]);
     }
   }, [selectedCity, t]);
 
@@ -72,7 +72,7 @@ export default function TranslatorsPage() {
           {t('translatorsPageTitle')}
         </h1>
         <Button variant="ghost" size="icon" asChild className="text-primary">
-          <Link href="/profile" aria-label={t('addTranslator')}>
+          <Link href="/profile/register-translator" aria-label={t('addTranslator')}>
             <UserPlus className="h-6 w-6" />
           </Link>
         </Button>
@@ -92,7 +92,7 @@ export default function TranslatorsPage() {
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(8)].map((_, i) => ( // Increased skeleton count for better loading feel
               <div key={`skeleton-${i}`} className="flex flex-col space-y-2">
                 <Skeleton className="aspect-[3/4] w-full rounded-lg" aria-hidden />
                 <Skeleton className="h-4 w-3/4" />
@@ -102,12 +102,12 @@ export default function TranslatorsPage() {
             ))}
           </div>
         ) : error ? (
-          <p className="text-destructive">{error}</p>
-        ) : recommendations.length === 0 ? (
-          <p className="text-muted-foreground">{t('noRecommendations')}</p>
+          <p className="text-destructive text-center py-10">{error}</p>
+        ) : translators.length === 0 ? (
+          <p className="text-muted-foreground text-center py-10">{t('noRecommendations')}</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {recommendations.map((item) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-3 gap-y-4">
+            {translators.map((item) => (
               <TranslatorCard key={item.id} item={item} />
             ))}
           </div>

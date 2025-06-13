@@ -41,20 +41,30 @@ export interface RecommendedItem {
   imageUrl?: string;
   description?: string;
   gender?: string;
-  city?: string; // This might represent the primary city of the service/item itself
+  city?: string; 
   testLevel?: string;
   speakingLevel?: string;
   writingLevel?: string;
   hasWorkedBefore?: boolean;
   possibleFields?: string[];
-  availableCities?: string[] | string; // For translators, can be array or string
-  price?: number | string; // Price can be a number or a descriptive string (e.g. "100-200元/日")
+  availableCities?: string[] | string; 
+  price?: number | string; 
   rating?: number;
   location?: string;
   primaryLanguage?: string;
   availabilityStatus?: string;
   dataAiHint?: string;
   itemType?: 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy';
+  // Fields from Translator type that might appear in RecommendedItem if it's a translator
+  nationality?: Nationality;
+  inChinaNow?: boolean;
+  yearsInChina?: number | null;
+  currentCityInChina?: string | null;
+  chineseExamTaken?: boolean;
+  translationFields?: TranslationField[];
+  dailyRate?: DailyRateRange;
+  chinaPhoneNumber?: string | null; // Keep for type consistency, but control visibility
+  wechatId?: string | null; // Keep for type consistency, but control visibility
 }
 
 export interface UserProfile {
@@ -71,17 +81,22 @@ export interface UserProfile {
 }
 
 export interface Order {
-  id: string;
-  serviceName: string;
-  date: string; // ISO string
-  status: 'pending' | 'confirmed' | 'cancelled';
-  // Add other order details
+  id: string; // Auto-generated
+  userId: string; // User who made the order
+  serviceType: 'translator' | 'flight' | 'hotel' | string; // Type of service
+  serviceId: string; // ID of the translator, flight, etc.
+  serviceName: string; // Name of the service/translator
+  orderDate: any; // Firestore Timestamp for when the order was placed
+  status: 'pending_payment' | 'confirmed' | 'cancelled' | 'completed';
+  amount?: number; // Amount paid
+  paymentDetails?: any; // Details about the payment
+  contactInfoRevealed?: boolean; // Specifically for translator orders
+  // Add other order details as needed
 }
 
-// This type will represent the data structure stored in Firestore for a saved item
-// and used for the state in the /saved page.
+
 export interface SavedDocData extends RecommendedItem {
-  savedAt: any; // For Firestore Timestamp (e.g., FieldValue from 'firebase/firestore')
+  savedAt: any; 
 }
 
 
@@ -99,11 +114,11 @@ export interface NotificationItem {
 export interface HospitalCategory {
   id: string;
   titleKey: string;
-  imageUrl?: string; // For most categories
-  Icon?: LucideIcon; // For special categories like "All"
+  imageUrl?: string; 
+  Icon?: LucideIcon; 
   dataAiHint?: string;
   href: string;
-  isSpecial?: boolean; // To differentiate styling for "All Categories"
+  isSpecial?: boolean; 
 }
 
 export interface EmbassyCategoryItem {
@@ -118,7 +133,7 @@ export interface WeChatCategoryItem {
   id: string;
   titleKey: string;
   iconType: 'lucide' | 'image';
-  iconNameOrUrl: string; // Lucide icon name or image URL
+  iconNameOrUrl: string; 
   dataAiHint?: string;
   href: string;
 }
@@ -127,42 +142,35 @@ export interface WeChatCategoryItem {
 export type Nationality = 'mongolian' | 'chinese' | 'inner_mongolian' | '';
 export type LanguageLevel = 'good' | 'intermediate' | 'basic' | '';
 export type DailyRateRange = '100-200' | '200-300' | '300-400' | '400-500' | '500+' | '';
-
-// This type is defined in constants.ts now
 export type TranslationField = 'tourism' | 'medical' | 'equipment' | 'exhibition' | 'official_documents' | 'official_speech' | 'machinery';
 
 
 export interface Translator {
-  id: string; // user.uid will be used as the document ID in 'translators' collection
+  id: string; 
   uid: string;
-  name: string; // From UserProfile.displayName initially
-  photoUrl?: string; // From UserProfile.photoURL initially
+  name: string; 
+  photoUrl?: string; 
   
   nationality?: Nationality;
-  inChinaNow?: boolean | undefined; // Added undefined
-  yearsInChina?: number | null; // Only if inChinaNow is false
-  currentCityInChina?: string | null; // Only if inChinaNow is true, CITIES value
-  chineseExamTaken?: boolean | undefined; // Added undefined
+  inChinaNow?: boolean | undefined; 
+  yearsInChina?: number | null; 
+  currentCityInChina?: string | null; 
+  chineseExamTaken?: boolean | undefined; 
   speakingLevel?: LanguageLevel;
   writingLevel?: LanguageLevel;
-  workedAsTranslator?: boolean | undefined; // Added undefined
+  workedAsTranslator?: boolean | undefined; 
   translationFields?: TranslationField[];
-  canWorkInOtherCities?: string[]; // Array of CITIES values
-  dailyRate?: DailyRateRange; // In Yuan
-  chinaPhoneNumber?: string | null;
-  wechatId?: string | null;
+  canWorkInOtherCities?: string[]; 
+  dailyRate?: DailyRateRange; 
+  chinaPhoneNumber?: string | null; // Sensitive
+  wechatId?: string | null; // Sensitive
 
-  // These were from the old simple form, might deprecate or merge
-  city?: string; // Main city of operation - replaced by currentCityInChina or inferred
-  examLevel?: string; // More generic, replaced by chineseExamTaken + details if any
-  // speakingLevel & writingLevel kept but with new types
-  // workedBefore renamed to workedAsTranslator
-  // availableFields renamed to translationFields
-  // availableCities renamed to canWorkInOtherCities
-  price?: number | string; // Replaced by dailyRate
+  // Generic fields that might overlap with RecommendedItem, ensure consistency
+  city?: string; // This is 'currentCityInChina' if in China, or primary operating city
   rating?: number; 
+  description?: string; // Could be a short bio
+  gender?: 'male' | 'female' | 'other' | null; // From user profile eventually
   
-  // Image URLs from Firebase Storage (to be implemented in a future step)
   idCardFrontImageUrl?: string;
   idCardBackImageUrl?: string;
   selfieImageUrl?: string;
@@ -170,14 +178,12 @@ export interface Translator {
 
   registeredAt?: any; 
   isActive?: boolean; 
-  isProfileComplete?: boolean; // For multi-step registration
+  isProfileComplete?: boolean; 
+  reviewCount?: number;
+  views?: number; // For display like "10/10 (436 views)"
 }
 
 
-// This type is for the state in `SavedPage` after fetching from Firestore
-// and ensuring it has all necessary fields for ServiceCard plus `savedAt`.
-// The document ID in Firestore will be the original item's ID.
-// So, `id` property of SavedPageItem will be the original item's ID.
 export interface SavedPageItem extends RecommendedItem {
-  savedAt: any; // Firestore Timestamp
+  savedAt: any; 
 }
