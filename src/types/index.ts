@@ -58,7 +58,7 @@ export interface RecommendedItem {
   primaryLanguage?: string;
   availabilityStatus?: string;
   dataAiHint?: string;
-  itemType?: ItemType;
+  itemType: ItemType; // Made mandatory
   // Fields from Translator type that might appear in RecommendedItem if it's a translator
   nationality?: Nationality;
   inChinaNow?: boolean | null;
@@ -84,6 +84,7 @@ export interface UserProfile {
   dateOfBirth?: string | null; // Store as ISO string (YYYY-MM-DD)
   gender?: 'male' | 'female' | 'other' | null;
   homeAddress?: string | null;
+  fcmTokens?: string[];
 }
 
 export interface Order {
@@ -115,7 +116,7 @@ export interface NotificationItem {
   imageUrl?: string;
   dataAiHint?: string;
   link?: string; // e.g., link to the order detail page if we had one
-  itemType?: ItemType; // Optional: to show an icon or specific styling
+  itemType: ItemType; // Made mandatory
 }
 
 export interface HospitalCategory {
@@ -177,6 +178,7 @@ export interface Translator {
   rating?: number;
   description?: string; // Could be a short bio
   gender?: 'male' | 'female' | 'other' | null; // From user profile eventually
+  itemType: ItemType; // Added to ensure translator items always have this
 
   idCardFrontImageUrl?: string;
   idCardBackImageUrl?: string;
@@ -194,5 +196,3 @@ export interface Translator {
 export interface SavedPageItem extends RecommendedItem {
   savedAt: Timestamp | any;
 }
-
-    

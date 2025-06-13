@@ -8,8 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, DocumentData } from 'firebase/firestore';
 import { ServiceCard } from '@/components/ServiceCard';
-import type { SavedPageItem } from '@/types'; // Using the new SavedPageItem
+import type { SavedPageItem, ItemType } from '@/types'; // Using the new SavedPageItem
 import { Skeleton } from '@/components/ui/skeleton';
+
+const VALID_ITEM_TYPES: ItemType[] = ['service', 'translator', 'hotel', 'wechat', 'promo', 'market', 'factory', 'hospital', 'embassy'];
 
 export default function SavedPage() {
   const { t } = useTranslation();
@@ -33,22 +35,32 @@ export default function SavedPage() {
     const q = query(savedItemsCol, orderBy("savedAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items: SavedPageItem[] = snapshot.docs.map(doc => {
-        const data = doc.data() as DocumentData;
-        return {
-          id: doc.id, // The original item's ID is the document ID here
-          name: data.name || t('serviceUnnamed'),
-          imageUrl: data.imageUrl,
-          description: data.description,
-          rating: data.rating,
-          location: data.location,
-          itemType: data.itemType,
-          dataAiHint: data.dataAiHint,
-          // Include any other fields from RecommendedItem that ServiceCard might use
-          // and ensure 'savedAt' is present for ordering or display if needed
-          savedAt: data.savedAt,
-        } as SavedPageItem;
-      });
+      const items: SavedPageItem[] = snapshot.docs
+        .map(doc => {
+          const data = doc.data() as DocumentData;
+          const itemType = data.itemType as ItemType;
+
+          if (!itemType || !VALID_ITEM_TYPES.includes(itemType)) {
+            console.warn(`Saved item ${doc.id} has missing or invalid itemType: ${itemType}. Skipping.`);
+            return null;
+          }
+
+          return {
+            id: doc.id, // The original item's ID is the document ID here
+            name: data.name || t('serviceUnnamed'),
+            imageUrl: data.imageUrl,
+            description: data.description,
+            rating: data.rating,
+            location: data.location,
+            itemType: itemType,
+            dataAiHint: data.dataAiHint,
+            // Include any other fields from RecommendedItem that ServiceCard might use
+            // and ensure 'savedAt' is present for ordering or display if needed
+            savedAt: data.savedAt,
+          } as SavedPageItem;
+        })
+        .filter((item): item is SavedPageItem => item !== null); // Filter out null items
+
       setSavedItems(items);
       setLoadingItems(false);
     }, (error) => {

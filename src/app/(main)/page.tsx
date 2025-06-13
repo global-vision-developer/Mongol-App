@@ -11,7 +11,7 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { collection, getDocs, limit, query, where, type Query, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { RecommendedItem } from "@/types";
+import type { RecommendedItem, ItemType } from "@/types";
 import { useCity } from "@/contexts/CityContext";
 
 export default function HomePage() {
@@ -36,7 +36,7 @@ export default function HomePage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    const fetchCollection = async (collectionName: string, itemType: RecommendedItem['itemType'], count: number, cityValue?: string): Promise<RecommendedItem[]> => {
+    const fetchCollection = async (collectionName: string, itemType: ItemType, count: number, cityValue?: string): Promise<RecommendedItem[]> => {
       const collectionRef = collection(db, collectionName);
       let firestoreQuery: Query<DocumentData>;
 
