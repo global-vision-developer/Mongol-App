@@ -12,7 +12,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { TranslatorCard } from "@/components/services/TranslatorCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
-import { collection, getDocs, query, where, type Query, orderBy } from "firebase/firestore"; 
+import { collection, getDocs, query, where, type Query } from "firebase/firestore"; 
 import { db } from "@/lib/firebase";
 import type { Translator } from "@/types";
 
@@ -33,9 +33,9 @@ export default function TranslatorsPage() {
         const ref = collection(db, "translators");
         let q: Query;
         if (selectedCity && selectedCity.value !== "all") {
-          q = query(ref, where("city", "==", selectedCity.value), where("isActive", "==", true), orderBy("registeredAt", "desc"));
+          q = query(ref, where("city", "==", selectedCity.value), where("isActive", "==", true));
         } else {
-          q = query(ref, where("isActive", "==", true), orderBy("registeredAt", "desc")); 
+          q = query(ref, where("isActive", "==", true)); 
         }
         const snapshot = await getDocs(q);
         const translatorsData: Translator[] = snapshot.docs.map((doc) => ({
