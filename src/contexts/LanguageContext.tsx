@@ -105,7 +105,7 @@ const translations: Record<Language, Record<string, string>> = {
     accountSettings: "Бүртгэлийн тохиргоо",
     userProfile: "Хэрэглэгчийн профайл",
     enterCredentialsLogin: "Нэвтрэхийн тулд мэдээллээ оруулна уу.",
-    createYourAccount: "Altan Zam-д бүртгүүлээрэй.",
+    createYourAccount: "Mongol-д бүртгүүлээрэй.",
     // Notification specific
     notification_promo_title: "Онцгой урамшуулал!",
     notification_promo_desc: "Манай шинэ үйлчилгээнд 50% хямдралтай. Битгий алдаарай!",
@@ -454,7 +454,7 @@ const translations: Record<Language, Record<string, string>> = {
     accountSettings: "账户设置",
     userProfile: "用户资料",
     enterCredentialsLogin: "请输入您的凭据以登录。",
-    createYourAccount: "创建您的 Altan Zam 账户。",
+    createYourAccount: "创建您的 Mongol 账户。",
     // Notification specific
     notification_promo_title: "特别促销！",
     notification_promo_desc: "我们的新服务有50%的折扣。不要错过！",

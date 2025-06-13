@@ -69,7 +69,7 @@ export function Header() {
               className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center"
               aria-label="Home page"
             >
-              <span className="font-headline text-xl font-semibold text-primary">Altan Zam</span>
+              <span className="font-headline text-xl font-semibold text-primary">Mongol</span> {/* Changed from Думдаду */}
             </Link>
 
             {/* Right: Search Icon, Language Switcher, User Menu */}

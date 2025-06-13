@@ -1,4 +1,3 @@
-
 "use client"; // This layout must be a client component to use context providers
 
 import { Header } from "@/components/layout/Header";
