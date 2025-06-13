@@ -10,10 +10,7 @@ import { format } from 'date-fns';
 export default function NotificationsPage() {
   const { t } = useTranslation();
   
-  const notifications: NotificationItem[] = [
-    { id: '1', titleKey: 'notification_promo_title', descriptionKey: 'notification_promo_desc', date: new Date().toISOString(), read: false, imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'sale offer' },
-    { id: '2', titleKey: 'notification_update_title', descriptionKey: 'notification_update_desc', date: new Date(Date.now() - 86400000).toISOString(), read: true, link: '/updates/new-feature' },
-  ];
+  const notifications: NotificationItem[] = []; // Made this array empty
 
   return (
     <div className="space-y-6">
