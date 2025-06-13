@@ -36,7 +36,7 @@ export default function HomePage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    const fetchCollection = async (collectionName: string, count: number, cityValue?: string): Promise<RecommendedItem[]> => {
+    const fetchCollection = async (collectionName: string, itemType: RecommendedItem['itemType'], count: number, cityValue?: string): Promise<RecommendedItem[]> => {
       const collectionRef = collection(db, collectionName);
       let firestoreQuery: Query<DocumentData>;
 
@@ -46,7 +46,7 @@ export default function HomePage() {
         firestoreQuery = query(collectionRef, limit(count));
       }
       const snapshot = await getDocs(firestoreQuery);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RecommendedItem));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), itemType } as RecommendedItem));
     };
 
     const fetchData = async () => {
@@ -72,13 +72,13 @@ export default function HomePage() {
           embassiesData,
           wechatData,
         ] = await Promise.all([
-          fetchCollection("translators", 8, selectedCity?.value),
-          fetchCollection("hotels", 8, selectedCity?.value),
-          fetchCollection("markets", 8, selectedCity?.value),
-          fetchCollection("factories", 8, selectedCity?.value),
-          fetchCollection("hospitals", 8, selectedCity?.value),
-          fetchCollection("embassies", 8, selectedCity?.value),
-          fetchCollection("wechatItems", 8, selectedCity?.value),
+          fetchCollection("translators", 'translator', 8, selectedCity?.value),
+          fetchCollection("hotels", 'hotel', 8, selectedCity?.value),
+          fetchCollection("markets", 'market', 8, selectedCity?.value),
+          fetchCollection("factories", 'factory', 8, selectedCity?.value),
+          fetchCollection("hospitals", 'hospital', 8, selectedCity?.value),
+          fetchCollection("embassies", 'embassy', 8, selectedCity?.value),
+          fetchCollection("wechatItems", 'wechat', 8, selectedCity?.value),
         ]);
         
         setTranslators(translatorsData);

@@ -12,7 +12,7 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
 
-import { collection, getDocs, query, where, Query } from "firebase/firestore"; // Added Query
+import { collection, getDocs, query, where, type Query as FirestoreQueryType } from "firebase/firestore"; // Renamed Query
 import { db } from "@/lib/firebase";
 
 import type { RecommendedItem } from "@/types";
@@ -32,25 +32,26 @@ export default function HotelsPage() {
       setError(null);
 
       try {
-        if (!selectedCity) { // Should ideally not happen if "all" is default
+        if (!selectedCity) { 
           setRecommendations([]);
           setLoading(false);
           return;
         }
 
         const hotelsRef = collection(db, "hotels");
-        let q: Query<Omit<RecommendedItem, "id">>;
+        let q: FirestoreQueryType;
 
         if (selectedCity.value === "all") {
-          q = query(hotelsRef) as Query<Omit<RecommendedItem, "id">>;
+          q = query(hotelsRef);
         } else {
-          q = query(hotelsRef, where("city", "==", selectedCity.value)) as Query<Omit<RecommendedItem, "id">>;
+          q = query(hotelsRef, where("city", "==", selectedCity.value));
         }
 
         const snapshot = await getDocs(q);
         const items: RecommendedItem[] = snapshot.docs.map(doc => ({
           id: doc.id,
           ...(doc.data() as Omit<RecommendedItem, "id">),
+          itemType: 'hotel' // Explicitly add itemType
         }));
 
         setRecommendations(items);

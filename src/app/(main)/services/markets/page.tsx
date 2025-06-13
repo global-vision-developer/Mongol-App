@@ -12,7 +12,7 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
 import type { RecommendedItem } from "@/types";
-import { collection, getDocs, query, where, Query } from "firebase/firestore"; // Added Query
+import { collection, getDocs, query, where, type Query as FirestoreQueryType } from "firebase/firestore"; // Renamed Query
 import { db } from "@/lib/firebase";
 
 export default function MarketsPage() {
@@ -30,7 +30,7 @@ export default function MarketsPage() {
       setError(null);
       try {
         const marketsRef = collection(db, "markets");
-        let q: Query;
+        let q: FirestoreQueryType;
         
         if (selectedCity && selectedCity.value !== "all") {
           q = query(marketsRef, where("city", "==", selectedCity.value));
@@ -42,6 +42,7 @@ export default function MarketsPage() {
         const items: RecommendedItem[] = snapshot.docs.map(doc => ({
           id: doc.id,
           ...(doc.data() as Omit<RecommendedItem, "id">),
+          itemType: 'market' // Explicitly add itemType
         }));
         setRecommendations(items);
       } catch (err: any) {
