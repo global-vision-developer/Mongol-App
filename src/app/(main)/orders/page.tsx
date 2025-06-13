@@ -4,9 +4,8 @@ import React from 'react'; // Added import for React
 import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from '@/components/ui/button';
-import { CreditCard, ShoppingBag, Briefcase } from 'lucide-react';
+import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Briefcase } from 'lucide-react'; // Added new icons
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
@@ -69,13 +68,17 @@ export default function OrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  const [activeTab, setActiveTab] = useState<ItemType | 'flights' | 'needs'>("flights");
+  const [activeTab, setActiveTab] = useState<ItemType | 'flights'>("flights");
 
-  const tabCategories: { value: ItemType | 'flights' | 'needs'; labelKey: string, icon: React.ElementType }[] = [
-    { value: "flights", labelKey: "flights", icon: CreditCard }, // Placeholder, flights not fully implemented
-    { value: "hotel", labelKey: "hotels", icon: CreditCard },
-    { value: "translator", labelKey: "translators", icon: Briefcase },
-    { value: "needs", labelKey: "ordersNeedsTab", icon: CreditCard }, // Placeholder
+  const tabCategories: { value: ItemType | 'flights'; labelKey: string, icon: React.ElementType }[] = [
+    { value: "flights", labelKey: "flights", icon: Plane },
+    { value: "hotel", labelKey: "hotels", icon: BedDouble },
+    { value: "translator", labelKey: "translators", icon: Users },
+    { value: "wechat", labelKey: "wechatOrdersTab", icon: Smartphone },
+    { value: "market", labelKey: "marketsOrdersTab", icon: ShoppingCart },
+    { value: "factory", labelKey: "factoriesOrdersTab", icon: FactoryIcon },
+    { value: "hospital", labelKey: "hospitalsOrdersTab", icon: HospitalIcon },
+    { value: "embassy", labelKey: "embassiesOrdersTab", icon: Landmark },
   ];
 
   useEffect(() => {
@@ -91,6 +94,7 @@ export default function OrdersPage() {
 
     setLoadingOrders(true);
     const ordersColRef = collection(db, "orders");
+    // The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/setgelzuin-app/firestore/indexes?create_composite=Ck1wcm9qZWN0cy9zZXRnZWx6dWluLWFwcC9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvb3JkZXJzL2luZGV4ZXMvXxABGgoKBnVzZXJJZBABGg0KCW9yZGVyRGF0ZRACGgwKCF9fbmFtZV9fEAI
     const q = query(ordersColRef, where("userId", "==", user.uid), orderBy("orderDate", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -116,8 +120,7 @@ export default function OrdersPage() {
 
 
   const filteredOrders = orders.filter(order => {
-    if (activeTab === 'flights') return order.serviceType === 'flight'; // Assuming 'flight' is an ItemType
-    if (activeTab === 'needs') return false; // 'Needs' tab logic TBD
+    if (activeTab === 'flights') return order.serviceType === 'flight'; // Assuming 'flight' is an ItemType or special case
     return order.serviceType === activeTab;
   });
 
@@ -164,8 +167,8 @@ export default function OrdersPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-headline font-semibold">{t('myOrders')}</h1>
 
-      <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as ItemType | 'flights' | 'needs')} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as ItemType | 'flights')} className="w-full">
+        <TabsList className="grid w-full grid-cols-4"> {/* Kept grid-cols-4, will wrap to 2 rows */}
           {tabCategories.map(category => (
             <TabsTrigger key={category.value} value={category.value}>
               {t(category.labelKey)}
@@ -175,22 +178,6 @@ export default function OrdersPage() {
 
         {tabCategories.map(category => (
           <TabsContent key={category.value} value={category.value} className="mt-4">
-            {/* Specific filters for flights can be re-added here if needed */}
-            {/* {category.value === "flights" && (
-              <div className="flex gap-2 mb-4">
-                {flightFilters.map(filter => (
-                  <Select key={filter.value}>
-                    <SelectTrigger className="flex-1 text-sm h-9">
-                      <SelectValue placeholder={t(filter.placeholderKey)} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="option1">{t(filter.labelKey)} 1</SelectItem>
-                      <SelectItem value="option2">{t(filter.labelKey)} 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ))}
-              </div>
-            )} */}
             {loadingOrders && user ? (
                 <div className="grid gap-4 md:grid-cols-2 mt-4">
                     {[...Array(2)].map((_, i) => (

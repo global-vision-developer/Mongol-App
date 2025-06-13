@@ -74,9 +74,14 @@ const translations: Record<Language, Record<string, string>> = {
     mySavedItems: "Миний хадгалсан зүйлс",
     myNotifications: "Миний мэдэгдлүүд",
     // No myProfile, using profilePageTitle instead
-    noOrdersPlaceholder: "Танд одоогоор захиалга байхгүй байна.", // This is old, new one is ordersNoPurchasesMade
+    noOrdersPlaceholder: "Танд одоогоор захиалга байхгүй байна.", 
     ordersNoPurchasesMade: "Та худалдан авалт хийгээгүй байна",
-    ordersNeedsTab: "Хэрэгцээ",
+    ordersNeedsTab: "Хэрэгцээ", // This key might be unused now
+    wechatOrdersTab: "WeChat",
+    marketsOrdersTab: "Захууд",
+    factoriesOrdersTab: "Үйлдвэр",
+    hospitalsOrdersTab: "Эмнэлэг",
+    embassiesOrdersTab: "Элчин сайд",
     ordersPaymentFilter: "Төлбөр",
     ordersTicketFilter: "Тасалбар",
     ordersRefundFilter: "Буцаалт",
@@ -396,6 +401,7 @@ const translations: Record<Language, Record<string, string>> = {
     orderAmount: "Дүн",
     day: "өдөр",
     loadingOrders: "Захиалга уншиж байна...",
+    status: "Төлөв",
 
   },
   cn: {
@@ -459,7 +465,12 @@ const translations: Record<Language, Record<string, string>> = {
     myNotifications: "我的通知",
     noOrdersPlaceholder: "您目前没有订单。",
     ordersNoPurchasesMade: "您还没有购买任何商品",
-    ordersNeedsTab: "需求",
+    ordersNeedsTab: "需求", // This key might be unused now
+    wechatOrdersTab: "微信服务",
+    marketsOrdersTab: "市场",
+    factoriesOrdersTab: "工厂",
+    hospitalsOrdersTab: "医院",
+    embassiesOrdersTab: "大使馆",
     ordersPaymentFilter: "付款",
     ordersTicketFilter: "票务",
     ordersRefundFilter: "退款",
@@ -779,6 +790,7 @@ const translations: Record<Language, Record<string, string>> = {
     orderAmount: "金额",
     day: "天",
     loadingOrders: "正在加载订单...",
+    status: "状态",
   },
 };
 
@@ -822,5 +834,3 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
-
-    
