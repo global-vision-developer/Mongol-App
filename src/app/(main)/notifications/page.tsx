@@ -9,69 +9,121 @@ import { Bell } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp, getDocs } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
-  const [notifications, setNotifications] = useState<NotificationItemType[]>([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(true);
+  const [userNotifications, setUserNotifications] = useState<NotificationItemType[]>([]);
+  const [globalNotifications, setGlobalNotifications] = useState<NotificationItemType[]>([]);
+  const [loadingUserNotifications, setLoadingUserNotifications] = useState(true);
+  const [loadingGlobalNotifications, setLoadingGlobalNotifications] = useState(true);
 
   useEffect(() => {
     if (authLoading) {
-      setLoadingNotifications(true);
+      setLoadingUserNotifications(true);
+      setLoadingGlobalNotifications(true);
       return;
     }
+
+    // Fetch Global Notifications (run once or listen for changes)
+    const fetchGlobalNotifications = async () => {
+      setLoadingGlobalNotifications(true);
+      try {
+        const globalNotificationsColRef = collection(db, "notifications");
+        const qGlobal = query(globalNotificationsColRef, orderBy("date", "desc"));
+        // Using getDocs for global notifications as they might not change frequently for a single user session
+        // Or use onSnapshot if real-time updates for global notifications are desired
+        const snapshot = await getDocs(qGlobal);
+        const items: NotificationItemType[] = snapshot.docs.map(doc => {
+          const data = doc.data() as DocumentData;
+          let dateValue: string | Timestamp = data.date;
+          if (data.date instanceof Timestamp) {
+            dateValue = data.date.toDate().toISOString();
+          } else if (data.date && typeof data.date.seconds === 'number') {
+            dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds).toDate().toISOString();
+          }
+          return {
+            id: doc.id,
+            titleKey: data.titleKey || 'unknownNotificationTitle',
+            descriptionKey: data.descriptionKey || 'unknownNotificationDescription',
+            descriptionPlaceholders: data.descriptionPlaceholders || {},
+            date: dateValue,
+            read: data.read || false, // For global, 'read' might be managed differently or ignored on client
+            imageUrl: data.imageUrl,
+            dataAiHint: data.dataAiHint,
+            link: data.link,
+            itemType: data.itemType,
+            isGlobal: true, // Mark as global
+          } as NotificationItemType;
+        });
+        setGlobalNotifications(items);
+      } catch (error) {
+        console.error("Error fetching global notifications:", error);
+      } finally {
+        setLoadingGlobalNotifications(false);
+      }
+    };
+    fetchGlobalNotifications();
+
+
     if (!user) {
-      setNotifications([]);
-      setLoadingNotifications(false);
-      return;
+      setUserNotifications([]);
+      setLoadingUserNotifications(false);
+      return; // Skip user notifications if no user
     }
 
-    setLoadingNotifications(true);
-    const notificationsColRef = collection(db, "users", user.uid, "notifications");
-    const q = query(notificationsColRef, orderBy("date", "desc"));
+    // Fetch User-Specific Notifications
+    setLoadingUserNotifications(true);
+    const userNotificationsColRef = collection(db, "users", user.uid, "notifications");
+    const qUser = query(userNotificationsColRef, orderBy("date", "desc"));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeUser = onSnapshot(qUser, (snapshot) => {
       const items: NotificationItemType[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
         let dateValue: string | Timestamp = data.date;
-        
-        // Ensure date is a string for format function, converting from Firestore Timestamp if necessary
         if (data.date instanceof Timestamp) {
           dateValue = data.date.toDate().toISOString();
         } else if (data.date && typeof data.date.seconds === 'number') {
-           // Handle plain object Firestore Timestamp representation
           dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds).toDate().toISOString();
         }
-
-
         return {
           id: doc.id,
           titleKey: data.titleKey || 'unknownNotificationTitle',
           descriptionKey: data.descriptionKey || 'unknownNotificationDescription',
           descriptionPlaceholders: data.descriptionPlaceholders || {},
-          date: dateValue, // Keep as string or Timestamp for flexibility, handle in render
+          date: dateValue,
           read: data.read || false,
           imageUrl: data.imageUrl,
           dataAiHint: data.dataAiHint,
           link: data.link,
           itemType: data.itemType,
+          isGlobal: false, // Mark as not global
         } as NotificationItemType;
       });
-      setNotifications(items);
-      setLoadingNotifications(false);
+      setUserNotifications(items);
+      setLoadingUserNotifications(false);
     }, (error) => {
-      console.error("Error fetching notifications:", error);
-      setLoadingNotifications(false);
-      // Optionally show a toast for error fetching notifications
+      console.error("Error fetching user notifications:", error);
+      setLoadingUserNotifications(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeUser();
+      // No need to unsubscribe from getDocs
+    };
   }, [user, authLoading]);
 
-  if (authLoading || (!user && !authLoading) || (user && loadingNotifications)) {
+  const combinedNotifications = [...globalNotifications, ...userNotifications].sort((a, b) => {
+    const dateA = a.date instanceof Timestamp ? a.date.toMillis() : new Date(a.date as string).getTime();
+    const dateB = b.date instanceof Timestamp ? b.date.toMillis() : new Date(b.date as string).getTime();
+    return dateB - dateA; // Sort descending
+  });
+
+  const isLoading = authLoading || loadingUserNotifications || loadingGlobalNotifications;
+
+  if (isLoading && combinedNotifications.length === 0) { // Show skeletons only if no data yet
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-headline font-semibold">{t('myNotifications')}</h1>
@@ -97,11 +149,11 @@ export default function NotificationsPage() {
       </div>
     );
   }
-
+  
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-headline font-semibold">{t('myNotifications')}</h1>
-      {notifications.length === 0 ? (
+      {combinedNotifications.length === 0 && !isLoading ? (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -115,8 +167,11 @@ export default function NotificationsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {notifications.map((item) => (
-            <Card key={item.id} className={`shadow-md hover:shadow-lg transition-shadow duration-300 ${item.read ? 'bg-card' : 'bg-primary/5 border-primary/20'}`}>
+          {combinedNotifications.map((item) => (
+            <Card 
+              key={item.id + (item.isGlobal ? '-global' : '-user')} 
+              className={`shadow-md hover:shadow-lg transition-shadow duration-300 ${!item.isGlobal && item.read ? 'bg-card' : (!item.isGlobal && !item.read ? 'bg-primary/5 border-primary/20' : 'bg-card')}`}
+            >
               <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
                 {item.imageUrl && (
                   <img src={item.imageUrl} alt={t(item.titleKey)} data-ai-hint={item.dataAiHint || "notification image"} className="h-16 w-16 rounded-md object-cover"/>
@@ -127,7 +182,8 @@ export default function NotificationsPage() {
                     {t(item.descriptionKey, item.descriptionPlaceholders)}
                   </CardDescription>
                 </div>
-                {!item.read && (
+                {/* Show read indicator only for non-global user notifications */}
+                {!item.isGlobal && !item.read && (
                    <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1 shrink-0" />
                 )}
               </CardHeader>

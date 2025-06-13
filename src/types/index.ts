@@ -36,7 +36,7 @@ export interface CarouselBannerItem {
   link?: string;
 }
 
-export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy';
+export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight';
 
 
 export interface RecommendedItem {
@@ -90,7 +90,7 @@ export interface UserProfile {
 export interface Order {
   id: string; // Firestore document ID
   userId: string; // User who made the order
-  serviceType: ItemType | string; // Type of service, matches ItemType
+  serviceType: ItemType; // Type of service, matches ItemType
   serviceId: string; // ID of the translator, flight, etc.
   serviceName: string; // Name of the service/translator
   orderDate: Timestamp | any; // Firestore Timestamp for when the order was placed
@@ -119,6 +119,7 @@ export interface NotificationItem {
   dataAiHint?: string;
   link?: string; // e.g., link to the order detail page if we had one
   itemType: ItemType;
+  isGlobal?: boolean; // To distinguish global notifications
 }
 
 export interface HospitalCategory {
@@ -198,3 +199,5 @@ export interface Translator {
 export interface SavedPageItem extends RecommendedItem {
   savedAt: Timestamp | any;
 }
+
+    
