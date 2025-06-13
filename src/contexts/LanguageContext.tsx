@@ -15,6 +15,14 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 // Simple translations store
 const translations: Record<Language, Record<string, string>> = {
   mn: {
+    bookNowButton: "Захиалах",
+    orderNowButton: "Одоо захиалах",
+    orderSuccessNotificationTitle: "Захиалга амжилттай",
+    orderSuccessNotificationDescription: "{{serviceName}} үйлчилгээний захиалга баталгаажлаа.",
+    orderFailedNotificationTitle: "Захиалга амжилтгүй",
+    orderFailedNotificationDescription: "{{serviceName}} үйлчилгээг захиалахад алдаа гарлаа.",
+    loginToProceed: "Үргэлжлүүлэхийн тулд нэвтэрнэ үү.",
+    loginToBookService: "Үйлчилгээ захиалахын тулд нэвтэрнэ үү.",
     // Header & Nav
     citySelectorPlaceholder: "Хот сонгох",
     citySelectorAriaLabel: "Хот сонгогч",
@@ -110,6 +118,8 @@ const translations: Record<Language, Record<string, string>> = {
     notification_promo_desc: "Манай шинэ үйлчилгээнд 50% хямдралтай. Битгий алдаарай!",
     notification_update_title: "Системийн шинэчлэл",
     notification_update_desc: "Аппликейшн шинэчлэгдлээ. Шинэ боломжуудтай танилцана уу.",
+    unknownNotificationTitle: "Мэдэгдэл",
+    unknownNotificationDescription: "Танд шинэ мэдэгдэл ирлээ.",
     // Flight Search Page
     flightsPageTitle: "Нислэг",
     fromAirport: "Хаанаас",
@@ -134,6 +144,7 @@ const translations: Record<Language, Record<string, string>> = {
     allSectionTitle: "Бүгд",
     fetchHotelsError: "Буудлын мэдээлэл татахад алдаа гарлаа.",
     noHotelsFound: "Сонгосон хотод зочид буудал олдсонгүй.",
+    loginToBookHotel: "Буудал захиалахын тулд нэвтэрнэ үү.",
     // New Profile Page Translations
     profilePageTitle: "Хэрэглэгч",
     personalInfo: "Хувийн мэдээлэл",
@@ -373,9 +384,16 @@ const translations: Record<Language, Record<string, string>> = {
     locationLabel: "Байршил",
     ratingLabel: "Үнэлгээ",
     descriptionLabel: "Тайлбар"
-
   },
   cn: {
+    bookNowButton: "立即预订",
+    orderNowButton: "立即下单",
+    orderSuccessNotificationTitle: "订单成功",
+    orderSuccessNotificationDescription: "您已成功预订 {{serviceName}} 服务。",
+    orderFailedNotificationTitle: "订单失败",
+    orderFailedNotificationDescription: "预订 {{serviceName}} 服务时出错。",
+    loginToProceed: "请登录后继续。",
+    loginToBookService: "请登录以预订服务。",
     // Header & Nav
     citySelectorPlaceholder: "选择城市",
     citySelectorAriaLabel: "城市选择器",
@@ -390,7 +408,7 @@ const translations: Record<Language, Record<string, string>> = {
     notifications: "通知",
     user: "用户", // For BottomNav
     // Service Groups
-    flights: "机票", 
+    flights: "机票",
     hotels: "酒店",
     translators: "翻译",
     wechat: "微信服务",
@@ -423,12 +441,12 @@ const translations: Record<Language, Record<string, string>> = {
     banner_promo1_alt: "促销1",
     banner_promo2_alt: "特色服务",
     // Dummy page titles
-    myOrders: "我的订单", 
+    myOrders: "我的订单",
     mySavedItems: "我保存的项目",
     myNotifications: "我的通知",
-    noOrdersPlaceholder: "您目前没有订单。", 
+    noOrdersPlaceholder: "您目前没有订单。",
     ordersNoPurchasesMade: "您还没有购买任何商品",
-    ordersNeedsTab: "需求", 
+    ordersNeedsTab: "需求",
     ordersPaymentFilter: "付款",
     ordersTicketFilter: "票务",
     ordersRefundFilter: "退款",
@@ -470,6 +488,8 @@ const translations: Record<Language, Record<string, string>> = {
     notification_promo_desc: "我们的新服务有50%的折扣。不要错过！",
     notification_update_title: "系统更新",
     notification_update_desc: "应用程序已更新。查看新功能。",
+    unknownNotificationTitle: "通知",
+    unknownNotificationDescription: "您有一条新通知。",
     // Flight Search Page
     flightsPageTitle: "航班",
     fromAirport: "从哪里",
@@ -494,6 +514,7 @@ const translations: Record<Language, Record<string, string>> = {
     allSectionTitle: "全部",
     fetchHotelsError: "获取酒店数据时出错。",
     noHotelsFound: "未找到所选城市的酒店。",
+    loginToBookHotel: "请登录以预订酒店。",
     // New Profile Page Translations
     profilePageTitle: "用户中心",
     personalInfo: "个人信息",
@@ -598,7 +619,7 @@ const translations: Record<Language, Record<string, string>> = {
     registerAsTranslatorPageTitle: "注册成为翻译员",
     translatorRegistrationFormTitle: "翻译员信息",
     translatorRegistrationFormDescription: "请填写您的翻译员信息以完成注册。",
-    submitRegistration: "提交注册", 
+    submitRegistration: "提交注册",
     registrationSuccessful: "注册成功！",
     registrationFailedGeneral: "注册失败，请重试。",
     fillAllFields: "请填写所有必填字段。",
@@ -776,3 +797,5 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
+
+    

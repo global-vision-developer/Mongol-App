@@ -4,11 +4,11 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, serverTimestamp, addDoc, collection as firestoreCollection } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, addDoc, collection as firestoreCollection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { Translator, City, Order as AppOrder, TranslationField, LanguageLevel, DailyRateRange } from "@/types";
+import type { Translator, City, Order as AppOrder, TranslationField, LanguageLevel, DailyRateRange, NotificationItem, ItemType } from "@/types";
 import { CITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info } from "lucide-react";
 import { format } from 'date-fns';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; translationFieldsValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean }> = ({ labelKey, value, icon: Icon, cityValue, translationFieldsValue, languageLevelValue, dailyRateValue }) => {
   const { t, language } = useTranslation();
@@ -51,7 +52,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
       displayValue = value.toString();
     }
   }
-  
+
   if (Icon) {
     return (
       <div className="flex items-start text-sm">
@@ -87,6 +88,7 @@ export default function TranslatorDetailPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const translatorId = params.id as string;
+  const itemType: ItemType = 'translator';
 
   useEffect(() => {
     if (translatorId) {
@@ -96,7 +98,10 @@ export default function TranslatorDetailPage() {
           const docRef = doc(db, "translators", translatorId);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            setTranslator({ id: docSnap.id, ...docSnap.data() } as Translator);
+            const data = docSnap.data();
+            // Ensure registeredAt is converted to Date if it's a Firestore Timestamp
+            const registeredAtDate = data.registeredAt instanceof Timestamp ? data.registeredAt.toDate() : (data.registeredAt ? new Date(data.registeredAt) : undefined);
+            setTranslator({ id: docSnap.id, ...data, itemType, registeredAt: registeredAtDate } as Translator);
           } else {
             console.log("No such translator!");
             setTranslator(null);
@@ -113,12 +118,10 @@ export default function TranslatorDetailPage() {
 
   const handleGetContactInfo = async () => {
     if (!user) {
-      toast({ title: t('loginToProceed'), variant: "destructive" });
+      toast({ title: t('loginToProceed'), description: t('loginToBookService'), variant: "destructive" });
       router.push('/auth/login');
       return;
     }
-    // For now, simulate payment then show info.
-    // Later, integrate actual payment.
     setIsPaymentModalOpen(true);
   };
 
@@ -126,21 +129,32 @@ export default function TranslatorDetailPage() {
     if (!user || !translator) return;
     setIsProcessingPayment(true);
     try {
-      // Simulate payment success
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate payment
 
-      // Create order in Firestore
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
-        serviceType: 'translator',
+        serviceType: itemType,
         serviceId: translator.id,
         serviceName: translator.name,
         orderDate: serverTimestamp(),
-        status: 'confirmed', // Assuming payment confirmation means order confirmed
-        amount: parseFloat(translator.dailyRate?.split('-')[0] || '0'), // Placeholder amount
+        status: 'confirmed',
+        amount: translator.dailyRate, // Use the string range for now
         contactInfoRevealed: true,
       };
-      await addDoc(firestoreCollection(db, "orders"), orderData);
+      const orderRef = await addDoc(firestoreCollection(db, "orders"), orderData);
+
+      // Create Notification
+       const notificationData: Omit<NotificationItem, 'id'> = {
+        titleKey: 'orderSuccessNotificationTitle',
+        descriptionKey: 'orderSuccessNotificationDescription',
+        descriptionPlaceholders: { serviceName: translator.name },
+        date: serverTimestamp(),
+        read: false,
+        itemType: itemType,
+        link: `/orders`
+      };
+      await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+
 
       toast({ title: t('orderCreatedSuccess') });
       setShowContactInfo(true);
@@ -155,9 +169,31 @@ export default function TranslatorDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="ml-4 text-muted-foreground">{t('loading')}...</p>
+      <div className="space-y-4 p-4">
+         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md -mx-4 px-4">
+            <div className="container mx-auto flex items-center justify-between h-16">
+                <Skeleton className="h-10 w-10" />
+                <Skeleton className="h-6 w-1/2" />
+                <div className="w-10"></div>
+            </div>
+        </div>
+        <div className="p-4 md:p-6">
+            <div className="flex items-center gap-3 mb-4">
+                <Skeleton className="h-20 w-20 rounded-full" />
+                <div className="space-y-2">
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-5 w-32" />
+                </div>
+            </div>
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-5/6 mb-6" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+            </div>
+        </div>
+        <CardFooter className="p-4 md:p-6 border-t">
+           <Skeleton className="h-12 w-full rounded-lg" />
+        </CardFooter>
       </div>
     );
   }
@@ -171,8 +207,11 @@ export default function TranslatorDetailPage() {
       </div>
     );
   }
-  
+
   const dailyRateDisplay = translator.dailyRate ? t(`rate${translator.dailyRate.replace('-', 'to').replace('+', 'plus')}`) : t('notProvided');
+  const registeredAtDate = translator.registeredAt instanceof Timestamp
+    ? translator.registeredAt.toDate()
+    : (translator.registeredAt ? new Date(translator.registeredAt as string) : null);
 
 
   return (
@@ -209,14 +248,14 @@ export default function TranslatorDetailPage() {
                     </Avatar>
                     <div>
                         <CardTitle className="text-2xl md:text-3xl font-headline text-white mb-1">{translator.name}</CardTitle>
-                        {translator.rating !== undefined && (
+                        {translator.rating !== undefined && translator.rating !== null && (
                             <div className="flex items-center gap-1 text-sm text-yellow-400">
                                 <Star className="h-5 w-5 fill-current" />
                                 <span>{t('ratingOutOf10', { rating: translator.rating.toFixed(1)})}</span>
-                                {translator.reviewCount && <span className="text-gray-300 text-xs"> {t('basedOnReviews', { reviewCount: translator.reviewCount })}</span>}
-                                {!translator.reviewCount && <span className="text-gray-300 text-xs"> ({t('noReviewsYet')})</span>}
+                                {translator.reviewCount ? <span className="text-gray-300 text-xs"> {t('basedOnReviews', { reviewCount: translator.reviewCount })}</span> : <span className="text-gray-300 text-xs"> ({t('noReviewsYet')})</span>}
                             </div>
                         )}
+                         {(translator.rating === undefined || translator.rating === null) && <span className="text-gray-300 text-xs">({t('noReviewsYet')})</span>}
                     </div>
                 </div>
             </div>
@@ -241,8 +280,8 @@ export default function TranslatorDetailPage() {
               <DetailItem labelKey="dailyRateLabel" value={translator.dailyRate} icon={Star} dailyRateValue />
               <DetailItem labelKey="translationFieldsLabel" value={translator.translationFields} icon={Users} translationFieldsValue />
               <DetailItem labelKey="canWorkInOtherCitiesLabel" value={translator.canWorkInOtherCities} icon={MapPin} cityValue />
-              {translator.registeredAt && typeof translator.registeredAt.toDate === 'function' && (
-                <DetailItem labelKey="registeredAt" value={format(translator.registeredAt.toDate(), 'yyyy-MM-dd')} icon={UserCheck} />
+              {registeredAtDate && (
+                <DetailItem labelKey="registeredAt" value={format(registeredAtDate, 'yyyy-MM-dd')} icon={UserCheck} />
               )}
             </div>
 
@@ -262,11 +301,11 @@ export default function TranslatorDetailPage() {
               </div>
             )}
           </CardContent>
-          
+
           {!showContactInfo && (
             <CardFooter className="p-4 md:p-6 border-t">
-              <Button className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-3 text-base h-12" onClick={handleGetContactInfo}>
-                {t('getContactInfoButton')}
+              <Button className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-3 text-base h-12" onClick={handleGetContactInfo} disabled={isProcessingPayment}>
+                {isProcessingPayment ? t('loading') : t('getContactInfoButton')}
               </Button>
             </CardFooter>
           )}
@@ -281,7 +320,6 @@ export default function TranslatorDetailPage() {
               {t('paymentModalDescription', { rate: translator.dailyRate?.split('-')[0] || '...' })}
             </DialogDescription>
           </DialogHeader>
-          {/* Placeholder for payment form elements */}
           <div className="py-4">
             <p className="text-sm text-muted-foreground">{t('contactInfoPaymentPlaceholder')}</p>
           </div>
@@ -298,3 +336,5 @@ export default function TranslatorDetailPage() {
     </div>
   );
 }
+
+    

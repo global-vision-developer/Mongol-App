@@ -4,14 +4,16 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection, serverTimestamp, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { RecommendedItem } from "@/types";
+import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Star, MapPin, AlertTriangle, Info } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { ArrowLeft, Star, MapPin, AlertTriangle, Info, ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -31,10 +33,14 @@ export default function HospitalDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const [item, setItem] = useState<RecommendedItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isBooking, setIsBooking] = useState(false);
   const itemId = params.id as string;
+  const itemType: ItemType = 'hospital';
 
   useEffect(() => {
     if (itemId) {
@@ -44,7 +50,7 @@ export default function HospitalDetailPage() {
           const docRef = doc(db, "hospitals", itemId);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            setItem({ id: docSnap.id, ...docSnap.data() } as RecommendedItem);
+            setItem({ id: docSnap.id, ...docSnap.data(), itemType } as RecommendedItem);
           } else {
             setItem(null);
           }
@@ -59,12 +65,62 @@ export default function HospitalDetailPage() {
     }
   }, [itemId]);
 
+  const handleBookNow = async () => {
+    if (!user) {
+      toast({ title: t('loginToProceed'), description: t('loginToBookService'), variant: "destructive" });
+      router.push('/auth/login');
+      return;
+    }
+    if (!item) return;
+
+    setIsBooking(true);
+    try {
+      const orderData: Omit<AppOrder, 'id'> = {
+        userId: user.uid,
+        serviceType: itemType,
+        serviceId: item.id,
+        serviceName: item.name,
+        orderDate: serverTimestamp(),
+        status: 'pending_confirmation', // Hospital appointments usually need confirmation
+      };
+      const orderRef = await addDoc(collection(db, "orders"), orderData);
+
+      const notificationData: Omit<NotificationItem, 'id'> = {
+        titleKey: 'orderSuccessNotificationTitle',
+        descriptionKey: 'orderSuccessNotificationDescription',
+        descriptionPlaceholders: { serviceName: item.name },
+        date: serverTimestamp(),
+        read: false,
+        itemType: itemType,
+        link: `/orders`
+      };
+      await addDoc(collection(db, "users", user.uid, "notifications"), notificationData);
+
+      toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name }) });
+    } catch (error) {
+      console.error("Error booking Hospital appointment:", error);
+      toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', {serviceName: item.name }), variant: "destructive" });
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-theme(spacing.32))]">
-        <Skeleton className="h-12 w-12 rounded-full mb-4" />
-        <Skeleton className="h-6 w-3/4 mb-2" />
+     return (
+      <div className="space-y-4 p-4">
+        <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md -mx-4 px-4">
+            <div className="container mx-auto flex items-center justify-between h-16">
+                <Skeleton className="h-10 w-10" />
+                <Skeleton className="h-6 w-1/2" />
+                <div className="w-10"></div>
+            </div>
+        </div>
+        <Skeleton className="w-full h-64 rounded-lg" />
+        <Skeleton className="h-8 w-3/4 mt-4" />
         <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-4 w-2/3 mt-2" />
+        <Skeleton className="h-4 w-1/2 mt-2" />
+        <Skeleton className="h-12 w-full rounded-lg mt-6" />
       </div>
     );
   }
@@ -107,21 +163,37 @@ export default function HospitalDetailPage() {
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-6">
             <CardTitle className="text-2xl md:text-3xl font-headline">{item.name}</CardTitle>
-            
+
             {item.description && (
               <div className="space-y-2">
                 <h3 className="text-md font-semibold text-foreground flex items-center"><Info className="h-5 w-5 mr-2 text-primary"/>{t('descriptionLabel')}</h3>
                 <p className="text-sm text-muted-foreground whitespace-pre-line">{item.description}</p>
               </div>
             )}
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
               {typeof item.rating === 'number' && <DetailItem labelKey="ratingLabel" value={item.rating.toFixed(1)} icon={Star} />}
             </div>
           </CardContent>
+           <CardFooter className="p-4 md:p-6 border-t">
+            <Button
+              className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-3 text-base h-12"
+              onClick={handleBookNow}
+              disabled={isBooking}
+            >
+              {isBooking ? t('loading') : (
+                 <>
+                  <ShoppingBag className="mr-2 h-5 w-5" />
+                  {t('bookNowButton')}
+                </>
+              )}
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     </div>
   );
 }
+
+    
