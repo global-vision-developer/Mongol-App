@@ -65,6 +65,7 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
     }
   }
 
+  const cardItselfIsLink = !!detailPageLink;
 
   const cardContent = (
     <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg h-full group", className)}>
@@ -110,14 +111,23 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
             <span>{ratingNumber.toFixed(1)}</span>
           </div>
         )}
-        {!detailPageLink && <Button variant="outline" size="sm">{t('viewDetails')}</Button>}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          disabled={!cardItselfIsLink} 
+          aria-hidden={cardItselfIsLink} // Hide from screen reader if card is already a link
+          tabIndex={cardItselfIsLink ? -1 : 0} // Remove from tab order if card is link
+          className={!cardItselfIsLink ? "opacity-50 cursor-not-allowed" : ""} // Style for disabled state
+        >
+          {t('viewDetails')}
+        </Button>
       </CardFooter>
     </Card>
   );
 
-  if (detailPageLink) {
+  if (cardItselfIsLink) {
     return (
-      <Link href={detailPageLink} className="block h-full">
+      <Link href={detailPageLink!} className="block h-full focus:outline-none" aria-label={item.name || t('serviceUnnamed')}>
         {cardContent}
       </Link>
     );
@@ -125,4 +135,3 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
 
   return cardContent;
 }
-
