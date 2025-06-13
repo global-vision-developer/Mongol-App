@@ -83,6 +83,8 @@ export default function HotelDetailPage() {
         orderDate: serverTimestamp(),
         status: 'pending_confirmation',
         amount: item.price,
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "hotel building",
       };
       const orderRef = await addDoc(collection(db, "orders"), orderData);
 
@@ -93,7 +95,9 @@ export default function HotelDetailPage() {
         date: serverTimestamp(),
         read: false,
         itemType: itemType,
-        link: `/orders` // Or `/orders/${orderRef.id}` if order detail page exists
+        link: `/orders`,
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "hotel building",
       };
       await addDoc(collection(db, "users", user.uid, "notifications"), notificationData);
 

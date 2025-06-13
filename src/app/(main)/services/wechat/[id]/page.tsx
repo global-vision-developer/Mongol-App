@@ -81,7 +81,9 @@ export default function WeChatServiceDetailPage() {
         serviceId: item.id,
         serviceName: item.name,
         orderDate: serverTimestamp(),
-        status: 'confirmed', // WeChat services might be instant or require less confirmation
+        status: 'confirmed', 
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "wechat service item",
       };
       const orderRef = await addDoc(collection(db, "orders"), orderData);
 
@@ -92,7 +94,9 @@ export default function WeChatServiceDetailPage() {
         date: serverTimestamp(),
         read: false,
         itemType: itemType,
-        link: `/orders`
+        link: `/orders`,
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "wechat service item",
       };
       await addDoc(collection(db, "users", user.uid, "notifications"), notificationData);
 

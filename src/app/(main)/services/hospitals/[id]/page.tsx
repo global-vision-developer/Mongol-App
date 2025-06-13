@@ -81,7 +81,9 @@ export default function HospitalDetailPage() {
         serviceId: item.id,
         serviceName: item.name,
         orderDate: serverTimestamp(),
-        status: 'pending_confirmation', // Hospital appointments usually need confirmation
+        status: 'pending_confirmation', 
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "hospital building interior",
       };
       const orderRef = await addDoc(collection(db, "orders"), orderData);
 
@@ -92,7 +94,9 @@ export default function HospitalDetailPage() {
         date: serverTimestamp(),
         read: false,
         itemType: itemType,
-        link: `/orders`
+        link: `/orders`,
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "hospital building interior",
       };
       await addDoc(collection(db, "users", user.uid, "notifications"), notificationData);
 

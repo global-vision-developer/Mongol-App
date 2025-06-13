@@ -81,7 +81,9 @@ export default function MarketDetailPage() {
         serviceId: item.id,
         serviceName: item.name,
         orderDate: serverTimestamp(),
-        status: 'confirmed', // Markets might be direct purchases or inquiries
+        status: 'confirmed', 
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "market stall produce",
       };
       const orderRef = await addDoc(collection(db, "orders"), orderData);
 
@@ -92,7 +94,9 @@ export default function MarketDetailPage() {
         date: serverTimestamp(),
         read: false,
         itemType: itemType,
-        link: `/orders`
+        link: `/orders`,
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "market stall produce",
       };
       await addDoc(collection(db, "users", user.uid, "notifications"), notificationData);
 

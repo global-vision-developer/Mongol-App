@@ -154,8 +154,8 @@ export default function TranslatorDetailPage() {
         descriptionPlaceholders: { serviceName: translator.name },
         date: serverTimestamp(),
         read: false,
-        itemType: itemType, // Use the specific itemType
-        link: `/orders`, // Link to the orders page
+        itemType: itemType, 
+        link: `/orders`, 
         imageUrl: translator.photoUrl,
         dataAiHint: "translator portrait"
       };

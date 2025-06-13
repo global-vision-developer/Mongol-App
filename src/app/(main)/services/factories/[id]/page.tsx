@@ -81,7 +81,9 @@ export default function FactoryDetailPage() {
         serviceId: item.id,
         serviceName: item.name,
         orderDate: serverTimestamp(),
-        status: 'pending_confirmation', // Factory orders likely need quotes/confirmation
+        status: 'pending_confirmation', 
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "factory exterior machinery",
       };
       const orderRef = await addDoc(collection(db, "orders"), orderData);
 
@@ -92,7 +94,9 @@ export default function FactoryDetailPage() {
         date: serverTimestamp(),
         read: false,
         itemType: itemType,
-        link: `/orders`
+        link: `/orders`,
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "factory exterior machinery",
       };
       await addDoc(collection(db, "users", user.uid, "notifications"), notificationData);
 

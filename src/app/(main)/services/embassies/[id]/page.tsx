@@ -65,7 +65,7 @@ export default function EmbassyDetailPage() {
     }
   }, [itemId]);
 
-  const handleBookNow = async () => { // "Book" might mean making an inquiry or noting interest
+  const handleBookNow = async () => { 
     if (!user) {
       toast({ title: t('loginToProceed'), description: t('loginToBookService'), variant: "destructive" });
       router.push('/auth/login');
@@ -81,18 +81,22 @@ export default function EmbassyDetailPage() {
         serviceId: item.id,
         serviceName: item.name,
         orderDate: serverTimestamp(),
-        status: 'pending_confirmation', // Embassy services are typically inquiries
+        status: 'pending_confirmation', 
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "embassy building flag",
       };
       const orderRef = await addDoc(collection(db, "orders"), orderData);
 
       const notificationData: Omit<NotificationItem, 'id'> = {
-        titleKey: 'orderSuccessNotificationTitle', // Generic title
-        descriptionKey: 'orderSuccessNotificationDescription', // Generic description
+        titleKey: 'orderSuccessNotificationTitle', 
+        descriptionKey: 'orderSuccessNotificationDescription', 
         descriptionPlaceholders: { serviceName: item.name },
         date: serverTimestamp(),
         read: false,
         itemType: itemType,
-        link: `/orders`
+        link: `/orders`,
+        imageUrl: item.imageUrl,
+        dataAiHint: item.dataAiHint || "embassy building flag",
       };
       await addDoc(collection(db, "users", user.uid, "notifications"), notificationData);
 
