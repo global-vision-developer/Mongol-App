@@ -61,7 +61,7 @@ export default function HospitalDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-theme(spacing.32))]">
         <Skeleton className="h-12 w-12 rounded-full mb-4" />
         <Skeleton className="h-6 w-3/4 mb-2" />
         <Skeleton className="h-4 w-1/2" />
@@ -102,7 +102,7 @@ export default function HospitalDetailPage() {
               layout="fill"
               objectFit="cover"
               className="bg-muted"
-              data-ai-hint={item.dataAiHint || "hospital building"}
+              data-ai-hint={item.dataAiHint || "hospital building interior"}
             />
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-6">
@@ -125,4 +125,3 @@ export default function HospitalDetailPage() {
     </div>
   );
 }
-

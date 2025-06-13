@@ -41,7 +41,6 @@ export default function WeChatServiceDetailPage() {
       const fetchItem = async () => {
         setLoading(true);
         try {
-          // Assuming WeChat items are stored in a collection named "wechatItems"
           const docRef = doc(db, "wechatItems", itemId);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
@@ -62,7 +61,7 @@ export default function WeChatServiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-theme(spacing.32))]">
         <Skeleton className="h-12 w-12 rounded-full mb-4" />
         <Skeleton className="h-6 w-3/4 mb-2" />
         <Skeleton className="h-4 w-1/2" />
@@ -80,10 +79,8 @@ export default function WeChatServiceDetailPage() {
     );
   }
   
-  // Assuming WeChat items might have a wechatId or qrCodeUrl specific field in RecommendedItem
-  const wechatId = (item as any).wechatId; // Example: access specific field
-  const wechatQrImageUrl = (item as any).wechatQrImageUrl; // Example: access specific field
-
+  const wechatId = (item as any).wechatId; 
+  const wechatQrImageUrl = (item as any).wechatQrImageUrl;
 
   return (
     <div className="pb-20">
@@ -108,7 +105,7 @@ export default function WeChatServiceDetailPage() {
               layout="fill"
               objectFit="cover"
               className="bg-muted"
-              data-ai-hint={item.dataAiHint || "wechat service"}
+              data-ai-hint={item.dataAiHint || "wechat service item"}
             />
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-6">
@@ -130,7 +127,7 @@ export default function WeChatServiceDetailPage() {
             {wechatQrImageUrl && (
               <div className="mt-4">
                 <h3 className="text-md font-semibold text-foreground mb-2">{t('wechatQrImageLabel')}</h3>
-                <Image src={wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={150} height={150} className="rounded-md border" data-ai-hint="qr code" />
+                <Image src={wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={150} height={150} className="rounded-md border" data-ai-hint="qr code wechat" />
               </div>
             )}
           </CardContent>
@@ -139,4 +136,3 @@ export default function WeChatServiceDetailPage() {
     </div>
   );
 }
-

@@ -58,10 +58,10 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
       case 'embassy':
         detailPageLink = `/services/embassies/${item.id}`;
         break;
-      case 'wechat': // Assuming 'wechat' is the itemType for wechatItems
+      case 'wechat':
         detailPageLink = `/services/wechat/${item.id}`;
         break;
-      // Add other cases as needed
+      // Add other cases as needed for new service types
     }
   }
 
@@ -111,16 +111,21 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
             <span>{ratingNumber.toFixed(1)}</span>
           </div>
         )}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          disabled={!cardItselfIsLink} 
-          aria-hidden={cardItselfIsLink} // Hide from screen reader if card is already a link
-          tabIndex={cardItselfIsLink ? -1 : 0} // Remove from tab order if card is link
-          className={!cardItselfIsLink ? "opacity-50 cursor-not-allowed" : ""} // Style for disabled state
-        >
-          {t('viewDetails')}
-        </Button>
+        {/* Ensure the button is part of the link if detailPageLink exists, or disabled if not */}
+        {cardItselfIsLink ? (
+          <span className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+            {t('viewDetails')}
+          </span>
+        ) : (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            disabled={true}
+            className="opacity-50 cursor-not-allowed"
+          >
+            {t('viewDetails')}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

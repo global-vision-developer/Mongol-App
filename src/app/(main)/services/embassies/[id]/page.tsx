@@ -61,7 +61,7 @@ export default function EmbassyDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-theme(spacing.32))]">
         <Skeleton className="h-12 w-12 rounded-full mb-4" />
         <Skeleton className="h-6 w-3/4 mb-2" />
         <Skeleton className="h-4 w-1/2" />
@@ -118,7 +118,6 @@ export default function EmbassyDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
               {typeof item.rating === 'number' && <DetailItem labelKey="ratingLabel" value={item.rating.toFixed(1)} icon={Star} />}
-              {/* Add other embassy-specific fields from RecommendedItem if any */}
             </div>
           </CardContent>
         </Card>
@@ -126,4 +125,3 @@ export default function EmbassyDetailPage() {
     </div>
   );
 }
-
