@@ -1,27 +1,17 @@
-"use client"; // This layout must be a client component to use context providers
 
-import { Header } from "@/components/layout/Header";
-import { BottomNav } from "@/components/layout/BottomNav";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import { CityProvider } from "@/contexts/CityContext";
 import type React from "react";
 
-export default function MainLayout({
+export default function ServicesSegmentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <LanguageProvider>
-      <CityProvider>
-        <div className="flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1 container py-6 pb-24 md:pb-6"> {/* Add padding-bottom for bottom nav */}
-            {children}
-          </main>
-          <BottomNav />
-        </div>
-      </CityProvider>
-    </LanguageProvider>
-  );
+  // The main Header, BottomNav, and Context Providers (LanguageProvider, CityProvider)
+  // are already defined in the parent layout: src/app/(main)/layout.tsx.
+  // This layout is nested within that parent layout for routes under /services.
+  // Therefore, we only need to render the children here.
+  // If there were layout elements specific ONLY to the /services/* routes,
+  // they would be added here. Otherwise, this file could potentially be removed
+  // if it serves no other purpose than wrapping children.
+  return <>{children}</>;
 }
