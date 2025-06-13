@@ -34,16 +34,16 @@ const fileSchema = z.instanceof(File)
 
 const translatorStep1Schema = z.object({
   nationality: z.enum(['mongolian', 'chinese', 'inner_mongolian', ''], { required_error: "requiredError"}).refine(val => val !== '', { message: "requiredError" }),
-  inChinaNow: z.boolean().optional(),
+  inChinaNow: z.boolean().optional().nullable(),
   yearsInChina: z.preprocess(
     (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
     z.number({ invalid_type_error: "invalidNumberError" }).positive().nullable()
   ),
   currentCityInChina: z.string().nullable(),
-  chineseExamTaken: z.boolean().optional(),
+  chineseExamTaken: z.boolean().optional().nullable(),
   speakingLevel: z.enum(['good', 'intermediate', 'basic', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
   writingLevel: z.enum(['good', 'intermediate', 'basic', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
-  workedAsTranslator: z.boolean().optional(),
+  workedAsTranslator: z.boolean().optional().nullable(),
   translationFields: z.array(z.string()).min(1, "requiredError"),
   canWorkInOtherCities: z.array(z.string()).optional(),
   dailyRate: z.enum(['100-200', '200-300', '300-400', '400-500', '500+', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
@@ -101,13 +101,13 @@ export function RegisterTranslatorForm() {
     mode: "onChange", // Validate on change for better UX
     defaultValues: {
       nationality: '',
-      inChinaNow: undefined,
+      inChinaNow: null,
       yearsInChina: null,
       currentCityInChina: null,
-      chineseExamTaken: undefined,
+      chineseExamTaken: null,
       speakingLevel: '',
       writingLevel: '',
-      workedAsTranslator: undefined,
+      workedAsTranslator: null,
       translationFields: [],
       canWorkInOtherCities: [],
       dailyRate: '',
@@ -181,22 +181,22 @@ export function RegisterTranslatorForm() {
       const translatorProfile: Partial<Translator> & { uid: string; registeredAt: any; isProfileComplete: boolean } = {
         uid: user.uid,
         id: user.uid, 
-        name: user.displayName || "Unknown", // Assuming name comes from auth user
-        photoUrl: user.photoURL || undefined,
+        name: user.displayName || "Unknown Name", 
+        photoUrl: user.photoURL || null, // Ensure photoUrl is null if not present
 
         nationality: data.nationality as Nationality,
         inChinaNow: data.inChinaNow,
-        yearsInChina: data.inChinaNow === false ? data.yearsInChina : null,
-        currentCityInChina: data.inChinaNow === true ? data.currentCityInChina : null,
+        yearsInChina: data.inChinaNow === false ? (data.yearsInChina || null) : null,
+        currentCityInChina: data.inChinaNow === true ? (data.currentCityInChina || null) : null,
         chineseExamTaken: data.chineseExamTaken,
         speakingLevel: data.speakingLevel as LanguageLevel,
         writingLevel: data.writingLevel as LanguageLevel,
         workedAsTranslator: data.workedAsTranslator,
         translationFields: data.translationFields as TranslationField[],
-        canWorkInOtherCities: data.canWorkInOtherCities,
+        canWorkInOtherCities: data.canWorkInOtherCities || [],
         dailyRate: data.dailyRate as DailyRateRange,
-        chinaPhoneNumber: data.chinaPhoneNumber,
-        wechatId: data.wechatId,
+        chinaPhoneNumber: data.chinaPhoneNumber || null,
+        wechatId: data.wechatId || null,
         
         // Placeholder for image URLs - to be replaced with actual URLs after storage upload
         // idCardFrontImageUrl: "placeholder_url_front",
@@ -307,7 +307,7 @@ export function RegisterTranslatorForm() {
                   render={({ field }) => (
                      <RadioGroup
                         onValueChange={(value) => field.onChange(value === "true")}
-                        value={field.value === undefined ? "" : String(field.value)}
+                        value={field.value === null ? "" : String(field.value)}
                         className="flex gap-4"
                         disabled={isSubmitting}
                       >
@@ -370,7 +370,7 @@ export function RegisterTranslatorForm() {
                     render={({ field }) => (
                       <RadioGroup
                         onValueChange={(value) => field.onChange(value === "true")}
-                        value={field.value === undefined ? "" : String(field.value)}
+                        value={field.value === null ? "" : String(field.value)}
                         className="flex gap-4"
                         disabled={isSubmitting}
                       >
@@ -437,7 +437,7 @@ export function RegisterTranslatorForm() {
                     render={({ field }) => (
                        <RadioGroup
                         onValueChange={(value) => field.onChange(value === "true")}
-                        value={field.value === undefined ? "" : String(field.value)}
+                        value={field.value === null ? "" : String(field.value)}
                         className="flex gap-4"
                         disabled={isSubmitting}
                       >

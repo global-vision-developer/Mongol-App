@@ -57,10 +57,10 @@ export interface RecommendedItem {
   itemType?: 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy';
   // Fields from Translator type that might appear in RecommendedItem if it's a translator
   nationality?: Nationality;
-  inChinaNow?: boolean;
+  inChinaNow?: boolean | null;
   yearsInChina?: number | null;
   currentCityInChina?: string | null;
-  chineseExamTaken?: boolean;
+  chineseExamTaken?: boolean | null;
   translationFields?: TranslationField[];
   dailyRate?: DailyRateRange;
   chinaPhoneNumber?: string | null; // Keep for type consistency, but control visibility
@@ -149,16 +149,16 @@ export interface Translator {
   id: string; 
   uid: string;
   name: string; 
-  photoUrl?: string; 
+  photoUrl?: string | null; 
   
   nationality?: Nationality;
-  inChinaNow?: boolean | undefined; 
+  inChinaNow?: boolean | null; 
   yearsInChina?: number | null; 
   currentCityInChina?: string | null; 
-  chineseExamTaken?: boolean | undefined; 
+  chineseExamTaken?: boolean | null; 
   speakingLevel?: LanguageLevel;
   writingLevel?: LanguageLevel;
-  workedAsTranslator?: boolean | undefined; 
+  workedAsTranslator?: boolean | null; 
   translationFields?: TranslationField[];
   canWorkInOtherCities?: string[]; 
   dailyRate?: DailyRateRange; 
