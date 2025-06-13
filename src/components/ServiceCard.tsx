@@ -31,8 +31,8 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
     <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg", className)}>
       <CardHeader className="p-0 relative">
         <Image
-          src={item.imageUrl || `https://placehold.co/400x250.png?text=${encodeURIComponent(item.name)}`}
-          alt={item.name}
+          src={item.imageUrl || `https://placehold.co/400x250.png?text=${encodeURIComponent(item.name || 'Service')}`}
+          alt={item.name || t('serviceImageDefaultAlt')}
           width={400}
           height={250}
           className="w-full h-48 object-cover"
@@ -53,7 +53,7 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
         </Button>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
-        <CardTitle className="text-lg font-headline mb-1 line-clamp-2">{item.name}</CardTitle>
+        <CardTitle className="text-lg font-headline mb-1 line-clamp-2">{item.name || t('serviceUnnamed')}</CardTitle>
         {item.location && (
           <div className="flex items-center text-xs text-muted-foreground mb-1">
             <MapPin className="h-3 w-3 mr-1 shrink-0" />
