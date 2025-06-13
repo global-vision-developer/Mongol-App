@@ -5,7 +5,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Briefcase } from 'lucide-react'; // Added new icons
+import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Briefcase, ShoppingBag } from 'lucide-react'; // Added ShoppingBag
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
