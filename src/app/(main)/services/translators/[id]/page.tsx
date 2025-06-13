@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info } from "lucide-react";
+import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info, ShoppingBag } from "lucide-react";
 import { format } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -129,19 +129,23 @@ export default function TranslatorDetailPage() {
     if (!user || !translator) return;
     setIsProcessingPayment(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate payment
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 1500)); 
 
+      // Create Order
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
         serviceType: itemType,
         serviceId: translator.id,
         serviceName: translator.name,
         orderDate: serverTimestamp(),
-        status: 'confirmed',
-        amount: translator.dailyRate, // Use the string range for now
+        status: 'contact_revealed', 
+        amount: translator.dailyRate, 
         contactInfoRevealed: true,
+        imageUrl: translator.photoUrl,
+        dataAiHint: "translator portrait",
       };
-      const orderRef = await addDoc(firestoreCollection(db, "orders"), orderData);
+      await addDoc(firestoreCollection(db, "orders"), orderData);
 
       // Create Notification
        const notificationData: Omit<NotificationItem, 'id'> = {
@@ -150,8 +154,10 @@ export default function TranslatorDetailPage() {
         descriptionPlaceholders: { serviceName: translator.name },
         date: serverTimestamp(),
         read: false,
-        itemType: itemType,
-        link: `/orders`
+        itemType: itemType, // Use the specific itemType
+        link: `/orders`, // Link to the orders page
+        imageUrl: translator.photoUrl,
+        dataAiHint: "translator portrait"
       };
       await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
 
@@ -304,8 +310,17 @@ export default function TranslatorDetailPage() {
 
           {!showContactInfo && (
             <CardFooter className="p-4 md:p-6 border-t">
-              <Button className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-3 text-base h-12" onClick={handleGetContactInfo} disabled={isProcessingPayment}>
-                {isProcessingPayment ? t('loading') : t('getContactInfoButton')}
+              <Button 
+                className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-3 text-base h-12" 
+                onClick={handleGetContactInfo} 
+                disabled={isProcessingPayment}
+                >
+                 {isProcessingPayment ? t('loading') : (
+                    <>
+                        <ShoppingBag className="mr-2 h-5 w-5" />
+                        {t('getContactInfoButton')}
+                    </>
+                 )}
               </Button>
             </CardFooter>
           )}

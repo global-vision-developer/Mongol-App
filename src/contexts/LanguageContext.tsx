@@ -383,7 +383,20 @@ const translations: Record<Language, Record<string, string>> = {
     itemNotFound: "Мэдээлэл олдсонгүй.",
     locationLabel: "Байршил",
     ratingLabel: "Үнэлгээ",
-    descriptionLabel: "Тайлбар"
+    descriptionLabel: "Тайлбар",
+    // Orders Page
+    orderStatusPendingConfirmation: "Баталгаажуулалт хүлээгдэж байна",
+    orderStatusConfirmed: "Баталгаажсан",
+    orderStatusContactRevealed: "Холбоо барих мэдээлэл нээгдсэн",
+    orderStatusPendingPayment: "Төлбөр хүлээгдэж байна",
+    orderStatusCancelled: "Цуцлагдсан",
+    orderStatusCompleted: "Дууссан",
+    orderDate: "Захиалсан огноо",
+    orderServiceName: "Үйлчилгээний нэр",
+    orderAmount: "Дүн",
+    day: "өдөр",
+    loadingOrders: "Захиалга уншиж байна...",
+
   },
   cn: {
     bookNowButton: "立即预订",
@@ -753,7 +766,19 @@ const translations: Record<Language, Record<string, string>> = {
     itemNotFound: "未找到项目。",
     locationLabel: "地点",
     ratingLabel: "评分",
-    descriptionLabel: "描述"
+    descriptionLabel: "描述",
+    // Orders Page
+    orderStatusPendingConfirmation: "等待确认",
+    orderStatusConfirmed: "已确认",
+    orderStatusContactRevealed: "联系方式已解锁",
+    orderStatusPendingPayment: "等待付款",
+    orderStatusCancelled: "已取消",
+    orderStatusCompleted: "已完成",
+    orderDate: "订单日期",
+    orderServiceName: "服务名称",
+    orderAmount: "金额",
+    day: "天",
+    loadingOrders: "正在加载订单...",
   },
 };
 
