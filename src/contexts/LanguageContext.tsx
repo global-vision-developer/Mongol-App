@@ -1,5 +1,4 @@
 
-
 "use client";
 import type { Language } from '@/types';
 import type React from 'react';
@@ -362,7 +361,18 @@ const translations: Record<Language, Record<string, string>> = {
     noReviewsYet: "Одоогоор үнэлгээ байхгүй",
     registeredAt: "Бүртгүүлсэн огноо",
     translatorDescription: "Орчуулагчийн танилцуулга",
-    notProvided: "Оруулаагүй"
+    notProvided: "Оруулаагүй",
+    // Detail pages for other services
+    hotelDetailTitle: "Буудлын дэлгэрэнгүй",
+    wechatItemDetailTitle: "WeChat үйлчилгээний дэлгэрэнгүй",
+    marketDetailTitle: "Захын дэлгэрэнгүй",
+    factoryDetailTitle: "Үйлдвэрийн дэлгэрэнгүй",
+    hospitalDetailTitle: "Эмнэлгийн дэлгэрэнгүй",
+    embassyDetailTitle: "Элчин сайдын дэлгэрэнгүй",
+    itemNotFound: "Мэдээлэл олдсонгүй.",
+    locationLabel: "Байршил",
+    ratingLabel: "Үнэлгээ",
+    descriptionLabel: "Тайлбар"
 
   },
   cn: {
@@ -711,7 +721,18 @@ const translations: Record<Language, Record<string, string>> = {
     noReviewsYet: "暂无评价",
     registeredAt: "注册日期",
     translatorDescription: "翻译员简介",
-    notProvided: "未提供"
+    notProvided: "未提供",
+    // Detail pages for other services
+    hotelDetailTitle: "酒店详情",
+    wechatItemDetailTitle: "微信服务详情",
+    marketDetailTitle: "市场详情",
+    factoryDetailTitle: "工厂详情",
+    hospitalDetailTitle: "医院详情",
+    embassyDetailTitle: "大使馆详情",
+    itemNotFound: "未找到项目。",
+    locationLabel: "地点",
+    ratingLabel: "评分",
+    descriptionLabel: "描述"
   },
 };
 
@@ -755,3 +776,4 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
+

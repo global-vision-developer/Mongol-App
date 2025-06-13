@@ -36,6 +36,36 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
 
   const ratingNumber = typeof item.rating === "number" ? item.rating : null;
 
+  let detailPageLink: string | undefined = undefined;
+
+  if (item.id) {
+    switch (item.itemType) {
+      case 'translator':
+        detailPageLink = `/services/translators/${item.id}`;
+        break;
+      case 'hotel':
+        detailPageLink = `/services/hotels/${item.id}`;
+        break;
+      case 'market':
+        detailPageLink = `/services/markets/${item.id}`;
+        break;
+      case 'factory':
+        detailPageLink = `/services/factories/${item.id}`;
+        break;
+      case 'hospital':
+        detailPageLink = `/services/hospitals/${item.id}`;
+        break;
+      case 'embassy':
+        detailPageLink = `/services/embassies/${item.id}`;
+        break;
+      case 'wechat': // Assuming 'wechat' is the itemType for wechatItems
+        detailPageLink = `/services/wechat/${item.id}`;
+        break;
+      // Add other cases as needed
+    }
+  }
+
+
   const cardContent = (
     <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg h-full group", className)}>
       <CardHeader className="p-0 relative">
@@ -46,7 +76,7 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
           height={250}
           className="w-full h-48 object-cover"
           data-ai-hint={item.dataAiHint || "item image"}
-          unoptimized={item.imageUrl?.includes('lh3.googleusercontent.com')} // Avoid optimization for Google user content for now
+          unoptimized={item.imageUrl?.includes('lh3.googleusercontent.com')} 
         />
         {isMounted && (
           <Button 
@@ -80,20 +110,19 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
             <span>{ratingNumber.toFixed(1)}</span>
           </div>
         )}
-        {/* The 'View Details' button is part of the Link if it's a translator */}
-        {item.itemType !== 'translator' && <Button variant="outline" size="sm">{t('viewDetails')}</Button>}
+        {!detailPageLink && <Button variant="outline" size="sm">{t('viewDetails')}</Button>}
       </CardFooter>
     </Card>
   );
 
-  if (item.itemType === 'translator' && item.id) {
+  if (detailPageLink) {
     return (
-      <Link href={`/services/translators/${item.id}`} className="block h-full">
+      <Link href={detailPageLink} className="block h-full">
         {cardContent}
       </Link>
     );
   }
 
-  // For other item types or if no specific link logic
   return cardContent;
 }
+
