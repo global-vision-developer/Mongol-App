@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -24,7 +25,7 @@ export function LoginForm() {
     try {
       await login(email, password);
       toast({ title: "Login Successful", description: "Welcome back!" });
-      router.push("/");
+      router.push("/services"); // Changed redirect to /services
     } catch (error) {
       toast({
         title: "Login Failed",

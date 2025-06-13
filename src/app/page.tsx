@@ -12,7 +12,7 @@ export default function RootPage() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace('/services');
+        router.replace('/services'); // Redirect to /services for logged-in users
       } else {
         router.replace('/auth/login');
       }

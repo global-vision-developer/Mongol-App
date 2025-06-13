@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -38,7 +39,7 @@ export function RegisterForm() {
         title: t("registrationSuccess"),
         description: t("welcome"),
       });
-      router.push("/");
+      router.push("/services"); // Changed redirect to /services
     } catch (error: any) {
       toast({
         title: t("registrationFailed"),

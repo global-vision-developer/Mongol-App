@@ -51,7 +51,7 @@ export function Header() {
                 ) : user ? (
                   <UserMenu user={user} />
                 ) : (
-                  null 
+                  null
                 )
               )}
             </div>
@@ -65,11 +65,11 @@ export function Header() {
 
             {/* Center: App Name */}
             <Link
-              href="/"
+              href="/services" // Changed href to /services
               className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center"
               aria-label="Home page"
             >
-              <span className="font-headline text-xl font-semibold text-primary">Mongol</span> {/* Changed from Думдаду */}
+              <span className="font-headline text-xl font-semibold text-primary">Mongol</span>
             </Link>
 
             {/* Right: Search Icon, Language Switcher, User Menu */}
@@ -84,7 +84,7 @@ export function Header() {
                 ) : user ? (
                   <UserMenu user={user} />
                 ) : (
-                  null // Don't show login button if not logged in, consistent with previous logic
+                  null
                 )
               )}
             </div>
