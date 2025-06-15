@@ -31,7 +31,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
 
 export default function HotelDetailPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -39,7 +39,7 @@ export default function HotelDetailPage() {
   const [item, setItem] = useState<RecommendedItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
-  const itemId = params.id as string;
+  const itemId = params.id;
   const itemType: ItemType = 'hotel';
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function HotelDetailPage() {
       };
       fetchItem();
     }
-  }, [itemId]);
+  }, [itemId, itemType]);
 
   const handleBookNow = async () => {
     if (!user) {
@@ -200,5 +200,3 @@ export default function HotelDetailPage() {
     </div>
   );
 }
-
-    

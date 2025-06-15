@@ -76,7 +76,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
 
 export default function TranslatorDetailPage() {
   const router = useRouter();
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -87,7 +87,7 @@ export default function TranslatorDetailPage() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const translatorId = params.id as string;
+  const translatorId = params.id;
   const itemType: ItemType = 'translator';
 
   useEffect(() => {
@@ -114,7 +114,7 @@ export default function TranslatorDetailPage() {
       };
       fetchTranslator();
     }
-  }, [translatorId]);
+  }, [translatorId, itemType]);
 
   const handleGetContactInfo = async () => {
     if (!user) {
@@ -351,5 +351,3 @@ export default function TranslatorDetailPage() {
     </div>
   );
 }
-
-    
