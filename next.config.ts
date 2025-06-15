@@ -1,14 +1,16 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
+
+const withPWA = require("@ducanh2912/next-pwa").default({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+});
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  output: 'export', // Enable static export
   images: {
+    unoptimized: true, // Recommended for `output: 'export'`
     remotePatterns: [
       {
         protocol: 'https',
@@ -24,6 +26,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);
