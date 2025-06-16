@@ -58,7 +58,7 @@ export const requestForToken = async (): Promise<string | null> => {
     // !!! ЧУХАЛ: ЭНЭ ХЭСЭГТ ӨӨРИЙН FIREBASE ТӨСЛИЙН ЖИНХЭНЭ VAPID KEY-Г ОРУУЛНА УУ !!!
     // Firebase Console > Project Settings > Cloud Messaging таб > Web Push certificates хэсэгт "Key pair" гэсэн утгыг хуулж авна.
     // =====================================================================================
-    const vapidKeyFromServer = "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE"; // <-- ЭНЭ ХЭСГИЙГ ӨӨРИЙН KEY-Р СОЛИНО УУ!
+    const vapidKeyFromServer = "TH8etw_bcQc_GGSMbcUUrgPNXHjylTtSSJmVi_J2SSU"; // <-- ЭНЭ ХЭСГИЙГ ӨӨРИЙН KEY-Р СОЛИНО УУ!
 
     if (vapidKeyFromServer === "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE") {
         console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
