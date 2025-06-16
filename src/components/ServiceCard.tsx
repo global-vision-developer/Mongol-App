@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Star, Heart, MapPin } from "lucide-react";
 import type { RecommendedItem } from '@/types';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Ensured React is imported
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -16,7 +16,8 @@ interface ServiceCardProps {
   className?: string;
 }
 
-export function ServiceCard({ item, className }: ServiceCardProps) {
+// Original function name changed to avoid conflict, or make it internal
+function ServiceCardComponent({ item, className }: ServiceCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const { t } = useTranslation();
   const [isMounted, setIsMounted] = useState(false);
@@ -77,12 +78,12 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
           height={250}
           className="w-full h-48 object-cover"
           data-ai-hint={item.dataAiHint || "item image"}
-          unoptimized={item.imageUrl?.includes('lh3.googleusercontent.com')} 
+          unoptimized={item.imageUrl?.includes('lh3.googleusercontent.com')}
         />
         {isMounted && (
-          <Button 
-            size="icon" 
-            variant="ghost" 
+          <Button
+            size="icon"
+            variant="ghost"
             className={cn(
               "absolute top-2 right-2 h-8 w-8 rounded-full bg-background/70 hover:bg-background z-10",
               isFavorite ? "text-destructive" : "text-muted-foreground"
@@ -117,9 +118,9 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
             {t('viewDetails')}
           </span>
         ) : (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             disabled={true}
             className="opacity-50 cursor-not-allowed"
           >
@@ -140,3 +141,5 @@ export function ServiceCard({ item, className }: ServiceCardProps) {
 
   return cardContent;
 }
+
+export const ServiceCard = React.memo(ServiceCardComponent);

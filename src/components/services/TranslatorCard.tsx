@@ -6,50 +6,44 @@ import Link from 'next/link';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, MapPin, Star, LanguagesIcon } from "lucide-react";
-import type { Translator } from '@/types'; // Changed from RecommendedItem to Translator
-import { useState, useEffect } from 'react';
+import type { Translator } from '@/types';
+import React, { useState, useEffect } from 'react'; // Ensured React is imported
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import { CITIES } from '@/lib/constants';
 
 interface TranslatorCardProps {
-  item: Translator; // Ensure item is of type Translator
+  item: Translator;
   className?: string;
 }
 
-export function TranslatorCard({ item, className }: TranslatorCardProps) {
+function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const { t, language } = useTranslation();
-   const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
     // Here you could check if the item is already a favorite, e.g., from user's saved items
-    // For now, it defaults to false
   }, []);
 
 
   const toggleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent link navigation when clicking favorite button
+    e.preventDefault(); 
     e.stopPropagation();
     setIsFavorite(!isFavorite);
     // TODO: Send to backend (add/remove from user's saved translators)
   };
-  
-  const cityLabel = item.currentCityInChina 
+
+  const cityLabel = item.currentCityInChina
     ? (CITIES.find(c => c.value === item.currentCityInChina) || {label: item.currentCityInChina, label_cn: item.currentCityInChina})
     : (item.city ? (CITIES.find(c => c.value === item.city) || {label: item.city, label_cn: item.city}) : null);
 
   const displayCity = cityLabel ? (language === 'cn' && cityLabel.label_cn ? cityLabel.label_cn : cityLabel.label) : t('n_a');
 
-
-  // For client components that might render differently on server vs client (like favorites),
-  // ensure it's only rendered client-side or state is managed carefully.
   if (!isMounted) {
-    // You can return a skeleton or null here to avoid hydration mismatch for favorite icon
-    return null; 
+    return null;
   }
-
 
   return (
     <Link href={`/services/translators/${item.id}`} className="block group">
@@ -79,7 +73,7 @@ export function TranslatorCard({ item, className }: TranslatorCardProps) {
         <CardContent className="p-3 space-y-1 text-sm flex-grow flex flex-col justify-between">
           <div>
             <h3 className="text-md font-semibold truncate group-hover:text-primary">{item.name || t('serviceUnnamed')}</h3>
-            
+
             {item.rating !== undefined && (
               <div className="flex items-center gap-1 text-xs text-amber-500 mt-0.5">
                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
@@ -106,7 +100,7 @@ export function TranslatorCard({ item, className }: TranslatorCardProps) {
               </div>
             )}
           </div>
-          
+
           {item.dailyRate && (
             <p className="text-sm font-semibold text-primary mt-2 self-end">
               {t(`rate${item.dailyRate.replace('-', 'to').replace('+', 'plus')}`)}/{t('day')}
@@ -117,3 +111,5 @@ export function TranslatorCard({ item, className }: TranslatorCardProps) {
     </Link>
   );
 }
+
+export const TranslatorCard = React.memo(TranslatorCardComponent);
