@@ -30,7 +30,7 @@ export default function FactoriesPage() {
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
-        const queryConstraints = [where("categoryName", "==", "factories")];
+        const queryConstraints = [where("categoryName", "==", "factories")]; // Changed from "factories"
 
         if (selectedCity && selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
@@ -44,11 +44,11 @@ export default function FactoriesPage() {
           const nestedData = entryData.data || {};
 
           const rawImageUrl = nestedData['nuur-zurag-url'];
-          const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+          const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
 
           return {
             id: doc.id,
-            name: nestedData.title || t('serviceUnnamed'),
+            name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
             location: nestedData.khot || undefined,

@@ -58,14 +58,14 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
               const nestedData = entryData.data || {};
 
               const rawImageUrl = nestedData['nuur-zurag-url'];
-              const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+              const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
               
-              const rawWeChatQrUrl = nestedData.wechatQrImageUrl; // Assuming this field exists in nestedData
+              const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
               const finalWeChatQrUrl = (rawWeChatQrUrl && typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim()) ? rawWeChatQrUrl.trim() : undefined;
 
               setItem({ 
                 id: docSnap.id, 
-                name: nestedData.title || t('serviceUnnamed'),
+                name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
@@ -117,7 +117,9 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
       };
       const orderRef = await addDoc(firestoreCollection(db, "orders"), orderData);
       
-      await addPointsToUser(15);
+      if (user && user.uid) { // Check if user and user.uid exist before adding points
+          await addPointsToUser(15);
+      }
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -130,7 +132,10 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "wechat service item",
       };
-      await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+      if (user && user.uid) { // Check if user and user.uid exist before adding notification
+          await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+      }
+
 
       toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
     } catch (error) {
@@ -198,7 +203,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
               objectFit="cover"
               className="bg-muted"
               data-ai-hint={item.dataAiHint || "wechat service item"}
-              unoptimized={item.imageUrl?.startsWith('data:')}
+              unoptimized={item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com')}
             />
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-6">
@@ -220,7 +225,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
             {wechatQrImageUrl && (
               <div className="mt-4">
                 <h3 className="text-md font-semibold text-foreground mb-2">{t('wechatQrImageLabel')}</h3>
-                <Image src={wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={150} height={150} className="rounded-md border" data-ai-hint="qr code wechat" unoptimized={wechatQrImageUrl.startsWith('data:')} />
+                <Image src={wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={150} height={150} className="rounded-md border" data-ai-hint="qr code wechat" unoptimized={wechatQrImageUrl.startsWith('data:') || wechatQrImageUrl?.includes('lh3.googleusercontent.com')} />
               </div>
             )}
           </CardContent>

@@ -58,11 +58,11 @@ export default function FactoryDetailClientPage({ params, itemType }: FactoryDet
               const nestedData = entryData.data || {};
 
               const rawImageUrl = nestedData['nuur-zurag-url'];
-              const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+              const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
               
               setItem({ 
                 id: docSnap.id, 
-                name: nestedData.title || t('serviceUnnamed'),
+                name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
@@ -111,7 +111,9 @@ export default function FactoryDetailClientPage({ params, itemType }: FactoryDet
       };
       const orderRef = await addDoc(firestoreCollection(db, "orders"), orderData);
       
-      await addPointsToUser(15);
+      if (user && user.uid) { // Check if user and user.uid exist before adding points
+          await addPointsToUser(15);
+      }
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -124,7 +126,10 @@ export default function FactoryDetailClientPage({ params, itemType }: FactoryDet
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "factory exterior machinery",
       };
-      await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+      if (user && user.uid) { // Check if user and user.uid exist before adding notification
+          await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+      }
+
 
       toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
     } catch (error) {
@@ -189,7 +194,7 @@ export default function FactoryDetailClientPage({ params, itemType }: FactoryDet
               objectFit="cover"
               className="bg-muted"
               data-ai-hint={item.dataAiHint || "factory exterior machinery"}
-              unoptimized={item.imageUrl?.startsWith('data:')}
+              unoptimized={item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com')}
             />
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-6">

@@ -109,16 +109,16 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                                           : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
                 
                 const rawImageUrl = nestedData['nuur-zurag-url'];
-                const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+                const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
                 
-                const rawWeChatQrUrl = nestedData.wechatQrImageUrl; // Assuming this field exists in nestedData
+                const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
                 const finalWeChatQrUrl = (rawWeChatQrUrl && typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim()) ? rawWeChatQrUrl.trim() : undefined;
 
 
                 setTranslator({ 
                   id: docSnap.id, 
                   uid: nestedData.uid || docSnap.id,
-                  name: nestedData.title || nestedData.name || t('serviceUnnamed'), 
+                  name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title || nestedData.name
                   photoUrl: finalImageUrl,
                   nationality: nestedData.nationality,
                   inChinaNow: nestedData.inChinaNow,
@@ -191,7 +191,9 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
       
-      await addPointsToUser(15);
+      if (user && user.uid) { // Check if user and user.uid exist before adding points
+          await addPointsToUser(15);
+      }
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -204,7 +206,10 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
         imageUrl: translator.photoUrl || null,
         dataAiHint: "translator portrait"
       };
-      await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+      if (user && user.uid) { // Check if user and user.uid exist before adding notification
+          await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+      }
+
 
       toast({ title: t('orderCreatedSuccess') });
       setShowContactInfo(true);
@@ -288,7 +293,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
               objectFit="cover"
               className="bg-muted"
               data-ai-hint="translator portrait professional"
-              unoptimized={translator.photoUrl?.startsWith('data:')}
+              unoptimized={translator.photoUrl?.startsWith('data:') || translator.photoUrl?.includes('lh3.googleusercontent.com')}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
             <div className="absolute bottom-0 left-0 p-4 md:p-6 w-full">
@@ -345,7 +350,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                    {translator.wechatQrImageUrl && (
                      <div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">{t('wechatQrImageLabel')}</p>
-                        <Image src={translator.wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={128} height={128} className="rounded-md border" data-ai-hint="qr code" unoptimized={translator.wechatQrImageUrl?.startsWith('data:')} />
+                        <Image src={translator.wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={128} height={128} className="rounded-md border" data-ai-hint="qr code" unoptimized={translator.wechatQrImageUrl?.startsWith('data:') || translator.wechatQrImageUrl?.includes('lh3.googleusercontent.com')} />
                      </div>
                    )}
                 </div>

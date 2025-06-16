@@ -51,12 +51,12 @@ export default function TranslatorsPage() {
             }
 
             const rawImageUrl = nestedData['nuur-zurag-url'];
-            const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+            const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
 
             return {
               id: doc.id,
               uid: nestedData.uid || doc.id, 
-              name: nestedData.title || nestedData.name || t('serviceUnnamed'),
+              name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title
               photoUrl: finalImageUrl,
               nationality: nestedData.nationality,
               inChinaNow: nestedData.inChinaNow,
