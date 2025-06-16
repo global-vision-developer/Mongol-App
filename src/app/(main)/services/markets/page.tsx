@@ -30,7 +30,7 @@ export default function MarketsPage() {
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
-        const queryConstraints = [where("categoryName", "==", "markets")]; // Changed from "markets"
+        const queryConstraints = [where("categoryName", "==", "markets")]; 
         
         if (selectedCity && selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
@@ -43,19 +43,23 @@ export default function MarketsPage() {
           const entryData = doc.data();
           const nestedData = entryData.data || {};
 
+          let finalImageUrl: string | undefined = undefined;
           const rawImageUrl = nestedData['nuur-zurag-url'];
-          const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
+          if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+            finalImageUrl = rawImageUrl.trim();
+          }
 
           return {
             id: doc.id,
-            name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title
+            name: nestedData.name || t('serviceUnnamed'),
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
             location: nestedData.khot || undefined,
-            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-            price: nestedData.price,
-            itemType: entryData.categoryName as ItemType, 
+            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
+            price: nestedData.price === undefined ? null : nestedData.price,
+            itemType: entryData.categoryName?.toLowerCase() as ItemType, 
             dataAiHint: nestedData.dataAiHint || "market item",
+            rooms: nestedData.uruunuud || [],
           } as RecommendedItem;
         });
         setRecommendations(items);

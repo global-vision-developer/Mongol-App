@@ -58,8 +58,12 @@ export default function HomePage() {
         const entryData = doc.data();
         const nestedData = entryData.data || {};
         
+        let finalImageUrl: string | undefined = undefined;
         const rawImageUrl = nestedData['nuur-zurag-url'];
-        const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
+        if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+          finalImageUrl = rawImageUrl.trim();
+        }
+
 
         return { 
           id: doc.id, 
@@ -67,16 +71,17 @@ export default function HomePage() {
           imageUrl: finalImageUrl,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
-          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-          price: nestedData.price, 
-          itemType: entryData.categoryName as ItemType,
-          dataAiHint: nestedData.dataAiHint || `${entryData.categoryName} item`,
+          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
+          price: nestedData.price === undefined ? null : nestedData.price, 
+          itemType: entryData.categoryName?.toLowerCase() as ItemType,
+          dataAiHint: nestedData.dataAiHint || `${entryData.categoryName || 'item'} item`,
           ...(entryData.categoryName === 'translator' && {
             nationality: nestedData.nationality,
             speakingLevel: nestedData.speakingLevel,
             writingLevel: nestedData.writingLevel,
             dailyRate: nestedData.dailyRate,
           }),
+          rooms: nestedData.uruunuud || [],
         } as RecommendedItem;
       });
     };

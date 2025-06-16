@@ -50,13 +50,17 @@ export default function TranslatorsPage() {
                 return null;
             }
 
+            let finalImageUrl: string | undefined = undefined;
             const rawImageUrl = nestedData['nuur-zurag-url'];
-            const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
+             if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+                finalImageUrl = rawImageUrl.trim();
+            }
+
 
             return {
               id: doc.id,
               uid: nestedData.uid || doc.id, 
-              name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title
+              name: nestedData.name || t('serviceUnnamed'),
               photoUrl: finalImageUrl,
               nationality: nestedData.nationality,
               inChinaNow: nestedData.inChinaNow,
@@ -72,9 +76,9 @@ export default function TranslatorsPage() {
               chinaPhoneNumber: nestedData.chinaPhoneNumber,
               wechatId: nestedData.wechatId,
               city: nestedData.khot || nestedData.currentCityInChina, 
-              rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+              rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
               description: nestedData.setgegdel || nestedData.description,
-              itemType: entryData.categoryName as ItemType, 
+              itemType: entryData.categoryName?.toLowerCase() as ItemType, 
               isActive: nestedData.isActive,
               reviewCount: nestedData.reviewCount,
             } as Translator;
