@@ -14,14 +14,14 @@ export default function AppInit() {
 
   useEffect(() => {
     const setupNotifications = async () => {
-      if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator && user?.uid) { // Ensure user and user.uid exists
+      if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator && user?.uid) {
         try {
           const permission = await Notification.requestPermission();
           if (permission === 'granted') {
             console.log('Notification permission granted.');
             const fcmToken = await requestForToken();
 
-            if (fcmToken && user?.uid) { // Ensure user.uid for Firestore path
+            if (fcmToken && user?.uid) {
               try {
                 const userDocRef = doc(db, "users", user.uid);
                 await updateDoc(userDocRef, {
@@ -36,9 +36,9 @@ export default function AppInit() {
 
             onMessageListener()
               .then(async (payload: any) => { 
-                if (!user?.uid) { // Double check user before saving notification
+                if (!user?.uid) {
                   console.warn("User not available, cannot save foreground notification to Firestore.");
-                  if (payload?.notification) { // Still show toast if possible
+                  if (payload?.notification) {
                      toast({
                         title: payload.notification.title || 'Notification',
                         description: payload.notification.body || 'You received a new message.',
@@ -68,16 +68,22 @@ export default function AppInit() {
                   console.log("Attempting to save notification to Firestore:", JSON.stringify(notificationToSave, null, 2));
 
                   try {
-                    await addDoc(collection(db, "users", user.uid, "notifications"), notificationToSave);
-                    console.log("Foreground notification saved to Firestore for user:", user.uid);
+                    // Only save non-global notifications to user's subcollection
+                    if (!notificationToSave.isGlobal) {
+                        await addDoc(collection(db, "users", user.uid, "notifications"), notificationToSave);
+                        console.log("Foreground user-specific notification saved to Firestore for user:", user.uid);
+                    } else {
+                        // Optionally, handle global notifications received in foreground differently if needed
+                        // e.g. add to a global 'notifications' collection, though this is usually done by server
+                        console.log("Global notification received in foreground, not saving to user's subcollection from client.");
+                    }
                   } catch (error) {
                     console.error("Error saving foreground notification to Firestore:", error);
                   }
 
                   toast({
-                    title: notificationToSave.titleKey, // Use the determined title for toast
-                    description: notificationToSave.descriptionKey, // Use the determined body
-                    // Potentially add action to navigate to the link if `notificationToSave.link` exists
+                    title: notificationToSave.titleKey,
+                    description: notificationToSave.descriptionKey,
                   });
                 }
               })
@@ -91,11 +97,11 @@ export default function AppInit() {
       }
     };
 
-    if (user) { // Only setup if user object exists
+    if (user) {
         setupNotifications();
     }
 
-  }, [user, toast]); // Add user to dependency array
+  }, [user, toast]);
 
   return null;
 }

@@ -31,27 +31,23 @@ export default function NotificationsPage() {
     const fetchGlobalNotifications = async () => {
       setLoadingGlobalNotifications(true);
       try {
-        // Assuming global notifications are stored in a top-level 'notifications' collection
         const globalNotificationsColRef = collection(db, "notifications");
         const qGlobal = query(globalNotificationsColRef, orderBy("date", "desc"));
         
         const unsubscribeGlobal = onSnapshot(qGlobal, (snapshot) => {
             const items: NotificationItemType[] = snapshot.docs.map(doc => {
             const data = doc.data() as DocumentData;
-            let dateValue: string | Timestamp = data.date;
-            if (data.date instanceof Timestamp) {
-                // Already a Timestamp, can be used directly or converted
-            } else if (data.date && typeof data.date.seconds === 'number') {
-                // Firestore-like Timestamp object from server, convert to JS Date then to ISO string if needed by format()
-                dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds).toDate();
+            let dateValue: Date | Timestamp = data.date;
+            if (data.date && typeof data.date.seconds === 'number' && typeof data.date.nanoseconds === 'number') {
+                dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds);
             }
             return {
                 id: doc.id,
                 titleKey: data.titleKey || 'unknownNotificationTitle',
                 descriptionKey: data.descriptionKey || 'unknownNotificationDescription',
                 descriptionPlaceholders: data.descriptionPlaceholders || {},
-                date: dateValue, // Keep as Date or Timestamp for sorting, format on display
-                read: data.read || false, // For global, 'read' might be managed differently or ignored
+                date: dateValue,
+                read: data.read || false, 
                 imageUrl: data.imageUrl,
                 dataAiHint: data.dataAiHint,
                 link: data.link,
@@ -69,7 +65,7 @@ export default function NotificationsPage() {
       } catch (error) {
         console.error("Error setting up global notifications listener:", error);
         setLoadingGlobalNotifications(false);
-        return () => {}; // Return an empty unsubscribe function on error
+        return () => {}; 
       }
     };
     
@@ -92,11 +88,9 @@ export default function NotificationsPage() {
     const unsubscribeUser = onSnapshot(qUser, (snapshot) => {
       const items: NotificationItemType[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
-        let dateValue: string | Timestamp = data.date;
-         if (data.date instanceof Timestamp) {
-            // Already a Timestamp
-        } else if (data.date && typeof data.date.seconds === 'number') {
-            dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds).toDate();
+        let dateValue: Date | Timestamp = data.date;
+         if (data.date && typeof data.date.seconds === 'number' && typeof data.date.nanoseconds === 'number') {
+            dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds);
         }
         return {
           id: doc.id,
@@ -126,7 +120,6 @@ export default function NotificationsPage() {
   }, [user, authLoading]);
 
   const combinedNotifications = [...globalNotifications, ...userNotifications].sort((a, b) => {
-    // Ensure dates are comparable (Timestamps or Date objects)
     const dateA = a.date instanceof Timestamp ? a.date.toMillis() : (a.date instanceof Date ? a.date.getTime() : 0);
     const dateB = b.date instanceof Timestamp ? b.date.toMillis() : (b.date instanceof Date ? b.date.getTime() : 0);
     return dateB - dateA; // Sort descending
@@ -185,7 +178,7 @@ export default function NotificationsPage() {
             >
               <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
                 {item.imageUrl && (
-                  <img src={item.imageUrl} alt={t(item.titleKey)} data-ai-hint={item.dataAiHint || "notification image"} className="h-16 w-16 rounded-md object-cover"/>
+                  <img src={item.imageUrl} alt={t(item.titleKey, item.descriptionPlaceholders)} data-ai-hint={item.dataAiHint || "notification image"} className="h-16 w-16 rounded-md object-cover"/>
                 )}
                 <div className="flex-1">
                   <CardTitle className="text-md font-semibold mb-1">{t(item.titleKey, item.descriptionPlaceholders)}</CardTitle>
