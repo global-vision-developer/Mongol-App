@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -35,7 +36,7 @@ export function CarouselBanner() {
             className="flex transition-transform duration-500 ease-in-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
-            {CAROUSEL_BANNER_ITEMS.map((item) => (
+            {CAROUSEL_BANNER_ITEMS.map((item, idx) => (
               <div key={item.id} className="w-full flex-shrink-0">
                 {item.link ? (
                   <Link href={item.link}>
@@ -45,7 +46,8 @@ export function CarouselBanner() {
                       width={1200}
                       height={400}
                       className="w-full h-48 md:h-64 lg:h-80 object-cover"
-                      priority={item.id === CAROUSEL_BANNER_ITEMS[0].id} // Priority for first image
+                      priority={idx === 0} 
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       data-ai-hint={item.dataAiHint}
                     />
                   </Link>
@@ -56,7 +58,8 @@ export function CarouselBanner() {
                     width={1200}
                     height={400}
                     className="w-full h-48 md:h-64 lg:h-80 object-cover"
-                    priority={item.id === CAROUSEL_BANNER_ITEMS[0].id}
+                    priority={idx === 0}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     data-ai-hint={item.dataAiHint}
                   />
                 )}

@@ -6,13 +6,19 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { CarouselBanner } from "@/components/CarouselBanner";
 import { ServiceGroupGrid } from "@/components/ServiceGroupGrid";
-import { RecommendedCarouselSection } from "@/components/RecommendedCarouselSection";
+// import { RecommendedCarouselSection } from "@/components/RecommendedCarouselSection"; // Removed direct import
 import { ServiceCard } from "@/components/ServiceCard";
 import { useTranslation } from "@/hooks/useTranslation";
 import { collection, getDocs, limit, query, where, type Query, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { RecommendedItem, ItemType } from "@/types";
 import { useCity } from "@/contexts/CityContext";
+import dynamic from 'next/dynamic';
+
+const RecommendedCarouselSection = dynamic(() =>
+  import('@/components/RecommendedCarouselSection').then((mod) => mod.RecommendedCarouselSection),
+  { loading: () => <div className="h-40 w-full animate-pulse rounded-lg bg-muted" /> } // Optional: add a skeleton loader
+);
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
