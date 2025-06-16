@@ -69,15 +69,6 @@ export const requestForToken = async (): Promise<string | null> => {
   const vapidKeyFromServer = "BNz9Zeh0p8jBbVb9Ib_JudJkS5kfKI6-xkezgpEoomhJQ6vn1GyRAPst2W2FJ-H-I3f2kD_KwEU1tE73gB5ledQ";
   // const vapidKeyFromServer = "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE";
 
-
-  // Sanity check (Keep this or remove if you are sure about the key)
-  if (vapidKeyFromServer === "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE") {
-      console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-      console.error("VAPID Key оруулаагүй байна! src/lib/firebase.ts файлыг засна уу.");
-      console.error("Firebase Console > Project Settings > Cloud Messaging > Web Push certificates -> Key pair");
-      console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-      return null;
-  }
   
   console.log("Attempting to get FCM token with VAPID key:", vapidKeyFromServer);
 
