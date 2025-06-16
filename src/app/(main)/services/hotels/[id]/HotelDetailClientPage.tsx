@@ -56,10 +56,14 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
             const entryData = docSnap.data();
             if (entryData.categoryName === itemType) { 
               const nestedData = entryData.data || {};
+
+              const rawImageUrl = nestedData['nuur-zurag-url'];
+              const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+
               setItem({ 
                 id: docSnap.id, 
                 name: nestedData.title || t('serviceUnnamed'),
-                imageUrl: nestedData['nuur-zurag-url'] || undefined,
+                imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
                 rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
@@ -186,6 +190,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
               objectFit="cover"
               className="bg-muted"
               data-ai-hint={item.dataAiHint || "hotel building"}
+              unoptimized={item.imageUrl?.startsWith('data:')}
             />
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-6">
@@ -222,3 +227,4 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
     </div>
   );
 }
+

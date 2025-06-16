@@ -42,10 +42,14 @@ export default function MarketsPage() {
         const items: RecommendedItem[] = snapshot.docs.map(doc => {
           const entryData = doc.data();
           const nestedData = entryData.data || {};
+
+          const rawImageUrl = nestedData['nuur-zurag-url'];
+          const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+
           return {
             id: doc.id,
             name: nestedData.title || t('serviceUnnamed'),
-            imageUrl: nestedData['nuur-zurag-url'] || undefined,
+            imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
             location: nestedData.khot || undefined,
             rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
@@ -125,3 +129,4 @@ export default function MarketsPage() {
     </div>
   );
 }
+

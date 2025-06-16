@@ -40,6 +40,11 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
     : (item.city ? (CITIES.find(c => c.value === item.city) || {label: item.city, label_cn: item.city}) : null);
 
   const displayCity = cityLabel ? (language === 'cn' && cityLabel.label_cn ? cityLabel.label_cn : cityLabel.label) : t('n_a');
+  
+  const placeholderImage = `https://placehold.co/300x400.png?text=${encodeURIComponent(item.name || 'T')}`;
+  const imageUrlToDisplay = item.photoUrl || placeholderImage;
+  const shouldUnoptimize = item.photoUrl?.startsWith('data:') || item.photoUrl?.includes('lh3.googleusercontent.com');
+
 
   if (!isMounted) {
     return null;
@@ -50,11 +55,12 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
       <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg h-full", className)}>
         <div className="relative aspect-[3/4] w-full">
           <Image
-            src={item.photoUrl || `https://placehold.co/300x400.png?text=${encodeURIComponent(item.name || 'T')}`}
+            src={imageUrlToDisplay}
             alt={item.name || t('serviceUnnamed')}
             fill
             className="object-cover rounded-t-lg"
             data-ai-hint="translator person"
+            unoptimized={shouldUnoptimize}
           />
           <Button
             size="icon"
@@ -113,3 +119,4 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
 }
 
 export const TranslatorCard = React.memo(TranslatorCardComponent);
+

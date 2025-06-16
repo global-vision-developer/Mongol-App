@@ -34,11 +34,7 @@ export default function TranslatorsPage() {
         const queryConstraints = [
           where("categoryName", "==", "translators"),
         ];
-        // isActive check is tricky if not directly on the top-level document or if it doesn't exist.
-        // Assuming it exists on entryData.data.isActive for now based on previous structure.
-        // queryConstraints.push(where("data.isActive", "==", true)); 
-
-
+        
         if (selectedCity && selectedCity.value !== "all") {
           queryConstraints.push(where("data.currentCityInChina", "==", selectedCity.value)); 
         }
@@ -50,15 +46,18 @@ export default function TranslatorsPage() {
           .map((doc) => {
             const entryData = doc.data();
             const nestedData = entryData.data || {};
-            // Filter out inactive translators if isActive field exists
             if (nestedData.isActive === false) {
                 return null;
             }
+
+            const rawImageUrl = nestedData['nuur-zurag-url'];
+            const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+
             return {
               id: doc.id,
               uid: nestedData.uid || doc.id, 
-              name: nestedData.title || nestedData.name || t('serviceUnnamed'), // Prioritize title from 'data'
-              photoUrl: nestedData['nuur-zurag-url'] || nestedData.photoUrl, // Prioritize nuur-zurag-url
+              name: nestedData.title || nestedData.name || t('serviceUnnamed'),
+              photoUrl: finalImageUrl,
               nationality: nestedData.nationality,
               inChinaNow: nestedData.inChinaNow,
               yearsInChina: nestedData.yearsInChina,
@@ -80,7 +79,7 @@ export default function TranslatorsPage() {
               reviewCount: nestedData.reviewCount,
             } as Translator;
           })
-          .filter((translator): translator is Translator => translator !== null); // Remove nulls
+          .filter((translator): translator is Translator => translator !== null); 
         
         setTranslators(translatorsData);
       } catch (err) {
@@ -152,3 +151,4 @@ export default function TranslatorsPage() {
     </div>
   );
 }
+

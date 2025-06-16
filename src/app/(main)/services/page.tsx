@@ -57,17 +57,20 @@ export default function HomePage() {
       return snapshot.docs.map(doc => {
         const entryData = doc.data();
         const nestedData = entryData.data || {};
+        
+        const rawImageUrl = nestedData['nuur-zurag-url'];
+        const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+
         return { 
           id: doc.id, 
           name: nestedData.title || t('serviceUnnamed'),
-          imageUrl: nestedData['nuur-zurag-url'] || undefined,
+          imageUrl: finalImageUrl,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
           rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
           price: nestedData.price, 
           itemType: entryData.categoryName as ItemType,
           dataAiHint: nestedData.dataAiHint || `${entryData.categoryName} item`,
-          // Map specific fields for translators if needed for ServiceCard or other components
           ...(entryData.categoryName === 'translator' && {
             nationality: nestedData.nationality,
             speakingLevel: nestedData.speakingLevel,
@@ -244,3 +247,4 @@ export default function HomePage() {
     </div>
   );
 }
+

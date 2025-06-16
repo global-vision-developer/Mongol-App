@@ -67,18 +67,22 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
   }
 
   const cardItselfIsLink = !!detailPageLink;
+  const placeholderImage = `https://placehold.co/400x250.png?text=${encodeURIComponent(item.name || t('serviceUnnamed'))}`;
+  const imageUrlToDisplay = item.imageUrl || placeholderImage;
+  const shouldUnoptimize = item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com');
+
 
   const cardContent = (
     <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg h-full group", className)}>
       <CardHeader className="p-0 relative">
         <Image
-          src={item.imageUrl || `https://placehold.co/400x250.png?text=${encodeURIComponent(item.name || t('serviceUnnamed'))}`}
+          src={imageUrlToDisplay}
           alt={item.name || t('serviceImageDefaultAlt')}
           width={400}
           height={250}
           className="w-full h-48 object-cover"
           data-ai-hint={item.dataAiHint || "item image"}
-          unoptimized={item.imageUrl?.includes('lh3.googleusercontent.com')}
+          unoptimized={shouldUnoptimize}
         />
         {isMounted && (
           <Button
@@ -143,3 +147,4 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 }
 
 export const ServiceCard = React.memo(ServiceCardComponent);
+

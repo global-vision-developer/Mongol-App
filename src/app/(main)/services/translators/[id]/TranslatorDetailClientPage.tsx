@@ -107,12 +107,19 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                 const registeredAtDate = registeredAtRaw instanceof Timestamp 
                                           ? registeredAtRaw.toDate() 
                                           : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
+                
+                const rawImageUrl = nestedData['nuur-zurag-url'];
+                const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim()) ? rawImageUrl.trim() : undefined;
+                
+                const rawWeChatQrUrl = nestedData.wechatQrImageUrl; // Assuming this field exists in nestedData
+                const finalWeChatQrUrl = (rawWeChatQrUrl && typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim()) ? rawWeChatQrUrl.trim() : undefined;
+
 
                 setTranslator({ 
                   id: docSnap.id, 
                   uid: nestedData.uid || docSnap.id,
                   name: nestedData.title || nestedData.name || t('serviceUnnamed'), 
-                  photoUrl: nestedData['nuur-zurag-url'] || nestedData.photoUrl,
+                  photoUrl: finalImageUrl,
                   nationality: nestedData.nationality,
                   inChinaNow: nestedData.inChinaNow,
                   yearsInChina: nestedData.yearsInChina,
@@ -126,7 +133,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                   dailyRate: nestedData.dailyRate,
                   chinaPhoneNumber: nestedData.chinaPhoneNumber,
                   wechatId: nestedData.wechatId,
-                  wechatQrImageUrl: nestedData.wechatQrImageUrl,
+                  wechatQrImageUrl: finalWeChatQrUrl,
                   city: nestedData.khot || nestedData.currentCityInChina,
                   rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
                   description: nestedData.setgegdel || nestedData.description,
@@ -281,6 +288,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
               objectFit="cover"
               className="bg-muted"
               data-ai-hint="translator portrait professional"
+              unoptimized={translator.photoUrl?.startsWith('data:')}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
             <div className="absolute bottom-0 left-0 p-4 md:p-6 w-full">
@@ -337,7 +345,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                    {translator.wechatQrImageUrl && (
                      <div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">{t('wechatQrImageLabel')}</p>
-                        <Image src={translator.wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={128} height={128} className="rounded-md border" data-ai-hint="qr code" />
+                        <Image src={translator.wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={128} height={128} className="rounded-md border" data-ai-hint="qr code" unoptimized={translator.wechatQrImageUrl?.startsWith('data:')} />
                      </div>
                    )}
                 </div>
@@ -389,3 +397,4 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
     </div>
   );
 }
+
