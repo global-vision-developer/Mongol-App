@@ -13,6 +13,7 @@ import { collection, getDocs, limit, query, where, type Query, type DocumentData
 import { db } from "@/lib/firebase";
 import type { RecommendedItem, ItemType } from "@/types";
 import { useCity } from "@/contexts/CityContext";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
@@ -52,6 +53,7 @@ export default function HomePage() {
     const fetchData = async () => {
       if (!selectedCity) {
         setDataLoading(false);
+        // Clear data if no city is selected (or handle as per your app's logic)
         setTranslators([]);
         setHotels([]);
         setMarkets([]);
@@ -96,9 +98,9 @@ export default function HomePage() {
       }
     };
 
-    if (user) {
+    if (user) { // Only fetch if user is logged in
       fetchData();
-    } else {
+    } else if (!authLoading && !user) { // If not loading and no user, stop data loading
       setDataLoading(false);
       setTranslators([]);
       setHotels([]);
@@ -108,14 +110,42 @@ export default function HomePage() {
       setEmbassies([]);
       setWeChatItems([]);
     }
-  }, [user, selectedCity]);
+  }, [user, selectedCity, authLoading]); // Added authLoading to dependencies
 
   const renderServiceItem = (item: RecommendedItem) => <ServiceCard item={item} />;
   const narrowerCarouselItemWidthClass = "w-[calc(46%-0.375rem)] sm:w-[calc(46%-0.5rem)]";
 
+  // Revised loading condition
+  const showFullPageLoader = authLoading || 
+                             (!user && !authLoading) || 
+                             (user && dataLoading && 
+                               !translators.length && 
+                               !hotels.length && 
+                               !markets.length && 
+                               !factories.length && 
+                               !hospitals.length && 
+                               !embassies.length && 
+                               !weChatItems.length);
 
-  if (authLoading || (!user && !authLoading) || (user && dataLoading) ) {
-    return <p className="text-center py-10">{t('loading')}...</p>; 
+  if (showFullPageLoader) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-20 w-full" /> {/* Placeholder for ServiceGroupGrid */}
+        <Skeleton className="h-48 md:h-64 lg:h-80 w-full" /> {/* Placeholder for CarouselBanner */}
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="space-y-3 mb-6">
+            <Skeleton className="h-6 w-1/2 px-1" />
+            <div className="flex space-x-3 sm:space-x-4 px-1 pb-3">
+              {[...Array(2)].map((_, j) => (
+                <div key={j} className={`${narrowerCarouselItemWidthClass} flex-shrink-0`}>
+                  <Skeleton className="h-64 w-full rounded-lg" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
   
   return (
@@ -129,6 +159,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        isLoading={dataLoading && translators.length === 0}
       />
 
       <RecommendedCarouselSection
@@ -137,6 +168,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8} 
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        isLoading={dataLoading && hotels.length === 0}
       />
       
       <RecommendedCarouselSection
@@ -145,6 +177,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        isLoading={dataLoading && weChatItems.length === 0}
       />
 
       <RecommendedCarouselSection
@@ -153,6 +186,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        isLoading={dataLoading && markets.length === 0}
       />
 
       <RecommendedCarouselSection
@@ -161,6 +195,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        isLoading={dataLoading && factories.length === 0}
       />
 
       <RecommendedCarouselSection
@@ -169,6 +204,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        isLoading={dataLoading && hospitals.length === 0}
       />
 
       <RecommendedCarouselSection
@@ -177,6 +213,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        isLoading={dataLoading && embassies.length === 0}
       />
     </div>
   );
