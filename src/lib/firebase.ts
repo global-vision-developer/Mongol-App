@@ -23,16 +23,21 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app: FirebaseApp = initializeApp(firebaseConfig);
+console.log("Firebase App initialized");
 
 // Initialize services
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
+console.log("Auth and Firestore initialized");
 
 // Optional: Analytics
 let analytics: Analytics | undefined;
 isSupported().then((supported) => {
   if (supported) {
     analytics = getAnalytics(app);
+    console.log("Firebase Analytics initialized");
+  } else {
+    console.log("Firebase Analytics not supported on this browser.");
   }
 });
 
@@ -40,16 +45,20 @@ isSupported().then((supported) => {
 let messagingInstance: Messaging | null = null;
 if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator) {
   try {
+    console.log("Attempting to initialize Firebase Messaging SDK...");
     messagingInstance = getMessaging(app);
+    console.log("Firebase Messaging SDK initialized successfully.");
   } catch (err) {
-    console.error('Failed to initialize Firebase Messaging:', err);
+    console.error('Failed to initialize Firebase Messaging SDK:', err);
   }
+} else {
+  console.log("Firebase Messaging not supported or not in a browser environment.");
 }
 
 // ✅ FCM Token авах функц
 export const requestForToken = async (): Promise<string | null> => {
   if (!messagingInstance) {
-    console.warn('Firebase Messaging is not initialized.');
+    console.warn('Firebase Messaging instance is not available. Cannot request token.');
     return null;
   }
 
@@ -58,8 +67,10 @@ export const requestForToken = async (): Promise<string | null> => {
   // Firebase Console > Project Settings > Cloud Messaging таб > Web Push certificates хэсэгт "Key pair" гэсэн утга.
   // =====================================================================================
   const vapidKeyFromServer = "BNz9Zeh0p8jBbVb9lb_JudJkS5kfKl6-xkezgpEoomhJQ6vn1GyRAPst2W2FJ-H-I3f2kD_KwEU1tE73gB5ledQ";
+  // const vapidKeyFromServer = "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE";
 
-  // Sanity check to ensure a real key is being used (optional, can be removed)
+
+  // Sanity check (Keep this or remove if you are sure about the key)
   if (vapidKeyFromServer === "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE") {
       console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
       console.error("VAPID Key оруулаагүй байна! src/lib/firebase.ts файлыг засна уу.");
@@ -84,8 +95,8 @@ export const requestForToken = async (): Promise<string | null> => {
     }
   } catch (err) {
     console.error('❌ FCM токен авахад алдаа гарлаа:', err);
-    if (err instanceof Error && (err.message.includes('InvalidAccessError') || err.message.includes("applicationServerKey is not valid"))) {
-        console.error('❗️ VAPID key буруу байх магадлалтай. Ашиглаж буй key:', vapidKeyFromServer, ' Firebase Console-оос авсан Key pair-г дахин шалгана уу.');
+    if (err instanceof Error && (err.message.includes('InvalidAccessError') || err.message.includes("applicationServerKey is not valid") || err.message.includes("token-subscribe-failed"))) {
+        console.error('❗️ VAPID key эсвэл Google Cloud төслийн тохиргоо (Биллинг, OAuth Consent Screen) буруу байх магадлалтай. Ашиглаж буй VAPID key:', vapidKeyFromServer);
     }
     return null;
   }
@@ -95,7 +106,7 @@ export const requestForToken = async (): Promise<string | null> => {
 export const onMessageListener = (): Promise<any> =>
   new Promise((resolve) => {
     if (!messagingInstance) {
-      console.warn('Firebase Messaging is not initialized. Cannot listen for messages.');
+      console.warn('Firebase Messaging instance is not available. Cannot listen for messages.');
       return resolve(null); 
     }
     onMessage(messagingInstance, (payload) => {
