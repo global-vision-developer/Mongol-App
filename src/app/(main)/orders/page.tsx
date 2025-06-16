@@ -139,7 +139,7 @@ export default function OrdersPage() {
   if (authLoading || (!user && !authLoading)) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-headline font-semibold">{t('myOrders')}</h1>
+        <h1 className="text-2xl font-headline font-semibold text-center">{t('orders')}</h1>
         <Skeleton className="h-10 w-full" />
         <div className="grid gap-4 md:grid-cols-2 mt-4">
           {[...Array(2)].map((_, i) => (
@@ -165,7 +165,7 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-headline font-semibold">{t('myOrders')}</h1>
+      <h1 className="text-2xl font-headline font-semibold text-center">{t('orders')}</h1>
 
       <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as ItemType | 'flights')} className="w-full">
         <TabsList className="grid w-full grid-cols-4"> {/* Kept grid-cols-4, will wrap to 2 rows */}
@@ -211,3 +211,4 @@ export default function OrdersPage() {
     </div>
   );
 }
+

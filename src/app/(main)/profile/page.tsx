@@ -149,9 +149,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-headline font-semibold text-center md:text-left">{t('profilePageTitle')}</h1>
-
+    <div className="space-y-6 pt-4 md:pt-6"> {/* Added padding-top here */}
+      
       <div className="flex flex-col items-center space-y-2 py-4">
         <Avatar className="w-24 h-24 text-3xl border-2 border-primary">
           <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "User"} />
@@ -230,3 +229,4 @@ const ConditionalLinkWrapper: React.FC<{href?: string; condition: boolean; class
   }
   return <div className={className}>{children}</div>;
 };
+

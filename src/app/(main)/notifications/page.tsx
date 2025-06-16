@@ -177,7 +177,7 @@ export default function NotificationsPage() {
   if (isLoading && combinedNotifications.length === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-headline font-semibold">{t('myNotifications')}</h1>
+        <h1 className="text-2xl font-headline font-semibold text-center">{t('notifications')}</h1>
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
             <Card key={`skeleton-notification-${i}`} className="shadow-md">
@@ -203,13 +203,13 @@ export default function NotificationsPage() {
   
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-headline font-semibold">{t('myNotifications')}</h1>
+      <h1 className="text-2xl font-headline font-semibold text-center">{t('notifications')}</h1>
       {combinedNotifications.length === 0 && !isLoading ? (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-6 w-6 text-primary" />
-               {t('myNotifications')}
+               {t('notifications')}
             </CardTitle>
           </CardHeader>
           <CardContent>

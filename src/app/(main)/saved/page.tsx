@@ -76,7 +76,7 @@ export default function SavedPage() {
   if (authLoading || (!user && !authLoading) || (user && loadingItems)) {
      return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-headline font-semibold">{t('mySavedItems')}</h1>
+            <h1 className="text-2xl font-headline font-semibold text-center">{t('saved')}</h1>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {[...Array(3)].map((_, i) => (
                     <div key={`skeleton-saved-${i}`} className="flex flex-col space-y-3">
@@ -95,13 +95,13 @@ export default function SavedPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-headline font-semibold">{t('mySavedItems')}</h1>
+      <h1 className="text-2xl font-headline font-semibold text-center">{t('saved')}</h1>
       {savedItems.length === 0 ? (
          <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Heart className="h-6 w-6 text-primary" />
-              {t('mySavedItems')}
+              {t('saved')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -120,3 +120,4 @@ export default function SavedPage() {
     </div>
   );
 }
+
