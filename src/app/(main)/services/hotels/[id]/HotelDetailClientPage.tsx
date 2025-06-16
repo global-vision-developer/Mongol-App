@@ -2,9 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; // Corrected import from 'next/navigation'
+import { useRouter } from "next/navigation"; 
 import Image from "next/image";
-import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp, Timestamp } from "firebase/firestore"; // aliased collection
+import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp } from "firebase/firestore"; 
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -31,13 +31,13 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
 
 interface HotelDetailClientPageProps {
   params: { id: string };
-  itemType: 'hotel'; // Keep this to enforce type context for order creation etc.
+  itemType: 'hotel'; 
 }
 
 export default function HotelDetailClientPage({ params, itemType }: HotelDetailClientPageProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, addPointsToUser } = useAuth(); // Added addPointsToUser
+  const { user, addPointsToUser } = useAuth(); 
   const { toast } = useToast();
 
   const [item, setItem] = useState<RecommendedItem | null>(null);
@@ -50,11 +50,11 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
       const fetchItem = async () => {
         setLoading(true);
         try {
-          const docRef = doc(db, "entries", itemId); // Fetch from "entries" collection
+          const docRef = doc(db, "entries", itemId); 
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
-            if (entryData.categoryName === itemType) { // Ensure it's actually a hotel
+            if (entryData.categoryName === itemType) { 
               const nestedData = entryData.data || {};
               setItem({ 
                 id: docSnap.id, 
@@ -63,10 +63,9 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
                 rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-                price: nestedData.price, // Expect price to be in nestedData
-                itemType: entryData.categoryName as ItemType, // This should be "hotel"
+                price: nestedData.price, 
+                itemType: entryData.categoryName as ItemType, 
                 dataAiHint: nestedData.dataAiHint || "hotel item",
-                 // Add other specific fields from nestedData if needed for hotels
               } as RecommendedItem);
             } else {
               console.warn(`Fetched item ${itemId} is not a ${itemType}, but ${entryData.categoryName}`);
@@ -98,7 +97,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
     try {
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
-        serviceType: itemType, // Use the passed itemType prop
+        serviceType: itemType, 
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
@@ -109,7 +108,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
       };
       const orderRef = await addDoc(firestoreCollection(db, "orders"), orderData);
 
-      await addPointsToUser(15); // Add 15 points
+      await addPointsToUser(15); 
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -202,7 +201,6 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
               {typeof item.rating === 'number' && <DetailItem labelKey="ratingLabel" value={item.rating.toFixed(1)} icon={Star} />}
-              {/* Add other specific hotel details here if available in item.data */}
             </div>
           </CardContent>
            <CardFooter className="p-4 md:p-6 border-t">

@@ -31,10 +31,10 @@ export default function WeChatPage() {
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
-        const queryConstraints = [where("categoryName", "==", "wechat")]; // Assuming categoryName is "wechat"
+        const queryConstraints = [where("categoryName", "==", "wechat")]; 
 
         if (selectedCity && selectedCity.value !== "all") {
-          queryConstraints.push(where("data.khot", "==", selectedCity.value)); // Assuming city is in data.khot
+          queryConstraints.push(where("data.khot", "==", selectedCity.value)); 
         }
 
         const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
@@ -51,10 +51,10 @@ export default function WeChatPage() {
             location: nestedData.khot || undefined,
             rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
             price: nestedData.price,
-            itemType: entryData.categoryName as ItemType, // This will be "wechat"
+            itemType: entryData.categoryName as ItemType, 
             dataAiHint: nestedData.dataAiHint || "wechat item",
-            wechatId: nestedData.wechatId, // Specific to WeChat items
-            wechatQrImageUrl: nestedData.wechatQrImageUrl, // Specific to WeChat items
+            wechatId: nestedData.wechatId, 
+            wechatQrImageUrl: nestedData.wechatQrImageUrl, 
           } as RecommendedItem;
         });
 

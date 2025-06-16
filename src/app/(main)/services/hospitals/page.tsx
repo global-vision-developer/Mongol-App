@@ -51,7 +51,7 @@ export default function HospitalsPage() {
             location: nestedData.khot || undefined,
             rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
             price: nestedData.price,
-            itemType: entryData.categoryName as ItemType, // This will be "hospitals"
+            itemType: entryData.categoryName as ItemType, 
             dataAiHint: nestedData.dataAiHint || "hospital item",
           } as RecommendedItem;
         });

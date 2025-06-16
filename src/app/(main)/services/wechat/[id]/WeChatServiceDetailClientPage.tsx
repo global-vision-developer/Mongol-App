@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp, Timestamp } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -50,7 +50,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
       const fetchItem = async () => {
         setLoading(true);
         try {
-          const docRef = doc(db, "entries", itemId); // Fetch from "entries"
+          const docRef = doc(db, "entries", itemId); 
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
@@ -66,8 +66,8 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
                 price: nestedData.price,
                 itemType: entryData.categoryName as ItemType,
                 dataAiHint: nestedData.dataAiHint || "wechat item",
-                wechatId: nestedData.wechatId, // Specific field for WeChat
-                wechatQrImageUrl: nestedData.wechatQrImageUrl, // Specific field for WeChat
+                wechatId: nestedData.wechatId, 
+                wechatQrImageUrl: nestedData.wechatQrImageUrl, 
               } as RecommendedItem);
             } else {
               console.warn(`Fetched item ${itemId} is not a ${itemType}, but ${entryData.categoryName}`);
@@ -164,8 +164,8 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
     );
   }
 
-  const wechatId = item.wechatId; // Accessing directly from RecommendedItem
-  const wechatQrImageUrl = item.wechatQrImageUrl; // Accessing directly
+  const wechatId = item.wechatId; 
+  const wechatQrImageUrl = item.wechatQrImageUrl; 
 
   return (
     <div className="pb-20">

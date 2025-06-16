@@ -64,10 +64,16 @@ export default function HomePage() {
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
           rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-          price: nestedData.price, // Assuming price might be in nestedData.price
+          price: nestedData.price, 
           itemType: entryData.categoryName as ItemType,
           dataAiHint: nestedData.dataAiHint || `${entryData.categoryName} item`,
-          // Add other fields from nestedData as needed by RecommendedItem
+          // Map specific fields for translators if needed for ServiceCard or other components
+          ...(entryData.categoryName === 'translator' && {
+            nationality: nestedData.nationality,
+            speakingLevel: nestedData.speakingLevel,
+            writingLevel: nestedData.writingLevel,
+            dailyRate: nestedData.dailyRate,
+          }),
         } as RecommendedItem;
       });
     };
@@ -101,7 +107,7 @@ export default function HomePage() {
           fetchEntriesByCategory("factories", 8, selectedCity?.value),
           fetchEntriesByCategory("hospitals", 8, selectedCity?.value),
           fetchEntriesByCategory("embassies", 8, selectedCity?.value),
-          fetchEntriesByCategory("wechat", 8, selectedCity?.value), // Assuming categoryName for wechat is "wechat"
+          fetchEntriesByCategory("wechat", 8, selectedCity?.value),
         ]);
         
         setTranslators(translatorsData);

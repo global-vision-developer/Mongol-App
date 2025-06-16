@@ -50,7 +50,7 @@ export default function MarketsPage() {
             location: nestedData.khot || undefined,
             rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
             price: nestedData.price,
-            itemType: entryData.categoryName as ItemType, // This will be "markets"
+            itemType: entryData.categoryName as ItemType, 
             dataAiHint: nestedData.dataAiHint || "market item",
           } as RecommendedItem;
         });

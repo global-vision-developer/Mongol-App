@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp, Timestamp } from "firebase/firestore";
+import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -50,7 +50,7 @@ export default function EmbassyDetailClientPage({ params, itemType }: EmbassyDet
       const fetchItem = async () => {
         setLoading(true);
         try {
-          const docRef = doc(db, "entries", itemId); // Fetch from "entries"
+          const docRef = doc(db, "entries", itemId); 
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();

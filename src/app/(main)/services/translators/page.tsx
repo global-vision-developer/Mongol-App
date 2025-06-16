@@ -14,14 +14,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
 import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore"; 
 import { db } from "@/lib/firebase";
-import type { Translator, ItemType } from "@/types"; // Translator might need to be adjusted or mapped to RecommendedItem
+import type { Translator, ItemType } from "@/types"; 
 
 export default function TranslatorsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { selectedCity } = useCity();
 
-  const [translators, setTranslators] = useState<Translator[]>([]); // Using Translator type, ensure it matches data structure
+  const [translators, setTranslators] = useState<Translator[]>([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,48 +33,54 @@ export default function TranslatorsPage() {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [
           where("categoryName", "==", "translators"),
-          where("data.isActive", "==", true) // Assuming isActive is in nested data
         ];
+        // isActive check is tricky if not directly on the top-level document or if it doesn't exist.
+        // Assuming it exists on entryData.data.isActive for now based on previous structure.
+        // queryConstraints.push(where("data.isActive", "==", true)); 
+
 
         if (selectedCity && selectedCity.value !== "all") {
-          // Assuming city for translators is stored in data.currentCityInChina or data.city
-          // This might need adjustment based on actual data structure for translators in "entries"
           queryConstraints.push(where("data.currentCityInChina", "==", selectedCity.value)); 
         }
         
         const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
         const snapshot = await getDocs(q);
         
-        const translatorsData: Translator[] = snapshot.docs.map((doc) => {
-          const entryData = doc.data();
-          const nestedData = entryData.data || {};
-          return {
-            id: doc.id,
-            uid: nestedData.uid || doc.id, // Assuming uid might be in nested data or use doc.id
-            name: nestedData.name || nestedData.title || t('serviceUnnamed'),
-            photoUrl: nestedData.photoUrl || nestedData['nuur-zurag-url'],
-            nationality: nestedData.nationality,
-            inChinaNow: nestedData.inChinaNow,
-            yearsInChina: nestedData.yearsInChina,
-            currentCityInChina: nestedData.currentCityInChina,
-            chineseExamTaken: nestedData.chineseExamTaken,
-            speakingLevel: nestedData.speakingLevel,
-            writingLevel: nestedData.writingLevel,
-            workedAsTranslator: nestedData.workedAsTranslator,
-            translationFields: nestedData.translationFields,
-            canWorkInOtherCities: nestedData.canWorkInOtherCities,
-            dailyRate: nestedData.dailyRate,
-            chinaPhoneNumber: nestedData.chinaPhoneNumber,
-            wechatId: nestedData.wechatId,
-            city: nestedData.city || nestedData.currentCityInChina, // Fallback for city
-            rating: nestedData.rating || nestedData.unelgee,
-            description: nestedData.description || nestedData.setgegdel,
-            itemType: entryData.categoryName as ItemType, // Should be "translator"
-            isActive: nestedData.isActive,
-            reviewCount: nestedData.reviewCount,
-            // Ensure all fields expected by TranslatorCard and Translator type are mapped
-          } as Translator;
-        });
+        const translatorsData: Translator[] = snapshot.docs
+          .map((doc) => {
+            const entryData = doc.data();
+            const nestedData = entryData.data || {};
+            // Filter out inactive translators if isActive field exists
+            if (nestedData.isActive === false) {
+                return null;
+            }
+            return {
+              id: doc.id,
+              uid: nestedData.uid || doc.id, 
+              name: nestedData.title || nestedData.name || t('serviceUnnamed'), // Prioritize title from 'data'
+              photoUrl: nestedData['nuur-zurag-url'] || nestedData.photoUrl, // Prioritize nuur-zurag-url
+              nationality: nestedData.nationality,
+              inChinaNow: nestedData.inChinaNow,
+              yearsInChina: nestedData.yearsInChina,
+              currentCityInChina: nestedData.currentCityInChina,
+              chineseExamTaken: nestedData.chineseExamTaken,
+              speakingLevel: nestedData.speakingLevel,
+              writingLevel: nestedData.writingLevel,
+              workedAsTranslator: nestedData.workedAsTranslator,
+              translationFields: nestedData.translationFields,
+              canWorkInOtherCities: nestedData.canWorkInOtherCities,
+              dailyRate: nestedData.dailyRate,
+              chinaPhoneNumber: nestedData.chinaPhoneNumber,
+              wechatId: nestedData.wechatId,
+              city: nestedData.khot || nestedData.currentCityInChina, 
+              rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+              description: nestedData.setgegdel || nestedData.description,
+              itemType: entryData.categoryName as ItemType, 
+              isActive: nestedData.isActive,
+              reviewCount: nestedData.reviewCount,
+            } as Translator;
+          })
+          .filter((translator): translator is Translator => translator !== null); // Remove nulls
         
         setTranslators(translatorsData);
       } catch (err) {

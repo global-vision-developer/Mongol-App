@@ -97,11 +97,11 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
       const fetchTranslator = async () => {
         setLoading(true);
         try {
-          const docRef = doc(db, "entries", translatorId); // Fetch from "entries"
+          const docRef = doc(db, "entries", translatorId); 
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
-             if (entryData.categoryName === itemType) { // Check if it's a translator
+             if (entryData.categoryName === itemType) { 
                 const nestedData = entryData.data || {};
                 const registeredAtRaw = nestedData.registeredAt;
                 const registeredAtDate = registeredAtRaw instanceof Timestamp 
@@ -111,8 +111,8 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                 setTranslator({ 
                   id: docSnap.id, 
                   uid: nestedData.uid || docSnap.id,
-                  name: nestedData.name || nestedData.title || t('serviceUnnamed'), // Use name or title from nestedData
-                  photoUrl: nestedData.photoUrl || nestedData['nuur-zurag-url'],
+                  name: nestedData.title || nestedData.name || t('serviceUnnamed'), 
+                  photoUrl: nestedData['nuur-zurag-url'] || nestedData.photoUrl,
                   nationality: nestedData.nationality,
                   inChinaNow: nestedData.inChinaNow,
                   yearsInChina: nestedData.yearsInChina,
@@ -127,10 +127,10 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                   chinaPhoneNumber: nestedData.chinaPhoneNumber,
                   wechatId: nestedData.wechatId,
                   wechatQrImageUrl: nestedData.wechatQrImageUrl,
-                  city: nestedData.city || nestedData.currentCityInChina,
-                  rating: nestedData.rating || nestedData.unelgee,
-                  description: nestedData.description || nestedData.setgegdel,
-                  itemType: entryData.categoryName as ItemType, // This will be "translator"
+                  city: nestedData.khot || nestedData.currentCityInChina,
+                  rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+                  description: nestedData.setgegdel || nestedData.description,
+                  itemType: entryData.categoryName as ItemType, 
                   registeredAt: registeredAtDate,
                   isActive: nestedData.isActive,
                   isProfileComplete: nestedData.isProfileComplete,
@@ -172,12 +172,12 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
 
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
-        serviceType: itemType, // Use the passed itemType prop ("translator")
+        serviceType: itemType, 
         serviceId: translator.id,
         serviceName: translator.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
         status: 'contact_revealed', 
-        amount: translator.dailyRate || null, // Use dailyRate or price from translator data
+        amount: translator.dailyRate || null, 
         contactInfoRevealed: true,
         imageUrl: translator.photoUrl || null,
         dataAiHint: "translator portrait",
