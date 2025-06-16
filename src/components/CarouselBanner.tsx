@@ -46,7 +46,8 @@ export function CarouselBanner() {
                       width={1200}
                       height={400}
                       className="w-full h-48 md:h-64 lg:h-80 object-cover"
-                      priority={idx === 0} 
+                      priority={idx === 0}
+                      fetchPriority={idx === 0 ? "high" : undefined}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       data-ai-hint={item.dataAiHint}
                     />
@@ -59,6 +60,7 @@ export function CarouselBanner() {
                     height={400}
                     className="w-full h-48 md:h-64 lg:h-80 object-cover"
                     priority={idx === 0}
+                    fetchPriority={idx === 0 ? "high" : undefined}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     data-ai-hint={item.dataAiHint}
                   />
