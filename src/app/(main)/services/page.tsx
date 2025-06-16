@@ -15,6 +15,21 @@ import type { RecommendedItem, ItemType } from "@/types";
 import { useCity } from "@/contexts/CityContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Helper function to map Firestore categoryName to singular ItemType for ServiceCard
+const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
+  const lowerCategoryName = categoryName?.toLowerCase();
+  switch (lowerCategoryName) {
+    case 'hotels': return 'hotel';
+    case 'translators': return 'translator';
+    case 'markets': return 'market';
+    case 'factories': return 'factory';
+    case 'hospitals': return 'hospital';
+    case 'embassies': return 'embassy';
+    case 'wechat': return 'wechat'; // Assuming 'wechat' is already singular
+    default: return lowerCategoryName as ItemType; // Fallback
+  }
+};
+
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -38,7 +53,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const fetchEntriesByCategory = async (
-      categoryNameFilter: string,
+      categoryNameFilter: string, // This will be plural e.g., "hotels", "translators"
       count: number,
       cityValue?: string
     ): Promise<RecommendedItem[]> => {
@@ -64,7 +79,6 @@ export default function HomePage() {
           finalImageUrl = rawImageUrl.trim();
         }
 
-
         return { 
           id: doc.id, 
           name: nestedData.name || t('serviceUnnamed'),
@@ -73,9 +87,9 @@ export default function HomePage() {
           location: nestedData.khot || undefined,
           rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
           price: nestedData.price === undefined ? null : nestedData.price, 
-          itemType: entryData.categoryName?.toLowerCase() as ItemType,
+          itemType: mapCategoryToSingularItemType(entryData.categoryName), // Use mapping here
           dataAiHint: nestedData.dataAiHint || `${entryData.categoryName || 'item'} item`,
-          ...(entryData.categoryName === 'translator' && {
+          ...(entryData.categoryName === 'translators' && { // Check original categoryName for specific fields
             nationality: nestedData.nationality,
             speakingLevel: nestedData.speakingLevel,
             writingLevel: nestedData.writingLevel,
@@ -252,4 +266,3 @@ export default function HomePage() {
     </div>
   );
 }
-

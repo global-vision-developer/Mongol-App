@@ -16,6 +16,16 @@ import type { RecommendedItem, ItemType } from "@/types";
 import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
+// Helper function to map Firestore categoryName to singular ItemType for ServiceCard
+const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
+  const lowerCategoryName = categoryName?.toLowerCase();
+  switch (lowerCategoryName) {
+    case 'hospitals': return 'hospital';
+    // Add other mappings if necessary
+    default: return lowerCategoryName as ItemType; // Fallback
+  }
+};
+
 export default function HospitalsPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -58,9 +68,9 @@ export default function HospitalsPage() {
             location: nestedData.khot || undefined,
             rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
             price: nestedData.price === undefined ? null : nestedData.price,
-            itemType: entryData.categoryName?.toLowerCase() as ItemType, 
+            itemType: mapCategoryToSingularItemType(entryData.categoryName),
             dataAiHint: nestedData.dataAiHint || "hospital item",
-            rooms: nestedData.uruunuud || [],
+            rooms: nestedData.uruunuud || [], // Ensure rooms is always an array
           } as RecommendedItem;
         });
         setRecommendations(items);
@@ -138,4 +148,3 @@ export default function HospitalsPage() {
     </div>
   );
 }
-

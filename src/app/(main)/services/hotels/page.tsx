@@ -17,6 +17,16 @@ import { db } from "@/lib/firebase";
 
 import type { RecommendedItem, ItemType } from "@/types";
 
+// Helper function to map Firestore categoryName to singular ItemType for ServiceCard
+const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
+  const lowerCategoryName = categoryName?.toLowerCase();
+  switch (lowerCategoryName) {
+    case 'hotels': return 'hotel';
+    // Add other mappings if necessary
+    default: return lowerCategoryName as ItemType; // Fallback
+  }
+};
+
 export default function HotelsPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -66,9 +76,9 @@ export default function HotelsPage() {
             location: nestedData.khot || undefined,
             rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
             price: nestedData.price === undefined ? null : nestedData.price,
-            itemType: entryData.categoryName?.toLowerCase() as ItemType,
+            itemType: mapCategoryToSingularItemType(entryData.categoryName),
             dataAiHint: nestedData.dataAiHint || "hotel item",
-            rooms: nestedData.uruunuud || [],
+            rooms: nestedData.uruunuud || [], // Ensure rooms is always an array
           } as RecommendedItem;
         });
 
@@ -138,4 +148,3 @@ export default function HotelsPage() {
     </div>
   );
 }
-

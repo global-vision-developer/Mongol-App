@@ -16,6 +16,17 @@ import { collection, getDocs, query, where, type Query as FirestoreQueryType, ty
 import { db } from "@/lib/firebase";
 import type { Translator, ItemType } from "@/types"; 
 
+// Helper function to map Firestore categoryName to singular ItemType for ServiceCard
+const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
+  const lowerCategoryName = categoryName?.toLowerCase();
+  switch (lowerCategoryName) {
+    case 'translators': return 'translator';
+    // Add other mappings if necessary
+    default: return lowerCategoryName as ItemType; // Fallback
+  }
+};
+
+
 export default function TranslatorsPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -36,6 +47,12 @@ export default function TranslatorsPage() {
         ];
         
         if (selectedCity && selectedCity.value !== "all") {
+          // For translators, city might be in `data.currentCityInChina` or `data.khot`
+          // Let's assume `data.currentCityInChina` is primary for active translators, 
+          // and `data.khot` can be a fallback or general location.
+          // The TranslatorCard specific logic already handles city display.
+          // Here, we'll query based on a primary city field if available.
+          // This might need adjustment based on exact data structure for translators.
           queryConstraints.push(where("data.currentCityInChina", "==", selectedCity.value)); 
         }
         
@@ -46,12 +63,12 @@ export default function TranslatorsPage() {
           .map((doc) => {
             const entryData = doc.data();
             const nestedData = entryData.data || {};
-            if (nestedData.isActive === false) {
+            if (nestedData.isActive === false) { // Assuming isActive is a field in `data` for translators
                 return null;
             }
 
             let finalImageUrl: string | undefined = undefined;
-            const rawImageUrl = nestedData['nuur-zurag-url'];
+            const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl; // Check both, photoUrl might be specific for translator profile pic
              if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
                 finalImageUrl = rawImageUrl.trim();
             }
@@ -78,7 +95,7 @@ export default function TranslatorsPage() {
               city: nestedData.khot || nestedData.currentCityInChina, 
               rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
               description: nestedData.setgegdel || nestedData.description,
-              itemType: entryData.categoryName?.toLowerCase() as ItemType, 
+              itemType: mapCategoryToSingularItemType(entryData.categoryName), 
               isActive: nestedData.isActive,
               reviewCount: nestedData.reviewCount,
             } as Translator;
@@ -155,4 +172,3 @@ export default function TranslatorsPage() {
     </div>
   );
 }
-

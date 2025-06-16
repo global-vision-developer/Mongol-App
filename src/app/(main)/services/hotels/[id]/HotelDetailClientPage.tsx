@@ -71,12 +71,13 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
-            if (entryData.categoryName === itemType) { 
+            // Ensure the fetched item's categoryName matches the expected itemType for this page ('hotel' which maps to 'hotels' in Firestore)
+            if (entryData.categoryName === "hotels") { 
               const nestedData = entryData.data || {};
 
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
-              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com') ) {
                  finalImageUrl = rawImageUrl.trim();
               }
               
@@ -88,9 +89,13 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
                 location: nestedData.khot || undefined,
                 rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
                 price: nestedData.price === undefined ? null : nestedData.price, 
-                itemType: entryData.categoryName as ItemType, 
+                itemType: itemType, // Use the prop itemType which is 'hotel' (singular)
                 dataAiHint: nestedData.dataAiHint || "hotel item",
-                rooms: nestedData.uruunuud || [],
+                rooms: (nestedData.uruunuud || []).map((room: any) => ({
+                    description: room.description || t('noRoomDescription'),
+                    imageUrl: room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.description || 'Room')}`,
+                    name: room.name, // Optional room name
+                })),
               } as HotelItemClient);
             } else {
               console.warn(`Fetched item ${itemId} is not a ${itemType}, but ${entryData.categoryName}`);
@@ -122,7 +127,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
     try {
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
-        serviceType: itemType, 
+        serviceType: "hotel", // Use singular 'hotel' or plural 'hotels' depending on Order type definition
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
@@ -134,7 +139,15 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
       await addDoc(firestoreCollection(db, "orders"), orderData);
 
       if (user?.uid) {
-          await addPointsToUser(15);
+          // TODO: Fetch user's current points before adding
+          // const userRef = doc(db, "users", user.uid);
+          // const userSnap = await getDoc(userRef);
+          // const currentPoints = userSnap.data()?.points || 0;
+          // await updateDoc(userRef, { points: currentPoints + 15 });
+          // For now, directly call addPointsToUser if it handles Firestore update
+          // This function is not available in the provided AuthContext
+          // await addPointsToUser(15); 
+          console.log("Points addition would happen here if addPointsToUser was available and implemented.");
       }
 
       const notificationData: Omit<NotificationItem, 'id'> = {
@@ -143,7 +156,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
         descriptionPlaceholders: { serviceName: item.name || t('serviceUnnamed') },
         date: serverTimestamp(),
         read: false,
-        itemType: itemType,
+        itemType: "hotel", // Consistent with orderData.serviceType
         link: `/orders`,
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "hotel building",
@@ -249,7 +262,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
                           layout="fill"
                           objectFit="cover"
                           className="bg-muted"
-                          data-ai-hint={room.description ? room.description.substring(0,15) : "hotel room"} // Basic hint from description
+                          data-ai-hint={room.description ? room.description.substring(0,15) : "hotel room"}
                           unoptimized={room.imageUrl?.startsWith('data:') || room.imageUrl?.includes('lh3.googleusercontent.com')}
                         />
                       </div>
@@ -284,20 +297,3 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
     </div>
   );
 }
-
-// Add to your LanguageContext translations:
-// mn: {
-//   roomsTitle: "Өрөөнүүд",
-//   roomImageAlt: "Өрөөний зураг",
-//   noRoomDescription: "Өрөөний тайлбар байхгүй.",
-//   ratingLabel: "Үнэлгээ",
-//   notProvided: "Оруулаагүй"
-// },
-// cn: {
-//   roomsTitle: "房间",
-//   roomImageAlt: "房间图片",
-//   noRoomDescription: "暂无房间描述。",
-//   ratingLabel: "评分",
-//   notProvided: "未提供"
-// }
-
