@@ -17,7 +17,17 @@ import { useToast } from "@/hooks/use-toast";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
-  const displayValue = value !== undefined && value !== null && value !== '' ? Array.isArray(value) ? value.join(', ') : value.toString() : t('notProvided');
+  let displayValue = t('notProvided');
+  if (value !== undefined && value !== null && value !== '') {
+    if (Array.isArray(value)) {
+      displayValue = value.join(', ');
+    } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
+      displayValue = `${value.toFixed(1)} / 5`; // Assuming 0-5 scale
+    }
+    else {
+      displayValue = value.toString();
+    }
+  }
   return (
     <div className="flex items-start text-sm">
       {Icon && <Icon className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />}
@@ -58,16 +68,19 @@ export default function EmbassyDetailClientPage({ params, itemType }: EmbassyDet
               const nestedData = entryData.data || {};
 
               const rawImageUrl = nestedData['nuur-zurag-url'];
-              const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
+              let finalImageUrl: string | undefined = undefined;
+              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+                 finalImageUrl = rawImageUrl.trim();
+              }
               
               setItem({ 
                 id: docSnap.id, 
-                name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title
+                name: nestedData.name || t('serviceUnnamed'), 
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
                 rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-                price: nestedData.price,
+                price: nestedData.price === undefined ? null : nestedData.price,
                 itemType: entryData.categoryName as ItemType,
                 dataAiHint: nestedData.dataAiHint || "embassy item",
               } as RecommendedItem);
@@ -109,9 +122,9 @@ export default function EmbassyDetailClientPage({ params, itemType }: EmbassyDet
         dataAiHint: item.dataAiHint || "embassy building flag",
         amount: item.price === undefined ? null : item.price,
       };
-      const orderRef = await addDoc(firestoreCollection(db, "orders"), orderData);
+      await addDoc(firestoreCollection(db, "orders"), orderData);
       
-      if (user && user.uid) { // Check if user and user.uid exist before adding points
+      if (user?.uid) {
           await addPointsToUser(15);
       }
 
@@ -126,10 +139,9 @@ export default function EmbassyDetailClientPage({ params, itemType }: EmbassyDet
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "embassy building flag",
       };
-      if (user && user.uid) { // Check if user and user.uid exist before adding notification
+      if (user?.uid) {
           await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
       }
-
 
       toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
     } catch (error) {
@@ -139,6 +151,8 @@ export default function EmbassyDetailClientPage({ params, itemType }: EmbassyDet
       setIsBooking(false);
     }
   };
+  
+  const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com');
 
   if (loading) {
      return (
@@ -194,7 +208,7 @@ export default function EmbassyDetailClientPage({ params, itemType }: EmbassyDet
               objectFit="cover"
               className="bg-muted"
               data-ai-hint={item.dataAiHint || "embassy building flag"}
-              unoptimized={item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com')}
+              unoptimized={mainImageShouldUnoptimize}
             />
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-6">
@@ -209,7 +223,7 @@ export default function EmbassyDetailClientPage({ params, itemType }: EmbassyDet
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
-              {typeof item.rating === 'number' && <DetailItem labelKey="ratingLabel" value={item.rating.toFixed(1)} icon={Star} />}
+              <DetailItem labelKey="ratingLabel" value={typeof item.rating === 'number' ? item.rating : undefined} icon={Star} />
             </div>
           </CardContent>
            <CardFooter className="p-4 md:p-6 border-t">
@@ -232,3 +246,6 @@ export default function EmbassyDetailClientPage({ params, itemType }: EmbassyDet
   );
 }
 
+// Add to LanguageContext:
+// mn: { ratingLabel: "Үнэлгээ", notProvided: "Оруулаагүй" },
+// cn: { ratingLabel: "评分", notProvided: "未提供" }

@@ -411,6 +411,10 @@ const translations: Record<Language, Record<string, string>> = {
     notificationDeletedSuccessDesc: "Мэдэгдэл устгагдлаа.",
     notificationDeletionErrorGeneric: "Мэдэгдэл устгахад алдаа гарлаа.",
     notificationDeletionErrorFirebase: "Firestore-оос мэдэгдэл устгахад алдаа гарлаа.",
+    // Hotel Detail Page specific
+    roomsTitle: "Өрөөнүүд",
+    roomImageAlt: "Өрөөний зураг",
+    noRoomDescription: "Өрөөний тайлбар байхгүй.",
   },
   cn: {
     bookNowButton: "立即预订",
@@ -808,6 +812,10 @@ const translations: Record<Language, Record<string, string>> = {
     notificationDeletedSuccessDesc: "通知已删除。",
     notificationDeletionErrorGeneric: "删除通知时出错。",
     notificationDeletionErrorFirebase: "从 Firestore 删除通知时出错。",
+    // Hotel Detail Page specific
+    roomsTitle: "房间",
+    roomImageAlt: "房间图片",
+    noRoomDescription: "暂无房间描述。",
   },
 };
 

@@ -71,6 +71,13 @@ export interface RecommendedItem {
   wechatId?: string | null; // Keep for type consistency, but control visibility
   // For WeChat items
   wechatQrImageUrl?: string;
+  // For Hotel items
+  rooms?: Array<{ 
+    description: string; 
+    imageUrl: string; 
+    name?: string; // Optional name for the room type
+    [key: string]: any; // Allow other potential room-specific fields
+  }>;
 }
 
 export interface UserProfile {
@@ -86,6 +93,7 @@ export interface UserProfile {
   homeAddress?: string | null;
   fcmTokens?: string[]; // Store FCM tokens for the user
   lastTokenUpdate?: Timestamp; // When the token list was last updated
+  points?: number;
 }
 
 export interface Order {
@@ -96,7 +104,7 @@ export interface Order {
   serviceName: string; // Name of the service/translator
   orderDate: Timestamp | any; // Firestore Timestamp for when the order was placed
   status: 'pending_payment' | 'pending_confirmation' | 'confirmed' | 'cancelled' | 'completed' | 'contact_revealed';
-  amount?: number | string; // Amount paid or price range
+  amount?: number | string | null; // Amount paid or price range
   paymentDetails?: any; // Details about the payment
   contactInfoRevealed?: boolean; // Specifically for translator orders
   imageUrl?: string | null; // Image of the service/item ordered

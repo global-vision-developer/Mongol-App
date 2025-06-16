@@ -10,14 +10,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ArrowLeft, Star, MapPin, AlertTriangle, Info, ShoppingBag } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
+import { ArrowLeft, Star, MapPin, AlertTriangle, Info, ShoppingBag, BedDouble } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
-  const displayValue = value !== undefined && value !== null && value !== '' ? Array.isArray(value) ? value.join(', ') : value.toString() : t('notProvided');
+  let displayValue = t('notProvided');
+  if (value !== undefined && value !== null && value !== '') {
+    if (Array.isArray(value)) {
+      displayValue = value.join(', ');
+    } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
+      // Assuming rating is out of 5 for now, adjust if needed for 1-10 scale
+      displayValue = `${value.toFixed(1)} / 5`; 
+    }
+     else {
+      displayValue = value.toString();
+    }
+  }
+
   return (
     <div className="flex items-start text-sm">
       {Icon && <Icon className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />}
@@ -28,6 +41,10 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     </div>
   );
 };
+
+interface HotelItemClient extends RecommendedItem {
+  // rooms field is already in RecommendedItem
+}
 
 interface HotelDetailClientPageProps {
   params: { id: string };
@@ -40,7 +57,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
   const { user, addPointsToUser } = useAuth(); 
   const { toast } = useToast();
 
-  const [item, setItem] = useState<RecommendedItem | null>(null);
+  const [item, setItem] = useState<HotelItemClient | null>(null);
   const [loading, setLoading] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
   const itemId = params.id;
@@ -58,19 +75,23 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
               const nestedData = entryData.data || {};
 
               const rawImageUrl = nestedData['nuur-zurag-url'];
-              const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
-
+              let finalImageUrl: string | undefined = undefined;
+              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+                 finalImageUrl = rawImageUrl.trim();
+              }
+              
               setItem({ 
                 id: docSnap.id, 
-                name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title
+                name: nestedData.name || t('serviceUnnamed'),
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
                 rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-                price: nestedData.price, 
+                price: nestedData.price === undefined ? null : nestedData.price, 
                 itemType: entryData.categoryName as ItemType, 
                 dataAiHint: nestedData.dataAiHint || "hotel item",
-              } as RecommendedItem);
+                rooms: nestedData.uruunuud || [],
+              } as HotelItemClient);
             } else {
               console.warn(`Fetched item ${itemId} is not a ${itemType}, but ${entryData.categoryName}`);
               setItem(null);
@@ -110,9 +131,9 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "hotel building",
       };
-      const orderRef = await addDoc(firestoreCollection(db, "orders"), orderData);
+      await addDoc(firestoreCollection(db, "orders"), orderData);
 
-      if (user && user.uid) { // Check if user and user.uid exist before adding points
+      if (user?.uid) {
           await addPointsToUser(15);
       }
 
@@ -127,10 +148,9 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "hotel building",
       };
-      if (user && user.uid) { // Check if user and user.uid exist before adding notification
+      if (user?.uid) {
           await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
       }
-
 
       toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
     } catch (error) {
@@ -170,6 +190,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
       </div>
     );
   }
+  const mainImageShouldUnoptimize = item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com');
 
   return (
     <div className="pb-20">
@@ -195,7 +216,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
               objectFit="cover"
               className="bg-muted"
               data-ai-hint={item.dataAiHint || "hotel building"}
-              unoptimized={item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com')}
+              unoptimized={mainImageShouldUnoptimize}
             />
           </CardHeader>
           <CardContent className="p-4 md:p-6 space-y-6">
@@ -210,8 +231,39 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
-              {typeof item.rating === 'number' && <DetailItem labelKey="ratingLabel" value={item.rating.toFixed(1)} icon={Star} />}
+              <DetailItem labelKey="ratingLabel" value={typeof item.rating === 'number' ? item.rating : undefined} icon={Star} />
             </div>
+
+            {item.rooms && item.rooms.length > 0 && (
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-xl font-semibold text-foreground flex items-center">
+                  <BedDouble className="h-6 w-6 mr-2 text-primary"/>{t('roomsTitle') || "Өрөөнүүд"}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {item.rooms.map((room, index) => (
+                    <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                      <div className="relative aspect-video">
+                        <Image
+                          src={room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.description || 'Room')}`}
+                          alt={room.description || t('roomImageAlt') || 'Room image'}
+                          layout="fill"
+                          objectFit="cover"
+                          className="bg-muted"
+                          data-ai-hint={room.description ? room.description.substring(0,15) : "hotel room"} // Basic hint from description
+                          unoptimized={room.imageUrl?.startsWith('data:') || room.imageUrl?.includes('lh3.googleusercontent.com')}
+                        />
+                      </div>
+                      <CardContent className="p-3">
+                        <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+                          {room.description || t('noRoomDescription') || 'No description available.'}
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </CardContent>
            <CardFooter className="p-4 md:p-6 border-t">
             <Button
@@ -232,4 +284,20 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
     </div>
   );
 }
+
+// Add to your LanguageContext translations:
+// mn: {
+//   roomsTitle: "Өрөөнүүд",
+//   roomImageAlt: "Өрөөний зураг",
+//   noRoomDescription: "Өрөөний тайлбар байхгүй.",
+//   ratingLabel: "Үнэлгээ",
+//   notProvided: "Оруулаагүй"
+// },
+// cn: {
+//   roomsTitle: "房间",
+//   roomImageAlt: "房间图片",
+//   noRoomDescription: "暂无房间描述。",
+//   ratingLabel: "评分",
+//   notProvided: "未提供"
+// }
 

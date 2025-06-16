@@ -48,7 +48,10 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
      else if (cityValue && typeof value === 'string') {
       const city = CITIES.find(c => c.value === value);
       displayValue = city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : value.toString();
-    } else {
+    } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
+      displayValue = `${value.toFixed(1)} / 5`; // Assuming 0-5 scale for translators for now
+    }
+     else {
       displayValue = value.toString();
     }
   }
@@ -109,16 +112,22 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                                           : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
                 
                 const rawImageUrl = nestedData['nuur-zurag-url'];
-                const finalImageUrl = (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() && !rawImageUrl.startsWith("https://lh3.googleusercontent.com/")) ? rawImageUrl.trim() : undefined;
+                let finalImageUrl: string | undefined = undefined;
+                if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+                    finalImageUrl = rawImageUrl.trim();
+                }
                 
                 const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
-                const finalWeChatQrUrl = (rawWeChatQrUrl && typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim()) ? rawWeChatQrUrl.trim() : undefined;
+                let finalWeChatQrUrl: string | undefined = undefined;
+                if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
+                    finalWeChatQrUrl = rawWeChatQrUrl.trim();
+                }
 
 
                 setTranslator({ 
                   id: docSnap.id, 
                   uid: nestedData.uid || docSnap.id,
-                  name: nestedData.name || t('serviceUnnamed'), // Changed from nestedData.title || nestedData.name
+                  name: nestedData.name || t('serviceUnnamed'),
                   photoUrl: finalImageUrl,
                   nationality: nestedData.nationality,
                   inChinaNow: nestedData.inChinaNow,
@@ -136,7 +145,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                   wechatQrImageUrl: finalWeChatQrUrl,
                   city: nestedData.khot || nestedData.currentCityInChina,
                   rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-                  description: nestedData.setgegdel || nestedData.description,
+                  description: nestedData.setgegdel || nestedData.description || '',
                   itemType: entryData.categoryName as ItemType, 
                   registeredAt: registeredAtDate,
                   isActive: nestedData.isActive,
@@ -175,7 +184,9 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
     if (!user || !translator) return;
     setIsProcessingPayment(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500)); 
+      // Simulate payment processing if needed, or directly create order
+      // For now, assume payment is successful immediately for demo purposes.
+      // await new Promise(resolve => setTimeout(resolve, 1500)); 
 
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
@@ -191,7 +202,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
       
-      if (user && user.uid) { // Check if user and user.uid exist before adding points
+      if (user?.uid) {
           await addPointsToUser(15);
       }
 
@@ -206,10 +217,9 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
         imageUrl: translator.photoUrl || null,
         dataAiHint: "translator portrait"
       };
-      if (user && user.uid) { // Check if user and user.uid exist before adding notification
+      if (user?.uid) {
           await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
       }
-
 
       toast({ title: t('orderCreatedSuccess') });
       setShowContactInfo(true);
@@ -221,6 +231,10 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
       setIsProcessingPayment(false);
     }
   };
+  
+  const mainImageShouldUnoptimize = translator?.photoUrl?.startsWith('data:') || translator?.photoUrl?.includes('lh3.googleusercontent.com');
+  const qrImageShouldUnoptimize = translator?.wechatQrImageUrl?.startsWith('data:') || translator?.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
+
 
   if (loading) {
     return (
@@ -293,7 +307,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
               objectFit="cover"
               className="bg-muted"
               data-ai-hint="translator portrait professional"
-              unoptimized={translator.photoUrl?.startsWith('data:') || translator.photoUrl?.includes('lh3.googleusercontent.com')}
+              unoptimized={mainImageShouldUnoptimize}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
             <div className="absolute bottom-0 left-0 p-4 md:p-6 w-full">
@@ -304,14 +318,15 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                     </Avatar>
                     <div>
                         <CardTitle className="text-2xl md:text-3xl font-headline text-white mb-1">{translator.name}</CardTitle>
-                        {translator.rating !== undefined && translator.rating !== null && (
-                            <div className="flex items-center gap-1 text-sm text-yellow-400">
-                                <Star className="h-5 w-5 fill-current" />
-                                <span>{t('ratingOutOf10', { rating: translator.rating.toFixed(1)})}</span>
-                                {translator.reviewCount ? <span className="text-gray-300 text-xs"> {t('basedOnReviews', { reviewCount: translator.reviewCount })}</span> : <span className="text-gray-300 text-xs"> ({t('noReviewsYet')})</span>}
-                            </div>
+                         <DetailItem labelKey="ratingLabel" value={typeof translator.rating === 'number' ? translator.rating : undefined} icon={Star} />
+                          {translator.reviewCount !== undefined && translator.reviewCount > 0 && (
+                            <span className="text-xs text-gray-300 ml-1">
+                                ({t('basedOnReviews', {reviewCount: translator.reviewCount})})
+                            </span>
                         )}
-                         {(translator.rating === undefined || translator.rating === null) && <span className="text-gray-300 text-xs">({t('noReviewsYet')})</span>}
+                        { (translator.reviewCount === undefined || translator.reviewCount === 0) && typeof translator.rating !== 'number' && (
+                             <span className="text-xs text-gray-300 ml-1">({t('noReviewsYet')})</span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -350,7 +365,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
                    {translator.wechatQrImageUrl && (
                      <div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">{t('wechatQrImageLabel')}</p>
-                        <Image src={translator.wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={128} height={128} className="rounded-md border" data-ai-hint="qr code" unoptimized={translator.wechatQrImageUrl?.startsWith('data:') || translator.wechatQrImageUrl?.includes('lh3.googleusercontent.com')} />
+                        <Image src={translator.wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={128} height={128} className="rounded-md border" data-ai-hint="qr code" unoptimized={qrImageShouldUnoptimize} />
                      </div>
                    )}
                 </div>
@@ -382,7 +397,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
           <DialogHeader>
             <DialogTitle>{t('paymentModalTitle')}</DialogTitle>
             <DialogDescription>
-              {translator.dailyRate && t('paymentModalDescription', { rate: translator.dailyRate.split('-')[0] || '...' })}
+              {translator.dailyRate && t('paymentModalDescription', { rate: dailyRateDisplay || '...' })}
               {!translator.dailyRate && t('paymentModalDescription', { rate: '...' })}
             </DialogDescription>
           </DialogHeader>
@@ -402,4 +417,14 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
     </div>
   );
 }
+
+// Add to LanguageContext:
+// mn: {
+//   ratingLabel: "Үнэлгээ",
+//   notProvided: "Оруулаагүй"
+// },
+// cn: {
+//   ratingLabel: "评分",
+//   notProvided: "未提供"
+// }
 
