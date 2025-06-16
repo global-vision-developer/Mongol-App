@@ -27,51 +27,61 @@ export default function NotificationsPage() {
       return;
     }
 
-    // Fetch Global Notifications (run once or listen for changes)
+    // Fetch Global Notifications
     const fetchGlobalNotifications = async () => {
       setLoadingGlobalNotifications(true);
       try {
+        // Assuming global notifications are stored in a top-level 'notifications' collection
         const globalNotificationsColRef = collection(db, "notifications");
         const qGlobal = query(globalNotificationsColRef, orderBy("date", "desc"));
-        // Using getDocs for global notifications as they might not change frequently for a single user session
-        // Or use onSnapshot if real-time updates for global notifications are desired
-        const snapshot = await getDocs(qGlobal);
-        const items: NotificationItemType[] = snapshot.docs.map(doc => {
-          const data = doc.data() as DocumentData;
-          let dateValue: string | Timestamp = data.date;
-          if (data.date instanceof Timestamp) {
-            dateValue = data.date.toDate().toISOString();
-          } else if (data.date && typeof data.date.seconds === 'number') {
-            dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds).toDate().toISOString();
-          }
-          return {
-            id: doc.id,
-            titleKey: data.titleKey || 'unknownNotificationTitle',
-            descriptionKey: data.descriptionKey || 'unknownNotificationDescription',
-            descriptionPlaceholders: data.descriptionPlaceholders || {},
-            date: dateValue,
-            read: data.read || false, // For global, 'read' might be managed differently or ignored on client
-            imageUrl: data.imageUrl,
-            dataAiHint: data.dataAiHint,
-            link: data.link,
-            itemType: data.itemType,
-            isGlobal: true, // Mark as global
-          } as NotificationItemType;
+        
+        const unsubscribeGlobal = onSnapshot(qGlobal, (snapshot) => {
+            const items: NotificationItemType[] = snapshot.docs.map(doc => {
+            const data = doc.data() as DocumentData;
+            let dateValue: string | Timestamp = data.date;
+            if (data.date instanceof Timestamp) {
+                // Already a Timestamp, can be used directly or converted
+            } else if (data.date && typeof data.date.seconds === 'number') {
+                // Firestore-like Timestamp object from server, convert to JS Date then to ISO string if needed by format()
+                dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds).toDate();
+            }
+            return {
+                id: doc.id,
+                titleKey: data.titleKey || 'unknownNotificationTitle',
+                descriptionKey: data.descriptionKey || 'unknownNotificationDescription',
+                descriptionPlaceholders: data.descriptionPlaceholders || {},
+                date: dateValue, // Keep as Date or Timestamp for sorting, format on display
+                read: data.read || false, // For global, 'read' might be managed differently or ignored
+                imageUrl: data.imageUrl,
+                dataAiHint: data.dataAiHint,
+                link: data.link,
+                itemType: data.itemType || 'general',
+                isGlobal: true,
+            } as NotificationItemType;
+            });
+            setGlobalNotifications(items);
+            setLoadingGlobalNotifications(false);
+        }, (error) => {
+            console.error("Error fetching global notifications:", error);
+            setLoadingGlobalNotifications(false);
         });
-        setGlobalNotifications(items);
+        return unsubscribeGlobal;
       } catch (error) {
-        console.error("Error fetching global notifications:", error);
-      } finally {
+        console.error("Error setting up global notifications listener:", error);
         setLoadingGlobalNotifications(false);
+        return () => {}; // Return an empty unsubscribe function on error
       }
     };
-    fetchGlobalNotifications();
+    
+    const unsubGlobal = fetchGlobalNotifications();
 
 
     if (!user) {
       setUserNotifications([]);
       setLoadingUserNotifications(false);
-      return; // Skip user notifications if no user
+       return () => {
+        if (typeof unsubGlobal === 'function') unsubGlobal();
+      };
     }
 
     // Fetch User-Specific Notifications
@@ -83,10 +93,10 @@ export default function NotificationsPage() {
       const items: NotificationItemType[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
         let dateValue: string | Timestamp = data.date;
-        if (data.date instanceof Timestamp) {
-          dateValue = data.date.toDate().toISOString();
+         if (data.date instanceof Timestamp) {
+            // Already a Timestamp
         } else if (data.date && typeof data.date.seconds === 'number') {
-          dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds).toDate().toISOString();
+            dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds).toDate();
         }
         return {
           id: doc.id,
@@ -98,8 +108,8 @@ export default function NotificationsPage() {
           imageUrl: data.imageUrl,
           dataAiHint: data.dataAiHint,
           link: data.link,
-          itemType: data.itemType,
-          isGlobal: false, // Mark as not global
+          itemType: data.itemType || 'general',
+          isGlobal: false,
         } as NotificationItemType;
       });
       setUserNotifications(items);
@@ -111,19 +121,20 @@ export default function NotificationsPage() {
 
     return () => {
       unsubscribeUser();
-      // No need to unsubscribe from getDocs
+      if (typeof unsubGlobal === 'function') unsubGlobal();
     };
   }, [user, authLoading]);
 
   const combinedNotifications = [...globalNotifications, ...userNotifications].sort((a, b) => {
-    const dateA = a.date instanceof Timestamp ? a.date.toMillis() : new Date(a.date as string).getTime();
-    const dateB = b.date instanceof Timestamp ? b.date.toMillis() : new Date(b.date as string).getTime();
+    // Ensure dates are comparable (Timestamps or Date objects)
+    const dateA = a.date instanceof Timestamp ? a.date.toMillis() : (a.date instanceof Date ? a.date.getTime() : 0);
+    const dateB = b.date instanceof Timestamp ? b.date.toMillis() : (b.date instanceof Date ? b.date.getTime() : 0);
     return dateB - dateA; // Sort descending
   });
 
   const isLoading = authLoading || loadingUserNotifications || loadingGlobalNotifications;
 
-  if (isLoading && combinedNotifications.length === 0) { // Show skeletons only if no data yet
+  if (isLoading && combinedNotifications.length === 0) {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-headline font-semibold">{t('myNotifications')}</h1>
@@ -177,19 +188,18 @@ export default function NotificationsPage() {
                   <img src={item.imageUrl} alt={t(item.titleKey)} data-ai-hint={item.dataAiHint || "notification image"} className="h-16 w-16 rounded-md object-cover"/>
                 )}
                 <div className="flex-1">
-                  <CardTitle className="text-md font-semibold mb-1">{t(item.titleKey)}</CardTitle>
+                  <CardTitle className="text-md font-semibold mb-1">{t(item.titleKey, item.descriptionPlaceholders)}</CardTitle>
                   <CardDescription className="text-sm text-muted-foreground line-clamp-2">
                     {t(item.descriptionKey, item.descriptionPlaceholders)}
                   </CardDescription>
                 </div>
-                {/* Show read indicator only for non-global user notifications */}
                 {!item.isGlobal && !item.read && (
                    <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1 shrink-0" />
                 )}
               </CardHeader>
               <CardContent className="pt-0 pb-3 flex justify-between items-center">
                  <p className="text-xs text-muted-foreground">
-                    {item.date ? format(item.date instanceof Timestamp ? item.date.toDate() : new Date(item.date as string), 'yyyy-MM-dd HH:mm') : t('n_a')}
+                    {item.date ? format(item.date instanceof Timestamp ? item.date.toDate() : (item.date instanceof Date ? item.date : new Date(item.date as string)), 'yyyy-MM-dd HH:mm') : t('n_a')}
                   </p>
                 {item.link && (
                   <Button variant="link" size="sm" asChild className="p-0 h-auto text-primary hover:text-primary/80">
@@ -204,5 +214,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-
-    

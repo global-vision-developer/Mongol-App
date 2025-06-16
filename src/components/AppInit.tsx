@@ -1,11 +1,12 @@
+
 'use client';
 import { useEffect } from 'react';
 import { requestForToken, onMessageListener } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast'; // Using toast for notifications
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-
+import type { NotificationItem, ItemType } from '@/types';
 
 export default function AppInit() {
   const { toast } = useToast();
@@ -21,11 +22,10 @@ export default function AppInit() {
             const fcmToken = await requestForToken();
 
             if (fcmToken) {
-              // Save FCM token to user's Firestore document
               try {
                 const userDocRef = doc(db, "users", user.uid);
                 await updateDoc(userDocRef, {
-                  fcmTokens: arrayUnion(fcmToken), // Add new token, avoid duplicates if logic added
+                  fcmTokens: arrayUnion(fcmToken),
                   lastTokenUpdate: serverTimestamp()
                 });
                 console.log('FCM token saved to Firestore for user:', user.uid);
@@ -35,14 +35,58 @@ export default function AppInit() {
             }
 
             onMessageListener()
-              .then((payload: any) => {
-                if (payload && payload.notification) {
+              .then(async (payload: any) => { // Made async to await Firestore write
+                if (payload && payload.data) { // Prefer data payload for consistency
                   console.log('Foreground message payload:', payload);
+                  
+                  // Prepare notification item for Firestore
+                  const notificationToSave: Omit<NotificationItem, 'id'> = {
+                    // Use keys from payload.data if available, otherwise fallback or use defaults
+                    titleKey: payload.data.titleKey || payload.notification?.title || 'New Notification',
+                    descriptionKey: payload.data.descriptionKey || payload.notification?.body || 'You have a new message.',
+                    descriptionPlaceholders: payload.data.descriptionPlaceholders ? JSON.parse(payload.data.descriptionPlaceholders) : {}, // Assuming placeholders are JSON string
+                    date: serverTimestamp(),
+                    read: false, // New notifications are unread
+                    imageUrl: payload.data.imageUrl || payload.notification?.image,
+                    dataAiHint: payload.data.dataAiHint,
+                    link: payload.data.link,
+                    itemType: (payload.data.itemType as ItemType) || 'general', // Default itemType
+                    isGlobal: payload.data.isGlobal === 'true' || false,
+                  };
+
+                  try {
+                    await addDoc(collection(db, "users", user.uid, "notifications"), notificationToSave);
+                    console.log("Foreground notification saved to Firestore for user:", user.uid);
+                  } catch (error) {
+                    console.error("Error saving foreground notification to Firestore:", error);
+                  }
+
+                  // Show toast using notification part for display consistency
                   toast({
-                    title: payload.notification.title,
-                    description: payload.notification.body,
-                    // Add action or link if payload contains it
+                    title: payload.notification?.title || payload.data?.titleKey || 'Notification',
+                    description: payload.notification?.body || payload.data?.descriptionKey,
                   });
+                } else if (payload && payload.notification) { // Fallback for simple notifications
+                    console.log('Foreground message payload (notification only):', payload);
+                    const notificationToSave: Omit<NotificationItem, 'id'> = {
+                        titleKey: payload.notification.title || 'New Notification',
+                        descriptionKey: payload.notification.body || 'You have a new message.',
+                        date: serverTimestamp(),
+                        read: false,
+                        imageUrl: payload.notification.image,
+                        itemType: 'general',
+                        isGlobal: false,
+                    };
+                    try {
+                        await addDoc(collection(db, "users", user.uid, "notifications"), notificationToSave);
+                        console.log("Foreground notification (simple) saved to Firestore for user:", user.uid);
+                    } catch (error) {
+                        console.error("Error saving foreground notification (simple) to Firestore:", error);
+                    }
+                     toast({
+                        title: payload.notification.title,
+                        description: payload.notification.body,
+                    });
                 }
               })
               .catch(err => console.error('Failed to listen for foreground messages:', err));
@@ -55,11 +99,11 @@ export default function AppInit() {
       }
     };
 
-    if (user) { // Only setup notifications if user is logged in
+    if (user) {
         setupNotifications();
     }
 
-  }, [user, toast]); // Rerun when user changes
+  }, [user, toast]);
 
-  return null; // This component does not render anything
+  return null;
 }

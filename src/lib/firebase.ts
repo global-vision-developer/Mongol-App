@@ -66,7 +66,7 @@ export const requestForToken = async (): Promise<string | null> => {
   // ЭНЭ БОЛ ТАНЫ FIREBASE ТӨСЛИЙН ЖИНХЭНЭ VAPID KEY (PUBLIC KEY PAIR)
   // Firebase Console > Project Settings > Cloud Messaging таб > Web Push certificates хэсэгт "Key pair" гэсэн утга.
   // =====================================================================================
-  const vapidKeyFromServer = "BNz9Zeh0p8jBbVb9lb_JudJkS5kfKl6-xkezgpEoomhJQ6vn1GyRAPst2W2FJ-H-I3f2kD_KwEU1tE73gB5ledQ";
+  const vapidKeyFromServer = "BNz9Zeh0p8jBbVb9Ib_JudJkS5kfKI6-xkezgpEoomhJQ6vn1GyRAPst2W2FJ-H-I3f2kD_KwEU1tE73gB5ledQ";
   // const vapidKeyFromServer = "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE";
 
 

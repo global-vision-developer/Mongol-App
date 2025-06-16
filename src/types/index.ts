@@ -36,7 +36,7 @@ export interface CarouselBannerItem {
   link?: string;
 }
 
-export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight';
+export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight' | 'message' | 'order' | 'update';
 
 
 export interface RecommendedItem {
@@ -84,7 +84,8 @@ export interface UserProfile {
   dateOfBirth?: string | null; // Store as ISO string (YYYY-MM-DD)
   gender?: 'male' | 'female' | 'other' | null;
   homeAddress?: string | null;
-  fcmTokens?: string[];
+  fcmTokens?: string[]; // Store FCM tokens for the user
+  lastTokenUpdate?: Timestamp; // When the token list was last updated
 }
 
 export interface Order {
@@ -110,16 +111,16 @@ export interface SavedDocData extends RecommendedItem {
 
 export interface NotificationItem {
   id: string; // Firestore document ID
-  titleKey: string;
-  descriptionKey: string;
+  titleKey: string; // Can be a direct title string or a translation key
+  descriptionKey: string; // Can be a direct description string or a translation key
   descriptionPlaceholders?: Record<string, string | number>; // For dynamic text like {{serviceName}}
-  date: string | Timestamp | any; // ISO string or Firestore Timestamp
+  date: Timestamp | any; // Firestore Timestamp
   read: boolean;
-  imageUrl?: string;
-  dataAiHint?: string;
-  link?: string; // e.g., link to the order detail page if we had one
-  itemType: ItemType;
-  isGlobal?: boolean; // To distinguish global notifications
+  imageUrl?: string | null; // Optional image for the notification
+  dataAiHint?: string | null; // Optional AI hint for the image
+  link?: string | null; // Optional link to navigate to when clicked
+  itemType: ItemType; // Type of item this notification relates to (e.g., 'order', 'promo')
+  isGlobal?: boolean; // True if it's a global notification, false/undefined for user-specific
 }
 
 export interface HospitalCategory {
