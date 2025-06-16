@@ -5,20 +5,37 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import type { NotificationItem as NotificationItemType } from '@/types';
 import { format } from 'date-fns';
-import { Bell } from 'lucide-react';
+import { Bell, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp, deleteDoc, doc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [userNotifications, setUserNotifications] = useState<NotificationItemType[]>([]);
   const [globalNotifications, setGlobalNotifications] = useState<NotificationItemType[]>([]);
   const [loadingUserNotifications, setLoadingUserNotifications] = useState(true);
   const [loadingGlobalNotifications, setLoadingGlobalNotifications] = useState(true);
+
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [selectedNotificationIdForDeletion, setSelectedNotificationIdForDeletion] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (authLoading) {
@@ -119,6 +136,36 @@ export default function NotificationsPage() {
     };
   }, [user, authLoading]);
 
+  const handleDeleteNotification = async () => {
+    if (!user || !selectedNotificationIdForDeletion) {
+      toast({
+        title: t('error'),
+        description: t('notificationDeletionErrorGeneric'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const notificationDocRef = doc(db, "users", user.uid, "notifications", selectedNotificationIdForDeletion);
+      await deleteDoc(notificationDocRef);
+      toast({
+        title: t('notificationDeletedSuccessTitle'),
+        description: t('notificationDeletedSuccessDesc'),
+      });
+    } catch (error) {
+      console.error("Error deleting notification: ", error);
+      toast({
+        title: t('error'),
+        description: t('notificationDeletionErrorFirebase'),
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedNotificationIdForDeletion(null);
+      setIsAlertOpen(false);
+    }
+  };
+
   const combinedNotifications = [...globalNotifications, ...userNotifications].sort((a, b) => {
     const dateA = a.date instanceof Timestamp ? a.date.toMillis() : (a.date instanceof Date ? a.date.getTime() : 0);
     const dateB = b.date instanceof Timestamp ? b.date.toMillis() : (b.date instanceof Date ? b.date.getTime() : 0);
@@ -194,11 +241,50 @@ export default function NotificationsPage() {
                  <p className="text-xs text-muted-foreground">
                     {item.date ? format(item.date instanceof Timestamp ? item.date.toDate() : (item.date instanceof Date ? item.date : new Date(item.date as string)), 'yyyy-MM-dd HH:mm') : t('n_a')}
                   </p>
-                {item.link && (
-                  <Button variant="link" size="sm" asChild className="p-0 h-auto text-primary hover:text-primary/80">
-                    <a href={item.link} target="_blank" rel="noopener noreferrer">{t('viewDetails')}</a>
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                    {item.link && (
+                    <Button variant="link" size="sm" asChild className="p-0 h-auto text-primary hover:text-primary/80">
+                        <a href={item.link} target="_blank" rel="noopener noreferrer">{t('viewDetails')}</a>
+                    </Button>
+                    )}
+                    {!item.isGlobal && user && (
+                        <AlertDialog open={isAlertOpen && selectedNotificationIdForDeletion === item.id} onOpenChange={(open) => {
+                            if (!open) {
+                                setSelectedNotificationIdForDeletion(null);
+                            }
+                            setIsAlertOpen(open);
+                        }}>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive/80"
+                                onClick={() => {
+                                    setSelectedNotificationIdForDeletion(item.id);
+                                    setIsAlertOpen(true);
+                                }}
+                                >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">{t('deleteNotification')}</span>
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>{t('confirmDeletionTitle')}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    {t('confirmDeletionNotificationDesc')}
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setIsAlertOpen(false)}>{t('cancel')}</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteNotification}>
+                                    {t('deleteButtonConfirm')}
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -207,3 +293,27 @@ export default function NotificationsPage() {
     </div>
   );
 }
+
+// Placeholder translation keys (add these to your LanguageContext)
+// mn: {
+//   deleteNotification: "Мэдэгдэл устгах",
+//   confirmDeletionTitle: "Устгахдаа итгэлтэй байна уу?",
+//   confirmDeletionNotificationDesc: "Энэ мэдэгдлийг устгах уу? Энэ үйлдлийг буцаах боломжгүй.",
+//   deleteButtonConfirm: "Устгах",
+//   notificationDeletedSuccessTitle: "Амжилттай",
+//   notificationDeletedSuccessDesc: "Мэдэгдэл устгагдлаа.",
+//   notificationDeletionErrorGeneric: "Мэдэгдэл устгахад алдаа гарлаа.",
+//   notificationDeletionErrorFirebase: "Firestore-оос мэдэгдэл устгахад алдаа гарлаа.",
+// }
+// cn: {
+//   deleteNotification: "删除通知",
+//   confirmDeletionTitle: "确认删除吗？",
+//   confirmDeletionNotificationDesc: "您确定要删除此通知吗？此操作无法撤销。",
+//   deleteButtonConfirm: "删除",
+//   notificationDeletedSuccessTitle: "成功",
+//   notificationDeletedSuccessDesc: "通知已删除。",
+//   notificationDeletionErrorGeneric: "删除通知时出错。",
+//   notificationDeletionErrorFirebase: "从 Firestore 删除通知时出错。",
+// }
+
+    

@@ -402,7 +402,15 @@ const translations: Record<Language, Record<string, string>> = {
     day: "өдөр",
     loadingOrders: "Захиалга уншиж байна...",
     status: "Төлөв",
-
+    // Notification Deletion
+    deleteNotification: "Мэдэгдэл устгах",
+    confirmDeletionTitle: "Устгахдаа итгэлтэй байна уу?",
+    confirmDeletionNotificationDesc: "Энэ мэдэгдлийг устгах уу? Энэ үйлдлийг буцаах боломжгүй.",
+    deleteButtonConfirm: "Устгах",
+    notificationDeletedSuccessTitle: "Амжилттай",
+    notificationDeletedSuccessDesc: "Мэдэгдэл устгагдлаа.",
+    notificationDeletionErrorGeneric: "Мэдэгдэл устгахад алдаа гарлаа.",
+    notificationDeletionErrorFirebase: "Firestore-оос мэдэгдэл устгахад алдаа гарлаа.",
   },
   cn: {
     bookNowButton: "立即预订",
@@ -791,6 +799,15 @@ const translations: Record<Language, Record<string, string>> = {
     day: "天",
     loadingOrders: "正在加载订单...",
     status: "状态",
+    // Notification Deletion
+    deleteNotification: "删除通知",
+    confirmDeletionTitle: "确认删除吗？",
+    confirmDeletionNotificationDesc: "您确定要删除此通知吗？此操作无法撤销。",
+    deleteButtonConfirm: "删除",
+    notificationDeletedSuccessTitle: "成功",
+    notificationDeletedSuccessDesc: "通知已删除。",
+    notificationDeletionErrorGeneric: "删除通知时出错。",
+    notificationDeletionErrorFirebase: "从 Firestore 删除通知时出错。",
   },
 };
 
@@ -834,3 +851,6 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
+
+
+    
