@@ -1,24 +1,23 @@
-// Scripts for firebase and firebase messaging
-importScripts('https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js');
+// public/firebase-messaging-sw.js
 
-// Initialize the Firebase app in the service worker by passing in
-// your app's Firebase config object.
-// (Don't forget to replace the config object with your own!)
+// Firebase SDK-ийн шинэ хувилбарыг ашиглах (жишээ нь, v10.x)
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+
+// Firebase аппыг service worker дотор initialize хийх
+// Вэб хуудсандаа Firebase аппаа initialize хийсний дараа service worker-г бүртгэхээ мартуузай.
 const firebaseConfig = {
   apiKey: "AIzaSyASai6a1N3BVpG8n6CMzssFQbxdzzRhdPc",
   authDomain: "setgelzuin-app.firebaseapp.com",
   projectId: "setgelzuin-app",
   storageBucket: "setgelzuin-app.firebasestorage.app",
-  messagingSenderId: "397784045864",
+  messagingSenderId: "397784045864", // Энэ ID нь таны Firebase төслийн Sender ID-тай таарч байх ёстой!
   appId: "1:397784045864:web:dd035abe90938e4725581d",
   measurementId: "G-GNT80QXXF4"
 };
 
 firebase.initializeApp(firebaseConfig);
 
-// Retrieve an instance of Firebase Messaging so that it can handle background
-// messages.
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
@@ -26,38 +25,43 @@ messaging.onBackgroundMessage((payload) => {
     '[firebase-messaging-sw.js] Received background message ',
     payload
   );
-  // Customize notification here
-  const notificationTitle = payload.notification?.title || 'New Message';
+  // Энд notification-г өөрийн хүссэнээр тохируулж болно
+  const notificationTitle = payload.notification?.title || 'Шинэ Мэдэгдэл';
   const notificationOptions = {
-    body: payload.notification?.body || '',
-    icon: payload.notification?.icon || '/icons/icon-192x192.png', // Default icon
-    data: payload.data // This allows you to pass data to the onnotificationclick handler
+    body: payload.notification?.body || 'Танд шинэ мэдэгдэл ирлээ.',
+    icon: payload.notification?.icon || '/icons/icon-192x192.png', // Өөрийн icon-ий замыг зааж өгнө үү
+    data: payload.data // Энэ нь notification click хийх үед data-г ашиглах боломжийг олгоно
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Optional: Handle notification click
+// Нэмэлт: Notification click хийх үйлдэл
 self.addEventListener('notificationclick', (event) => {
   console.log('[firebase-messaging-sw.js] Notification click Received.', event.notification);
 
   event.notification.close();
 
-  // This looks to see if the current is already open and
-  // focuses, if it isn't, it opens a new window.
-  // You can customize this behavior as you see fit.
-  const urlToOpen = event.notification.data?.url || '/'; // Get URL from data or default
-  event.waitUntil(clients.matchAll({
-    type: 'window'
-  }).then((clientList) => {
-    for (let i = 0; i < clientList.length; i++) {
-      const client = clientList[i];
-      if (client.url === urlToOpen && 'focus' in client) {
-        return client.focus();
-      }
-    }
-    if (clients.openWindow) {
-      return clients.openWindow(urlToOpen);
-    }
-  }));
+  // Энэ хэсэг нь нээлттэй байгаа цонхыг фокуслахыг оролдоно
+  event.waitUntil(
+    clients
+      .matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      })
+      .then((clientList) => {
+        // Хэрэв notification data дотор URL байвал тэр URL-г нээнэ
+        const urlToOpen = event.notification.data?.url || '/'; // URL байхгүй бол үндсэн хуудас руу
+
+        for (const client of clientList) {
+          if (client.url === urlToOpen && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Хэрэв тохирох client олдвол эсвэл шинэ цонх нээх боломжтой бол
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
 });

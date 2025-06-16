@@ -1,4 +1,3 @@
-
 // lib/firebase.ts
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
@@ -53,40 +52,40 @@ export const requestForToken = async (): Promise<string | null> => {
     return null;
   }
 
+  // =====================================================================================
+  // !!! ЧУХАЛ: ЭНЭ ХЭСЭГТ ӨӨРИЙН FIREBASE ТӨСЛИЙН ЖИНХЭНЭ VAPID KEY-Г ОРУУЛНА УУ !!!
+  // Firebase Console > Project Settings > Cloud Messaging таб > Web Push certificates хэсэгт "Key pair" гэсэн утгыг хуулж авна.
+  // =====================================================================================
+  const vapidKeyFromServer = "TH8etw_bcQc_GGSMbcUUrgPNXHjylTtSSJmVi_J2SSU"; // <-- ӨМНӨХ УТГААР ҮЛДЭЭЛЭЭ. ШАЛГААРАЙ!
+
+  // Хэрэв VAPID key-г огт оруулаагүй бол анхааруулга гаргана.
+  // Энэ хэсгийг хэвээр үлдээх эсвэл устгаж болно, учир нь та key-гээ оруулсан.
+  if (vapidKeyFromServer === "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE_PLEASE_REPLACE") {
+      console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+      console.error("VAPID Key оруулаагүй байна! src/lib/firebase.ts файлыг засна уу.");
+      console.error("Firebase Console > Project Settings > Cloud Messaging > Web Push certificates -> Key pair");
+      console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+      return null;
+  }
+  
+  console.log("Attempting to get FCM token with VAPID key:", vapidKeyFromServer); // Log the key being used
+
   try {
-    // =====================================================================================
-    // !!! ЧУХАЛ: ЭНЭ ХЭСЭГТ ӨӨРИЙН FIREBASE ТӨСЛИЙН ЖИНХЭНЭ VAPID KEY-Г ОРУУЛНА УУ !!!
-    // Firebase Console > Project Settings > Cloud Messaging таб > Web Push certificates хэсэгт "Key pair" гэсэн утгыг хуулж авна.
-    // =====================================================================================
-    const vapidKeyFromServer = "TH8etw_bcQc_GGSMbcUUrgPNXHjylTtSSJmVi_J2SSU"; // <-- ЭНЭ ХЭСГИЙГ ӨӨРИЙН KEY-Р СОЛИНО УУ!
-
-    if (vapidKeyFromServer === "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE") {
-        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        console.error("VAPID Key оруулаагүй байна! src/lib/firebase.ts файлыг засна уу.");
-        console.error("Firebase Console > Project Settings > Cloud Messaging > Web Push certificates -> Key pair");
-        console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        return null;
-    }
-
     const currentToken = await getToken(messagingInstance, {
       vapidKey: vapidKeyFromServer
     });
 
     if (currentToken) {
       console.log('✅ FCM Token:', currentToken);
-      // Та энд токеныг сервер лүү илгээж хадгалж болно
-      // Example: sendTokenToServer(currentToken);
       return currentToken;
     } else {
-      console.warn('🚫 Токен авах боломжгүй байна. Permission асуух хэрэгтэй.');
+      console.warn('🚫 Токен авах боломжгүй байна. Notification permission шаардлагатай эсвэл VAPID key буруу байж магадгүй.');
       return null;
     }
   } catch (err) {
     console.error('❌ FCM токен авахад алдаа гарлаа:', err);
-    // InvalidAccessError: Failed to execute 'subscribe' on 'PushManager': The provided applicationServerKey is not valid.
-    // Энэ алдаа нь ихэвчлэн VAPID key буруу үед гардаг.
-    if (err instanceof Error && err.name === 'InvalidAccessError') {
-        console.error('❗️ VAPID key буруу байх магадлалтай. Firebase Console-оос авсан Key pair-г шалгана уу.');
+    if (err instanceof Error && (err.name === 'InvalidAccessError' || err.message.includes("applicationServerKey is not valid"))) {
+        console.error('❗️ VAPID key буруу байх магадлалтай. Firebase Console-оос авсан Key pair-г дахин шалгана уу. Ашиглаж буй key:', vapidKeyFromServer);
     }
     return null;
   }
@@ -97,7 +96,6 @@ export const onMessageListener = (): Promise<any> =>
   new Promise((resolve) => {
     if (!messagingInstance) {
       console.warn('Firebase Messaging is not initialized. Cannot listen for messages.');
-      // Resolve with null or an empty object if messaging is not available
       return resolve(null); 
     }
     onMessage(messagingInstance, (payload) => {
