@@ -11,8 +11,8 @@ import { SearchBar } from "@/components/SearchBar";
 import { ServiceCard } from "@/components/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
-import type { RecommendedItem } from "@/types";
-import { collection, getDocs, query, where, type Query as FirestoreQueryType } from "firebase/firestore"; // Renamed Query
+import type { RecommendedItem, ItemType } from "@/types";
+import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function FactoriesPage() {
@@ -25,28 +25,38 @@ export default function FactoriesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchFactories = async () => {
+    const fetchFactoryEntries = async () => {
       setLoading(true);
       setError(null);
       try {
-        const factoriesRef = collection(db, "factories");
-        let q: FirestoreQueryType;
+        const entriesRef = collection(db, "entries");
+        const queryConstraints = [where("categoryName", "==", "factories")];
 
         if (selectedCity && selectedCity.value !== "all") {
-          q = query(factoriesRef, where("city", "==", selectedCity.value));
-        } else {
-          q = query(factoriesRef); // Fetch all if "all" or no city selected
+          queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
         
+        const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
         const snapshot = await getDocs(q);
-        const items: RecommendedItem[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<RecommendedItem, "id">),
-          itemType: 'factory' // Explicitly add itemType
-        }));
+
+        const items: RecommendedItem[] = snapshot.docs.map(doc => {
+          const entryData = doc.data();
+          const nestedData = entryData.data || {};
+          return {
+            id: doc.id,
+            name: nestedData.title || t('serviceUnnamed'),
+            imageUrl: nestedData['nuur-zurag-url'] || undefined,
+            description: nestedData.setgegdel || '',
+            location: nestedData.khot || undefined,
+            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+            price: nestedData.price,
+            itemType: entryData.categoryName as ItemType, // This will be "factories"
+            dataAiHint: nestedData.dataAiHint || "factory item",
+          } as RecommendedItem;
+        });
         setRecommendations(items);
       } catch (err: any) {
-        console.error("Error fetching factories:", err);
+        console.error("Error fetching factory entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа");
       } finally {
         setLoading(false);
@@ -54,7 +64,7 @@ export default function FactoriesPage() {
     };
 
     if(selectedCity){
-        fetchFactories();
+        fetchFactoryEntries();
     } else {
         setLoading(false);
         setRecommendations([]);

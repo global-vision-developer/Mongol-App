@@ -12,10 +12,10 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
 
-import { collection, getDocs, query, where, type Query as FirestoreQueryType } from "firebase/firestore"; // Renamed Query
+import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
-import type { RecommendedItem } from "@/types";
+import type { RecommendedItem, ItemType } from "@/types";
 
 export default function HotelsPage() {
   const { t } = useTranslation();
@@ -27,7 +27,7 @@ export default function HotelsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchHotels = async () => {
+    const fetchHotelEntries = async () => {
       setLoading(true);
       setError(null);
 
@@ -38,25 +38,35 @@ export default function HotelsPage() {
           return;
         }
 
-        const hotelsRef = collection(db, "hotels");
-        let q: FirestoreQueryType;
-
-        if (selectedCity.value === "all") {
-          q = query(hotelsRef);
-        } else {
-          q = query(hotelsRef, where("city", "==", selectedCity.value));
+        const entriesRef = collection(db, "entries");
+        const queryConstraints = [where("categoryName", "==", "hotels")];
+        
+        if (selectedCity.value !== "all") {
+          queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
 
+        const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
+        
         const snapshot = await getDocs(q);
-        const items: RecommendedItem[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<RecommendedItem, "id">),
-          itemType: 'hotel' // Explicitly add itemType
-        }));
+        const items: RecommendedItem[] = snapshot.docs.map(doc => {
+          const entryData = doc.data();
+          const nestedData = entryData.data || {};
+          return {
+            id: doc.id,
+            name: nestedData.title || t('serviceUnnamed'),
+            imageUrl: nestedData['nuur-zurag-url'] || undefined,
+            description: nestedData.setgegdel || '',
+            location: nestedData.khot || undefined,
+            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+            price: nestedData.price,
+            itemType: entryData.categoryName as ItemType,
+            dataAiHint: nestedData.dataAiHint || "hotel item",
+          } as RecommendedItem;
+        });
 
         setRecommendations(items);
       } catch (err: any) {
-        console.error("Error fetching hotels:", err);
+        console.error("Error fetching hotel entries:", err);
         setError(
           typeof err === "string"
             ? err
@@ -67,7 +77,7 @@ export default function HotelsPage() {
       }
     };
 
-    fetchHotels();
+    fetchHotelEntries();
   }, [selectedCity, t]);
 
   return (

@@ -12,8 +12,8 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { HospitalCategoryGrid } from "@/components/services/HospitalCategoryGrid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
-import type { RecommendedItem } from "@/types";
-import { collection, getDocs, query, where, type Query as FirestoreQueryType } from "firebase/firestore"; // Renamed Query
+import type { RecommendedItem, ItemType } from "@/types";
+import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function HospitalsPage() {
@@ -26,28 +26,38 @@ export default function HospitalsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchHospitals = async () => {
+    const fetchHospitalEntries = async () => {
       setLoading(true);
       setError(null);
       try {
-        const hospitalsRef = collection(db, "hospitals");
-        let q: FirestoreQueryType;
+        const entriesRef = collection(db, "entries");
+        const queryConstraints = [where("categoryName", "==", "hospitals")];
         
         if (selectedCity && selectedCity.value !== "all") {
-          q = query(hospitalsRef, where("city", "==", selectedCity.value));
-        } else {
-          q = query(hospitalsRef); // Fetch all if "all" or no city selected
+          queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
 
+        const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
         const snapshot = await getDocs(q);
-        const items: RecommendedItem[] = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...(doc.data() as Omit<RecommendedItem, "id">),
-          itemType: 'hospital' // Explicitly add itemType
-        }));
+
+        const items: RecommendedItem[] = snapshot.docs.map(doc => {
+          const entryData = doc.data();
+          const nestedData = entryData.data || {};
+          return {
+            id: doc.id,
+            name: nestedData.title || t('serviceUnnamed'),
+            imageUrl: nestedData['nuur-zurag-url'] || undefined,
+            description: nestedData.setgegdel || '',
+            location: nestedData.khot || undefined,
+            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+            price: nestedData.price,
+            itemType: entryData.categoryName as ItemType, // This will be "hospitals"
+            dataAiHint: nestedData.dataAiHint || "hospital item",
+          } as RecommendedItem;
+        });
         setRecommendations(items);
       } catch (err: any) {
-        console.error("Error fetching hospitals:", err);
+        console.error("Error fetching hospital entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа");
       } finally {
         setLoading(false);
@@ -55,7 +65,7 @@ export default function HospitalsPage() {
     };
 
     if(selectedCity){
-        fetchHospitals();
+        fetchHospitalEntries();
     } else {
         setLoading(false);
         setRecommendations([]);
@@ -87,7 +97,6 @@ export default function HospitalsPage() {
       </div>
       
       <div className="px-1">
-        {/* Results title, similar to hotels page 'All' section, could be dynamic based on category later */}
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('allHospitalsSectionTitle')}</h2>
         
         {loading && (

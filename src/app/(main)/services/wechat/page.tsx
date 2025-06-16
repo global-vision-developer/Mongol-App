@@ -12,9 +12,9 @@ import { WeChatCategoryGrid } from "@/components/services/WeChatCategoryGrid";
 import { ServiceCard } from "@/components/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
-import { collection, getDocs, query, where, type Query as FirestoreQueryType } from "firebase/firestore"; // Renamed Query
+import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { RecommendedItem } from "@/types";
+import type { RecommendedItem, ItemType } from "@/types";
 
 export default function WeChatPage() {
   const { t } = useTranslation();
@@ -26,37 +26,49 @@ export default function WeChatPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchItems = async () => {
+    const fetchWeChatEntries = async () => {
       setLoading(true);
       setError(null);
       try {
-        const itemsRef = collection(db, "wechatItems");
-        let q: FirestoreQueryType;
+        const entriesRef = collection(db, "entries");
+        const queryConstraints = [where("categoryName", "==", "wechat")]; // Assuming categoryName is "wechat"
 
         if (selectedCity && selectedCity.value !== "all") {
-          q = query(itemsRef, where("city", "==", selectedCity.value));
-        } else {
-          q = query(itemsRef); // Fetch all if "all" or no city selected
+          queryConstraints.push(where("data.khot", "==", selectedCity.value)); // Assuming city is in data.khot
         }
 
+        const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
         const snapshot = await getDocs(q);
-        const data: RecommendedItem[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<RecommendedItem, "id">),
-          itemType: 'wechat' // Explicitly add itemType
-        })) as RecommendedItem[];
+        
+        const data: RecommendedItem[] = snapshot.docs.map((doc) => {
+          const entryData = doc.data();
+          const nestedData = entryData.data || {};
+          return {
+            id: doc.id,
+            name: nestedData.title || t('serviceUnnamed'),
+            imageUrl: nestedData['nuur-zurag-url'] || undefined,
+            description: nestedData.setgegdel || '',
+            location: nestedData.khot || undefined,
+            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+            price: nestedData.price,
+            itemType: entryData.categoryName as ItemType, // This will be "wechat"
+            dataAiHint: nestedData.dataAiHint || "wechat item",
+            wechatId: nestedData.wechatId, // Specific to WeChat items
+            wechatQrImageUrl: nestedData.wechatQrImageUrl, // Specific to WeChat items
+          } as RecommendedItem;
+        });
 
         setProductItems(data);
       } catch (err: any) {
-        console.error("Error fetching WeChat items:", err);
+        console.error("Error fetching WeChat entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа.");
       } finally {
         setLoading(false);
       }
     };
     
-    if(selectedCity){ // Fetch only if selectedCity is defined
-        fetchItems();
+    if(selectedCity){ 
+        fetchWeChatEntries();
     } else {
         setLoading(false);
         setProductItems([]);

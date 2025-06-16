@@ -9,11 +9,11 @@ import { ServiceGroupGrid } from "@/components/ServiceGroupGrid";
 import { RecommendedCarouselSection } from "@/components/RecommendedCarouselSection";
 import { ServiceCard } from "@/components/ServiceCard";
 import { useTranslation } from "@/hooks/useTranslation";
-import { collection, getDocs, limit, query, where, type Query, type DocumentData } from "firebase/firestore";
+import { collection, getDocs, limit, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { RecommendedItem, ItemType } from "@/types";
 import { useCity } from "@/contexts/CityContext";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
@@ -37,23 +37,44 @@ export default function HomePage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    const fetchCollection = async (collectionName: string, itemType: ItemType, count: number, cityValue?: string): Promise<RecommendedItem[]> => {
-      const collectionRef = collection(db, collectionName);
-      let firestoreQuery: Query<DocumentData>;
+    const fetchEntriesByCategory = async (
+      categoryNameFilter: string,
+      count: number,
+      cityValue?: string
+    ): Promise<RecommendedItem[]> => {
+      const entriesRef = collection(db, "entries");
+      let firestoreQuery: FirestoreQueryType<DocumentData>;
 
+      const queryConstraints = [where("categoryName", "==", categoryNameFilter)];
       if (cityValue && cityValue !== "all") {
-        firestoreQuery = query(collectionRef, where("city", "==", cityValue), limit(count));
-      } else {
-        firestoreQuery = query(collectionRef, limit(count));
+        queryConstraints.push(where("data.khot", "==", cityValue));
       }
+      queryConstraints.push(limit(count));
+
+      firestoreQuery = query(entriesRef, ...queryConstraints);
+      
       const snapshot = await getDocs(firestoreQuery);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), itemType } as RecommendedItem));
+      return snapshot.docs.map(doc => {
+        const entryData = doc.data();
+        const nestedData = entryData.data || {};
+        return { 
+          id: doc.id, 
+          name: nestedData.title || t('serviceUnnamed'),
+          imageUrl: nestedData['nuur-zurag-url'] || undefined,
+          description: nestedData.setgegdel || '',
+          location: nestedData.khot || undefined,
+          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+          price: nestedData.price, // Assuming price might be in nestedData.price
+          itemType: entryData.categoryName as ItemType,
+          dataAiHint: nestedData.dataAiHint || `${entryData.categoryName} item`,
+          // Add other fields from nestedData as needed by RecommendedItem
+        } as RecommendedItem;
+      });
     };
 
     const fetchData = async () => {
       if (!selectedCity) {
         setDataLoading(false);
-        // Clear data if no city is selected (or handle as per your app's logic)
         setTranslators([]);
         setHotels([]);
         setMarkets([]);
@@ -74,13 +95,13 @@ export default function HomePage() {
           embassiesData,
           wechatData,
         ] = await Promise.all([
-          fetchCollection("translators", 'translator', 8, selectedCity?.value),
-          fetchCollection("hotels", 'hotel', 8, selectedCity?.value),
-          fetchCollection("markets", 'market', 8, selectedCity?.value),
-          fetchCollection("factories", 'factory', 8, selectedCity?.value),
-          fetchCollection("hospitals", 'hospital', 8, selectedCity?.value),
-          fetchCollection("embassies", 'embassy', 8, selectedCity?.value),
-          fetchCollection("wechatItems", 'wechat', 8, selectedCity?.value),
+          fetchEntriesByCategory("translators", 8, selectedCity?.value),
+          fetchEntriesByCategory("hotels", 8, selectedCity?.value),
+          fetchEntriesByCategory("markets", 8, selectedCity?.value),
+          fetchEntriesByCategory("factories", 8, selectedCity?.value),
+          fetchEntriesByCategory("hospitals", 8, selectedCity?.value),
+          fetchEntriesByCategory("embassies", 8, selectedCity?.value),
+          fetchEntriesByCategory("wechat", 8, selectedCity?.value), // Assuming categoryName for wechat is "wechat"
         ]);
         
         setTranslators(translatorsData);
@@ -98,9 +119,9 @@ export default function HomePage() {
       }
     };
 
-    if (user) { // Only fetch if user is logged in
+    if (user) { 
       fetchData();
-    } else if (!authLoading && !user) { // If not loading and no user, stop data loading
+    } else if (!authLoading && !user) { 
       setDataLoading(false);
       setTranslators([]);
       setHotels([]);
@@ -110,12 +131,11 @@ export default function HomePage() {
       setEmbassies([]);
       setWeChatItems([]);
     }
-  }, [user, selectedCity, authLoading]); // Added authLoading to dependencies
+  }, [user, selectedCity, authLoading, t]);
 
   const renderServiceItem = (item: RecommendedItem) => <ServiceCard item={item} />;
   const narrowerCarouselItemWidthClass = "w-[calc(46%-0.375rem)] sm:w-[calc(46%-0.5rem)]";
 
-  // Revised loading condition
   const showFullPageLoader = authLoading || 
                              (!user && !authLoading) || 
                              (user && dataLoading && 

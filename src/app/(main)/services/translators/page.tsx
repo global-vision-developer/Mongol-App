@@ -12,40 +12,73 @@ import { SearchBar } from "@/components/SearchBar";
 import { TranslatorCard } from "@/components/services/TranslatorCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
-import { collection, getDocs, query, where, type Query } from "firebase/firestore"; 
+import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore"; 
 import { db } from "@/lib/firebase";
-import type { Translator } from "@/types";
+import type { Translator, ItemType } from "@/types"; // Translator might need to be adjusted or mapped to RecommendedItem
 
 export default function TranslatorsPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const { selectedCity } = useCity();
 
-  const [translators, setTranslators] = useState<Translator[]>([]);
+  const [translators, setTranslators] = useState<Translator[]>([]); // Using Translator type, ensure it matches data structure
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchTranslators = async () => {
+    const fetchTranslatorEntries = async () => {
       setLoading(true);
       setError(null);
       try {
-        const ref = collection(db, "translators");
-        let q: Query;
+        const entriesRef = collection(db, "entries");
+        const queryConstraints = [
+          where("categoryName", "==", "translators"),
+          where("data.isActive", "==", true) // Assuming isActive is in nested data
+        ];
+
         if (selectedCity && selectedCity.value !== "all") {
-          q = query(ref, where("city", "==", selectedCity.value), where("isActive", "==", true));
-        } else {
-          q = query(ref, where("isActive", "==", true)); 
+          // Assuming city for translators is stored in data.currentCityInChina or data.city
+          // This might need adjustment based on actual data structure for translators in "entries"
+          queryConstraints.push(where("data.currentCityInChina", "==", selectedCity.value)); 
         }
+        
+        const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
         const snapshot = await getDocs(q);
-        const translatorsData: Translator[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Translator[];
+        
+        const translatorsData: Translator[] = snapshot.docs.map((doc) => {
+          const entryData = doc.data();
+          const nestedData = entryData.data || {};
+          return {
+            id: doc.id,
+            uid: nestedData.uid || doc.id, // Assuming uid might be in nested data or use doc.id
+            name: nestedData.name || nestedData.title || t('serviceUnnamed'),
+            photoUrl: nestedData.photoUrl || nestedData['nuur-zurag-url'],
+            nationality: nestedData.nationality,
+            inChinaNow: nestedData.inChinaNow,
+            yearsInChina: nestedData.yearsInChina,
+            currentCityInChina: nestedData.currentCityInChina,
+            chineseExamTaken: nestedData.chineseExamTaken,
+            speakingLevel: nestedData.speakingLevel,
+            writingLevel: nestedData.writingLevel,
+            workedAsTranslator: nestedData.workedAsTranslator,
+            translationFields: nestedData.translationFields,
+            canWorkInOtherCities: nestedData.canWorkInOtherCities,
+            dailyRate: nestedData.dailyRate,
+            chinaPhoneNumber: nestedData.chinaPhoneNumber,
+            wechatId: nestedData.wechatId,
+            city: nestedData.city || nestedData.currentCityInChina, // Fallback for city
+            rating: nestedData.rating || nestedData.unelgee,
+            description: nestedData.description || nestedData.setgegdel,
+            itemType: entryData.categoryName as ItemType, // Should be "translator"
+            isActive: nestedData.isActive,
+            reviewCount: nestedData.reviewCount,
+            // Ensure all fields expected by TranslatorCard and Translator type are mapped
+          } as Translator;
+        });
         
         setTranslators(translatorsData);
       } catch (err) {
-        console.error("Error fetching translators:", err);
+        console.error("Error fetching translator entries:", err);
         setError(t('fetchErrorGeneric') || "Алдаа гарлаа. Түр хүлээнэ үү.");
       } finally {
         setLoading(false);
@@ -53,7 +86,7 @@ export default function TranslatorsPage() {
     };
 
     if(selectedCity){ 
-        fetchTranslators();
+        fetchTranslatorEntries();
     } else {
         setLoading(false); 
         setTranslators([]);
@@ -62,7 +95,6 @@ export default function TranslatorsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header Section */}
       <div className="flex items-center justify-between sticky top-0 z-10 bg-background py-3 md:relative md:py-0">
         <Button variant="ghost" size="icon" onClick={() => router.back()} className="md:hidden">
           <ArrowLeft className="h-6 w-6" />
@@ -78,7 +110,6 @@ export default function TranslatorsPage() {
         </Button>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col md:flex-row gap-2 px-1">
         <CitySelector />
         <div className="flex-grow">
@@ -86,13 +117,12 @@ export default function TranslatorsPage() {
         </div>
       </div>
 
-      {/* Results */}
       <div className="px-1">
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('translatorsSectionTitle')}</h2>
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => ( // Increased skeleton count for better loading feel
+            {[...Array(8)].map((_, i) => (
               <div key={`skeleton-${i}`} className="flex flex-col space-y-2">
                 <Skeleton className="aspect-[3/4] w-full rounded-lg" aria-hidden />
                 <Skeleton className="h-4 w-3/4" />
