@@ -1,3 +1,4 @@
+
 // lib/firebase.ts
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
@@ -53,14 +54,13 @@ export const requestForToken = async (): Promise<string | null> => {
   }
 
   // =====================================================================================
-  // !!! ЧУХАЛ: ЭНЭ ХЭСЭГТ ӨӨРИЙН FIREBASE ТӨСЛИЙН ЖИНХЭНЭ VAPID KEY-Г ОРУУЛНА УУ !!!
-  // Firebase Console > Project Settings > Cloud Messaging таб > Web Push certificates хэсэгт "Key pair" гэсэн утгыг хуулж авна.
+  // ЭНЭ БОЛ ТАНЫ FIREBASE ТӨСЛИЙН ЖИНХЭНЭ VAPID KEY (PUBLIC KEY PAIR)
+  // Firebase Console > Project Settings > Cloud Messaging таб > Web Push certificates хэсэгт "Key pair" гэсэн утга.
   // =====================================================================================
-  const vapidKeyFromServer = "TH8etw_bcQc_GGSMbcUUrgPNXHjylTtSSJmVi_J2SSU"; // <-- ӨМНӨХ УТГААР ҮЛДЭЭЛЭЭ. ШАЛГААРАЙ!
+  const vapidKeyFromServer = "BNz9Zeh0p8jBbVb9lb_JudJkS5kfKl6-xkezgpEoomhJQ6vn1GyRAPst2W2FJ-H-I3f2kD_KwEU1tE73gB5ledQ";
 
-  // Хэрэв VAPID key-г огт оруулаагүй бол анхааруулга гаргана.
-  // Энэ хэсгийг хэвээр үлдээх эсвэл устгаж болно, учир нь та key-гээ оруулсан.
-  if (vapidKeyFromServer === "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE_PLEASE_REPLACE") {
+  // Sanity check to ensure a real key is being used (optional, can be removed)
+  if (vapidKeyFromServer === "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE") {
       console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
       console.error("VAPID Key оруулаагүй байна! src/lib/firebase.ts файлыг засна уу.");
       console.error("Firebase Console > Project Settings > Cloud Messaging > Web Push certificates -> Key pair");
@@ -68,7 +68,7 @@ export const requestForToken = async (): Promise<string | null> => {
       return null;
   }
   
-  console.log("Attempting to get FCM token with VAPID key:", vapidKeyFromServer); // Log the key being used
+  console.log("Attempting to get FCM token with VAPID key:", vapidKeyFromServer);
 
   try {
     const currentToken = await getToken(messagingInstance, {
@@ -84,8 +84,8 @@ export const requestForToken = async (): Promise<string | null> => {
     }
   } catch (err) {
     console.error('❌ FCM токен авахад алдаа гарлаа:', err);
-    if (err instanceof Error && (err.name === 'InvalidAccessError' || err.message.includes("applicationServerKey is not valid"))) {
-        console.error('❗️ VAPID key буруу байх магадлалтай. Firebase Console-оос авсан Key pair-г дахин шалгана уу. Ашиглаж буй key:', vapidKeyFromServer);
+    if (err instanceof Error && (err.message.includes('InvalidAccessError') || err.message.includes("applicationServerKey is not valid"))) {
+        console.error('❗️ VAPID key буруу байх магадлалтай. Ашиглаж буй key:', vapidKeyFromServer, ' Firebase Console-оос авсан Key pair-г дахин шалгана уу.');
     }
     return null;
   }
