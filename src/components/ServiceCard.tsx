@@ -7,32 +7,95 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Star, Heart, MapPin } from "lucide-react";
 import type { RecommendedItem } from '@/types';
-import React, { useState, useEffect } from 'react'; // Ensured React is imported
+import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
+import { doc, setDoc, deleteDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from "@/hooks/use-toast";
+
 
 interface ServiceCardProps {
   item: RecommendedItem;
   className?: string;
 }
 
-// Original function name changed to avoid conflict, or make it internal
 function ServiceCardComponent({ item, className }: ServiceCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { user } = useAuth();
+  const { toast } = useToast();
   const { t } = useTranslation();
+  
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isProcessingFavorite, setIsProcessingFavorite] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  const checkFavoriteStatus = useCallback(async () => {
+    if (!user || !item.id || !isMounted) return;
+    setIsProcessingFavorite(true);
+    try {
+      const favDocRef = doc(db, "users", user.uid, "savedItems", item.id);
+      const docSnap = await getDoc(favDocRef);
+      setIsFavorite(docSnap.exists());
+    } catch (error) {
+      console.error("Error checking favorite status:", error);
+      // Do not show toast for this type of error on load
+    } finally {
+      setIsProcessingFavorite(false);
+    }
+  }, [user, item.id, isMounted]);
+
 
   useEffect(() => {
     setIsMounted(true);
-    // In a real app, check favorite status from user data
   }, []);
 
+  useEffect(() => {
+    if (isMounted && user && item.id) {
+      checkFavoriteStatus();
+    } else if (!user) {
+      setIsFavorite(false); // Reset if user logs out
+    }
+  }, [user, item.id, checkFavoriteStatus, isMounted]);
 
-  const toggleFavorite = (e: React.MouseEvent) => {
+
+  const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
-    // API call to update favorite status
+
+    if (!user) {
+      toast({ title: t('loginToProceed'), description: t('loginToSave'), variant: "destructive" });
+      return;
+    }
+    if (!item || !item.id) return;
+
+    setIsProcessingFavorite(true);
+    const favDocRef = doc(db, "users", user.uid, "savedItems", item.id);
+
+    try {
+      if (isFavorite) {
+        await deleteDoc(favDocRef);
+        setIsFavorite(false);
+        toast({ title: t('itemRemovedFromSaved') });
+      } else {
+        // Ensure all necessary fields from RecommendedItem are saved
+        const itemToSave: any = { ...item };
+        delete itemToSave.id; // Don't save the ID as a field in the document if it's the doc ID
+        
+        await setDoc(favDocRef, {
+          ...itemToSave,
+          savedAt: serverTimestamp(),
+          itemType: item.itemType, // Ensure itemType is explicitly saved
+        });
+        setIsFavorite(true);
+        toast({ title: t('itemSaved') });
+      }
+    } catch (error) {
+      console.error("Error updating favorite status:", error);
+      toast({ title: isFavorite ? t('errorRemovingItem') : t('errorSavingItem'), variant: "destructive" });
+    } finally {
+      setIsProcessingFavorite(false);
+    }
   };
 
   const ratingNumber = typeof item.rating === "number" ? item.rating : null;
@@ -67,7 +130,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
   }
 
   const cardItselfIsLink = !!detailPageLink;
-  const placeholderImage = `https://placehold.co/400x250.png?text=${encodeURIComponent(item.name || t('serviceUnnamed'))}`;
+  const placeholderImage = `https://placehold.co/400x300.png?text=${encodeURIComponent(item.name || t('serviceUnnamed'))}`;
   const imageUrlToDisplay = item.imageUrl || placeholderImage;
   const shouldUnoptimize = item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com');
 
@@ -75,15 +138,17 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
   const cardContent = (
     <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg h-full group", className)}>
       <CardHeader className="p-0 relative">
-        <Image
-          src={imageUrlToDisplay}
-          alt={item.name || t('serviceImageDefaultAlt')}
-          width={400}
-          height={250}
-          className="w-full h-48 object-cover"
-          data-ai-hint={item.dataAiHint || "item image"}
-          unoptimized={shouldUnoptimize}
-        />
+        <div className="relative aspect-[3/4] w-full">
+            <Image
+                src={imageUrlToDisplay}
+                alt={item.name || t('serviceImageDefaultAlt')}
+                fill
+                className="object-cover"
+                data-ai-hint={item.dataAiHint || "item image"}
+                unoptimized={shouldUnoptimize}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" // Example sizes, adjust as needed
+            />
+        </div>
         {isMounted && (
           <Button
             size="icon"
@@ -94,44 +159,51 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
             )}
             onClick={toggleFavorite}
             aria-label={isFavorite ? t('removeFromFavorites') : t('addToFavorites')}
+            disabled={isProcessingFavorite}
           >
             <Heart className={cn("h-5 w-5", isFavorite && "fill-destructive")} />
           </Button>
         )}
       </CardHeader>
-      <CardContent className="p-4 flex-grow">
-        <CardTitle className="text-lg font-headline mb-1 line-clamp-2 group-hover:text-primary">{item.name || t('serviceUnnamed')}</CardTitle>
-        {item.location && (
-          <div className="flex items-center text-xs text-muted-foreground mb-1">
-            <MapPin className="h-3 w-3 mr-1 shrink-0" />
-            <span className="line-clamp-1">{item.location}</span>
-          </div>
-        )}
-        <CardDescription className="text-sm line-clamp-3 mb-2">{item.description || ''}</CardDescription>
+      <CardContent className="p-3 flex-grow flex flex-col justify-between"> {/* Changed padding to p-3 and added flex-col justify-between */}
+        <div>
+            <CardTitle className="text-base font-headline mb-1 line-clamp-2 group-hover:text-primary">{item.name || t('serviceUnnamed')}</CardTitle> {/* text-lg to text-base */}
+            {item.location && (
+            <div className="flex items-center text-xs text-muted-foreground mb-1">
+                <MapPin className="h-3 w-3 mr-1 shrink-0" />
+                <span className="line-clamp-1">{item.location}</span>
+            </div>
+            )}
+            <CardDescription className="text-xs line-clamp-2 mb-2">{item.description || ''}</CardDescription> {/* text-sm to text-xs, line-clamp-3 to line-clamp-2 */}
+        </div>
+        
+        <div className="flex justify-between items-center mt-2"> {/* Moved rating and button to a new div for bottom alignment */}
+            {ratingNumber !== null && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground"> {/* text-sm to text-xs */}
+                <Star className="h-4 w-4 text-accent fill-accent" />
+                <span>{ratingNumber.toFixed(1)}</span>
+            </div>
+            )}
+             {/* Spacer to push button to the right if rating is not present */}
+            {ratingNumber === null && <div className="flex-grow"></div>}
+
+            {cardItselfIsLink ? (
+            <span className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-2.5"> {/* text-sm to text-xs, h-9 to h-8, px-3 to px-2.5 */}
+                {t('viewDetails')}
+            </span>
+            ) : (
+            <Button
+                variant="outline"
+                size="sm"
+                disabled={true}
+                className="opacity-50 cursor-not-allowed h-8 px-2.5 text-xs" /* Adjusted size and text */
+            >
+                {t('viewDetails')}
+            </Button>
+            )}
+        </div>
       </CardContent>
-      <CardFooter className="p-4 flex justify-between items-center border-t">
-        {ratingNumber !== null && (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Star className="h-4 w-4 text-accent fill-accent" />
-            <span>{ratingNumber.toFixed(1)}</span>
-          </div>
-        )}
-        {/* Ensure the button is part of the link if detailPageLink exists, or disabled if not */}
-        {cardItselfIsLink ? (
-          <span className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
-            {t('viewDetails')}
-          </span>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={true}
-            className="opacity-50 cursor-not-allowed"
-          >
-            {t('viewDetails')}
-          </Button>
-        )}
-      </CardFooter>
+      {/* CardFooter is removed as its content is moved into CardContent for better layout control */}
     </Card>
   );
 
@@ -147,4 +219,3 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 }
 
 export const ServiceCard = React.memo(ServiceCardComponent);
-
