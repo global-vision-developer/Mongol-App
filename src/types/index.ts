@@ -38,6 +38,12 @@ export interface CarouselBannerItem {
 
 export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight' | 'message' | 'order' | 'update';
 
+export interface ShowcaseItem {
+  description: string;
+  imageUrl: string;
+  name?: string; // Optional name for the showcase item
+  [key: string]: any; // Allow other potential item-specific fields
+}
 
 export interface RecommendedItem {
   id: string;
@@ -52,8 +58,8 @@ export interface RecommendedItem {
   hasWorkedBefore?: boolean;
   possibleFields?: string[];
   availableCities?: string[] | string;
-  price?: number | string; // Can be a string like "100-200" or a number
-  rating?: number;
+  price?: number | string | null; // Can be a string like "100-200" or a number, allow null
+  rating?: number | null; // Allow null
   location?: string;
   primaryLanguage?: string;
   availabilityStatus?: string;
@@ -66,18 +72,21 @@ export interface RecommendedItem {
   currentCityInChina?: string | null;
   chineseExamTaken?: boolean | null;
   translationFields?: TranslationField[];
-  dailyRate?: DailyRateRange;
+  dailyRate?: DailyRateRange | null; // Allow null
   chinaPhoneNumber?: string | null; // Keep for type consistency, but control visibility
   wechatId?: string | null; // Keep for type consistency, but control visibility
   // For WeChat items
   wechatQrImageUrl?: string;
-  // For Hotel items
-  rooms?: Array<{ 
-    description: string; 
-    imageUrl: string; 
-    name?: string; // Optional name for the room type
-    [key: string]: any; // Allow other potential room-specific fields
+  // For Hotel items / Factory items with multiple showcases
+  rooms?: Array<{ // For Hotels
+    description: string;
+    imageUrl: string;
+    name?: string;
+    [key: string]: any;
   }>;
+  showcaseItems?: ShowcaseItem[]; // For Factories or other items with detailed showcases
+  isMainSection?: boolean; // from data.golheseg for factories for example
+  taniltsuulga?: string; // Introduction field specifically for factories if needed
 }
 
 export interface UserProfile {
@@ -187,10 +196,10 @@ export interface Translator {
 
   // Generic fields that might overlap with RecommendedItem, ensure consistency
   city?: string; // This is 'currentCityInChina' if in China, or primary operating city
-  rating?: number;
+  rating?: number | null;
   description?: string; // Could be a short bio
   gender?: 'male' | 'female' | 'other' | null; // From user profile eventually
-  itemType: ItemType; 
+  itemType: ItemType;
 
   idCardFrontImageUrl?: string;
   idCardBackImageUrl?: string;
@@ -208,5 +217,3 @@ export interface Translator {
 export interface SavedPageItem extends RecommendedItem {
   savedAt: Timestamp | any;
 }
-
-    

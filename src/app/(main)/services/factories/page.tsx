@@ -12,16 +12,21 @@ import { ServiceCard } from "@/components/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
 import type { RecommendedItem, ItemType } from "@/types";
-import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
+import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 // Helper function to map Firestore categoryName to singular ItemType for ServiceCard
-const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
+const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
   const lowerCategoryName = categoryName?.toLowerCase();
   switch (lowerCategoryName) {
     case 'factories': return 'factory';
-    // Add other mappings if necessary
-    default: return lowerCategoryName as ItemType; // Fallback
+    case 'hotels': return 'hotel';
+    case 'translators': return 'translator';
+    case 'markets': return 'market';
+    case 'hospitals': return 'hospital';
+    case 'embassies': return 'embassy';
+    case 'wechat': return 'wechat';
+    default: return (lowerCategoryName || 'service') as ItemType; // Fallback, ensure it's a valid ItemType
   }
 };
 
@@ -40,7 +45,10 @@ export default function FactoriesPage() {
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
-        const queryConstraints = [where("categoryName", "==", "factories")]; 
+        const queryConstraints = [
+            where("categoryName", "==", "factories"),
+            limit(20) // Limit to 20 items for performance on listing pages
+        ];
 
         if (selectedCity && selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
@@ -50,7 +58,7 @@ export default function FactoriesPage() {
         const snapshot = await getDocs(q);
 
         const items: RecommendedItem[] = snapshot.docs.map(doc => {
-          const entryData = doc.data();
+          const entryData = doc.data() as DocumentData;
           const nestedData = entryData.data || {};
 
           let finalImageUrl: string | undefined = undefined;
@@ -61,15 +69,16 @@ export default function FactoriesPage() {
 
           return {
             id: doc.id,
-            name: nestedData.name || t('serviceUnnamed'),
+            name: nestedData.name || nestedData.title || t('serviceUnnamed'),
             imageUrl: finalImageUrl,
-            description: nestedData.setgegdel || '',
+            description: nestedData.taniltsuulga || nestedData.setgegdel || '',
             location: nestedData.khot || undefined,
-            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
+            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
             price: nestedData.price === undefined ? null : nestedData.price,
             itemType: mapCategoryToSingularItemType(entryData.categoryName),
             dataAiHint: nestedData.dataAiHint || "factory item",
-            rooms: nestedData.uruunuud || [], // Ensure rooms is always an array
+            isMainSection: typeof nestedData.golheseg === 'boolean' ? nestedData.golheseg : undefined,
+            // showcaseItems and rooms are not typically needed for card view, fetched in detail page
           } as RecommendedItem;
         });
         setRecommendations(items);

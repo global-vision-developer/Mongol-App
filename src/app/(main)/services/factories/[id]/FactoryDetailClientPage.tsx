@@ -8,12 +8,13 @@ import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType } from "@/types";
+import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType, ShowcaseItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ArrowLeft, Star, MapPin, AlertTriangle, Info, ShoppingBag } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
+import { ArrowLeft, Star, MapPin, AlertTriangle, Info, ShoppingBag, PackageSearch } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     if (Array.isArray(value)) {
       displayValue = value.join(', ');
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      displayValue = `${value.toFixed(1)} / 5`;
+      displayValue = `${value.toFixed(1)} / 5`; // Assuming 0-5 scale, adjust if 0-10
     } else {
       displayValue = value.toString();
     }
@@ -66,23 +67,32 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
-            if (entryData.categoryName === itemType) {
+            if (entryData.categoryName === "factories") { // Ensure it's a factory
               const nestedData = entryData.data || {};
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
                 finalImageUrl = rawImageUrl.trim();
               }
+              const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
+                description: detail.description || '',
+                imageUrl: detail.imageUrl || '',
+                name: detail.name || undefined,
+              }));
+
               setItem({
                 id: docSnap.id,
-                name: nestedData.name || t('serviceUnnamed'),
+                name: nestedData.name || nestedData.title || t('serviceUnnamed'),
                 imageUrl: finalImageUrl,
-                description: nestedData.setgegdel || '',
+                description: nestedData.taniltsuulga || nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
-                rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+                rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 price: nestedData.price === undefined ? null : nestedData.price,
-                itemType: entryData.categoryName as ItemType,
+                itemType: 'factory',
                 dataAiHint: nestedData.dataAiHint || "factory item",
+                showcaseItems: showcaseItems,
+                isMainSection: typeof nestedData.golheseg === 'boolean' ? nestedData.golheseg : undefined,
+                taniltsuulga: nestedData.taniltsuulga || undefined,
               } as RecommendedItem);
             } else {
               setItem(null);
@@ -99,7 +109,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
       };
       fetchItem();
     }
-  }, [itemData, params.id, itemType, t]);
+  }, [itemData, params.id, t]);
 
   const handleBookNow = async () => {
     if (!user) {
@@ -117,14 +127,12 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
-        status: 'pending_confirmation',
+        status: 'pending_confirmation', // Or 'confirmed' depending on flow
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "factory exterior machinery",
         amount: item.price === undefined ? null : item.price,
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
-
-      // Removed addPointsToUser call
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -221,8 +229,41 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
-              <DetailItem labelKey="ratingLabel" value={typeof item.rating === 'number' ? item.rating : undefined} icon={Star} />
+              <DetailItem labelKey="ratingLabel" value={item.rating} icon={Star} />
             </div>
+
+            {item.showcaseItems && item.showcaseItems.length > 0 && (
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-xl font-semibold text-foreground flex items-center">
+                  <PackageSearch className="h-6 w-6 mr-2 text-primary"/> {/* Using PackageSearch as a generic icon */}
+                  {t('productShowcaseTitle') || "Бүтээгдэхүүний танилцуулга"}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {item.showcaseItems.map((showcaseItem, index) => (
+                    <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                      <div className="relative aspect-video">
+                        <Image
+                          src={showcaseItem.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(showcaseItem.description || 'Product')}`}
+                          alt={showcaseItem.description || t('productImageAlt') || 'Product image'}
+                          layout="fill"
+                          objectFit="cover"
+                          className="bg-muted"
+                          data-ai-hint={showcaseItem.description ? showcaseItem.description.substring(0,20) : "product item"}
+                          unoptimized={showcaseItem.imageUrl?.startsWith('data:') || showcaseItem.imageUrl?.includes('lh3.googleusercontent.com')}
+                        />
+                      </div>
+                      <CardContent className="p-3">
+                        {showcaseItem.name && <CardTitle className="text-sm font-semibold mb-1 line-clamp-1">{showcaseItem.name}</CardTitle>}
+                        <CardDescription className="text-xs text-muted-foreground line-clamp-2">
+                          {showcaseItem.description || t('noProductDescription') || 'No description available.'}
+                        </CardDescription>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
           </CardContent>
            <CardFooter className="p-4 md:p-6 border-t">
             <Button

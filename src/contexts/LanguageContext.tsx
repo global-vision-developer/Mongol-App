@@ -74,7 +74,7 @@ const translations: Record<Language, Record<string, string>> = {
     mySavedItems: "Миний хадгалсан зүйлс",
     myNotifications: "Миний мэдэгдлүүд",
     // No myProfile, using profilePageTitle instead
-    noOrdersPlaceholder: "Танд одоогоор захиалга байхгүй байна.", 
+    noOrdersPlaceholder: "Танд одоогоор захиалга байхгүй байна.",
     ordersNoPurchasesMade: "Та худалдан авалт хийгээгүй байна",
     ordersNeedsTab: "Хэрэгцээ", // This key might be unused now
     wechatOrdersTab: "WeChat",
@@ -205,6 +205,9 @@ const translations: Record<Language, Record<string, string>> = {
     // Factories Page
     factoriesPageTitle: "Үйлдвэр",
     allFactoriesSectionTitle: "Үйлдвэрүүд",
+    productShowcaseTitle: "Бүтээгдэхүүний танилцуулга",
+    productImageAlt: "Бүтээгдэхүүний зураг",
+    noProductDescription: "Бүтээгдэхүүний тайлбар байхгүй.",
     // Markets Page
     marketsPageTitle: "Зах, худалдаа",
     allMarketsSectionTitle: "Захууд ба худалдааны төвүүд",
@@ -606,6 +609,9 @@ const translations: Record<Language, Record<string, string>> = {
     // Factories Page
     factoriesPageTitle: "工厂",
     allFactoriesSectionTitle: "所有工厂",
+    productShowcaseTitle: "产品展示",
+    productImageAlt: "产品图片",
+    noProductDescription: "暂无产品描述。",
     // Markets Page
     marketsPageTitle: "市场/购物",
     allMarketsSectionTitle: "市场和购物中心",
@@ -859,6 +865,3 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
-
-
-    

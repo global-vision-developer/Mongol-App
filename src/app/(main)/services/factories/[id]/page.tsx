@@ -4,7 +4,7 @@ import FactoryDetailClientPage from './FactoryDetailClientPage';
 import { collection, getDocs, doc, getDoc, type DocumentData, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
-import type { RecommendedItem, ItemType } from '@/types';
+import type { RecommendedItem, ItemType, ShowcaseItem } from '@/types';
 
 async function getItemData(id: string): Promise<RecommendedItem | null> {
   try {
@@ -13,24 +13,34 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
 
     if (docSnap.exists()) {
       const entryData = docSnap.data();
-      if (entryData.categoryName === "factories") { 
+      if (entryData.categoryName === "factories") {
         const nestedData = entryData.data || {};
-        const rawImageUrl = nestedData['nuur-zurag-url'];
+
         let finalImageUrl: string | undefined = undefined;
-        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+        const rawImageUrl = nestedData['nuur-zurag-url'];
+        if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
           finalImageUrl = rawImageUrl.trim();
         }
 
+        const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
+          description: detail.description || '',
+          imageUrl: detail.imageUrl || '',
+          name: detail.name || undefined, // Assuming 'name' might exist for showcase items
+        }));
+
         return {
           id: docSnap.id,
-          name: nestedData.name || 'Unnamed Factory',
+          name: nestedData.name || nestedData.title || 'Unnamed Factory',
           imageUrl: finalImageUrl,
-          description: nestedData.setgegdel || '',
+          description: nestedData.taniltsuulga || nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
-          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'factory' as ItemType,
           dataAiHint: nestedData.dataAiHint || "factory item",
+          showcaseItems: showcaseItems,
+          isMainSection: typeof nestedData.golheseg === 'boolean' ? nestedData.golheseg : undefined,
+          taniltsuulga: nestedData.taniltsuulga || undefined,
         } as RecommendedItem;
       }
     }
