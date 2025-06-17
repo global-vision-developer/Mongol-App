@@ -77,13 +77,18 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
         setIsFavorite(false);
         toast({ title: t('itemRemovedFromSaved') });
       } else {
-        const itemToSave: any = { ...item };
-        delete itemToSave.id; 
+        // Prepare item data for saving, exclude 'id' if it's the doc key itself
+        const { id, ...itemDataToSave } = item; 
         
         await setDoc(favDocRef, {
-          ...itemToSave,
+          ...itemDataToSave,
+          // Ensure all fields from RecommendedItem that are needed on saved page are here
+          // For example, if ServiceCard on saved page relies on item.name, item.imageUrl, etc.
+          // they must be present in itemDataToSave.
+          // Also, explicitly add itemType and originalId if needed.
+          originalItemId: id, // Store original item id if doc id is different or for reference
+          itemType: item.itemType, // Crucial for routing from saved page
           savedAt: serverTimestamp(),
-          itemType: item.itemType, 
         });
         setIsFavorite(true);
         toast({ title: t('itemSaved') });
@@ -121,6 +126,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       case 'wechat':
         detailPageLink = `/services/wechat/${item.id}`;
         break;
+      // Add other cases if needed
     }
   }
 
@@ -161,14 +167,18 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
         )}
       </CardHeader>
       <CardContent className="p-3 flex-grow flex flex-col justify-between">
-        <div>
+        <div className="space-y-0.5"> {/* Ensures consistent spacing for text block */}
             <CardTitle className="text-md font-semibold truncate mb-1 group-hover:text-primary">{item.name || t('serviceUnnamed')}</CardTitle>
-            {item.location && (
-            <div className="flex items-center text-xs text-muted-foreground mb-1">
-                <MapPin className="h-3 w-3 mr-1 shrink-0" />
-                <span className="truncate">{item.location}</span>
+            
+            {/* Reserve space for location line, even if item.location is not present */}
+            <div className="h-4"> {/* h-4 is approx 1rem, typical height for text-xs line */}
+              {item.location && (
+              <div className="flex items-center text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3 mr-1 shrink-0" />
+                  <span className="truncate">{item.location}</span>
+              </div>
+              )}
             </div>
-            )}
         </div>
         
         <div className="flex justify-end items-center mt-2">
@@ -203,4 +213,3 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 }
 
 export const ServiceCard = React.memo(ServiceCardComponent);
-
