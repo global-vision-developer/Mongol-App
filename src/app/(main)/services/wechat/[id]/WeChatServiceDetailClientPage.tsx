@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { ArrowLeft, Star, MapPin, AlertTriangle, Info, MessageCircle, ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { ServiceReviewForm } from "@/components/ServiceReviewForm"; // Added import
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -22,7 +23,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     if (Array.isArray(value)) {
       displayValue = value.join(', ');
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      displayValue = `${value.toFixed(1)} / 5`;
+      displayValue = `${value.toFixed(1)} / 10`;
     } else {
       displayValue = value.toString();
     }
@@ -84,7 +85,9 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
-                rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+                averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+                reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+                totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
                 price: nestedData.price === undefined ? null : nestedData.price,
                 itemType: entryData.categoryName as ItemType,
                 dataAiHint: nestedData.dataAiHint || "wechat item",
@@ -124,14 +127,12 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
-        status: 'confirmed',
+        status: 'confirmed', // Or 'pending_payment' if there's a price
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "wechat service item",
         amount: item.price === undefined ? null : item.price,
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
-
-      // Removed addPointsToUser call
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -154,6 +155,17 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
       toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }), variant: "destructive" });
     } finally {
       setIsBooking(false);
+    }
+  };
+
+  const onReviewSubmitted = (newAverageRating: number, newReviewCount: number, newTotalRatingSum: number) => {
+    if (item) {
+      setItem(prevItem => prevItem ? ({
+        ...prevItem,
+        averageRating: newAverageRating,
+        reviewCount: newReviewCount,
+        totalRatingSum: newTotalRatingSum,
+      }) : null);
     }
   };
 
@@ -208,7 +220,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
       </div>
 
       <div className="container mx-auto py-2 md:py-6 px-2">
-        <Card className="overflow-hidden shadow-xl">
+        <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
               src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'WeChat')}`}
@@ -232,7 +244,17 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
-              <DetailItem labelKey="ratingLabel" value={typeof item.rating === 'number' ? item.rating : undefined} icon={Star} />
+              <div className="flex items-start text-sm">
+                <Star className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                <div>
+                    <p className="font-medium text-muted-foreground">{t('ratingLabel')}</p>
+                    {item.averageRating !== null && item.averageRating !== undefined && item.reviewCount !== undefined ? (
+                        <p className="text-foreground">{t('averageRatingDisplay', { averageRating: item.averageRating.toFixed(1), reviewCount: item.reviewCount })}</p>
+                    ) : (
+                        <p className="text-foreground">{t('noReviewsYet')}</p>
+                    )}
+                </div>
+              </div>
               {wechatId && <DetailItem labelKey="wechatIdLabel" value={wechatId} icon={MessageCircle} />}
             </div>
 
@@ -258,6 +280,14 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
             </Button>
           </CardFooter>
         </Card>
+        <ServiceReviewForm
+          itemId={item.id}
+          itemType={item.itemType}
+          currentAverageRating={item.averageRating ?? 0}
+          currentReviewCount={item.reviewCount ?? 0}
+          currentTotalRatingSum={item.totalRatingSum ?? 0}
+          onReviewSubmitted={onReviewSubmitted}
+        />
       </div>
     </div>
   );

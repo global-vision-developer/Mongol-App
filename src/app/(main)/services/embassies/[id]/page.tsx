@@ -27,7 +27,9 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           imageUrl: finalImageUrl,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
-          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+          averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+          reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+          totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'embassy' as ItemType,
           dataAiHint: nestedData.dataAiHint || "embassy item",
@@ -51,9 +53,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 export async function generateStaticParams(): Promise<Params[]> {
   try {
     const entriesRef = collection(db, "entries");
-    // Note: The category name for embassies in Firestore might be "embassies" (plural)
-    // but the itemType in the app might be "embassy" (singular).
-    // Ensure consistency or map correctly when fetching.
     const q = query(entriesRef, where("categoryName", "==", "embassies"));
     const snapshot = await getDocs(q);
     const paths = snapshot.docs.map((doc) => ({

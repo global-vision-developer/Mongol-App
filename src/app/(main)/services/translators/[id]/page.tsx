@@ -52,13 +52,14 @@ async function getItemData(id: string): Promise<Translator | null> {
           wechatId: nestedData.wechatId,
           wechatQrImageUrl: finalWeChatQrUrl,
           city: nestedData.khot || nestedData.currentCityInChina,
-          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+          averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+          reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+          totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
           description: nestedData.setgegdel || nestedData.description || '',
           itemType: 'translator' as ItemType,
           registeredAt: registeredAtDate,
           isActive: nestedData.isActive,
           isProfileComplete: nestedData.isProfileComplete,
-          reviewCount: nestedData.reviewCount,
           views: nestedData.views,
         } as Translator;
       }

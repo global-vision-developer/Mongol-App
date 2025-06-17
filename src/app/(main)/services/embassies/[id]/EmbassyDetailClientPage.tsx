@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Star, MapPin, AlertTriangle, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ServiceReviewForm } from "@/components/ServiceReviewForm"; // Added import
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     if (Array.isArray(value)) {
       displayValue = value.join(', ');
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      displayValue = `${value.toFixed(1)} / 5`;
+      displayValue = `${value.toFixed(1)} / 10`;
     } else {
       displayValue = value.toString();
     }
@@ -46,7 +47,7 @@ interface EmbassyDetailClientPageProps {
 export default function EmbassyDetailClientPage({ params, itemType, itemData }: EmbassyDetailClientPageProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user } = useAuth(); // Keep useAuth if needed for other purposes
+  const { user } = useAuth(); 
 
   const [item, setItem] = useState<RecommendedItem | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
@@ -77,9 +78,11 @@ export default function EmbassyDetailClientPage({ params, itemType, itemData }: 
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
-                rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+                averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+                reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+                totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
                 price: nestedData.price === undefined ? null : nestedData.price,
-                itemType: entryData.categoryName as ItemType, // Use actual categoryName
+                itemType: entryData.categoryName as ItemType, 
                 dataAiHint: nestedData.dataAiHint || "embassy item",
               } as RecommendedItem);
             } else {
@@ -98,6 +101,17 @@ export default function EmbassyDetailClientPage({ params, itemType, itemData }: 
       fetchItem();
     }
   }, [itemData, params.id, itemType, t]);
+
+  const onReviewSubmitted = (newAverageRating: number, newReviewCount: number, newTotalRatingSum: number) => {
+    if (item) {
+      setItem(prevItem => prevItem ? ({
+        ...prevItem,
+        averageRating: newAverageRating,
+        reviewCount: newReviewCount,
+        totalRatingSum: newTotalRatingSum,
+      }) : null);
+    }
+  };
 
   const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com');
 
@@ -145,7 +159,7 @@ export default function EmbassyDetailClientPage({ params, itemType, itemData }: 
       </div>
 
       <div className="container mx-auto py-2 md:py-6 px-2">
-        <Card className="overflow-hidden shadow-xl">
+        <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
               src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Embassy')}`}
@@ -169,11 +183,28 @@ export default function EmbassyDetailClientPage({ params, itemType, itemData }: 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
-              <DetailItem labelKey="ratingLabel" value={typeof item.rating === 'number' ? item.rating : undefined} icon={Star} />
+              <div className="flex items-start text-sm">
+                <Star className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                <div>
+                    <p className="font-medium text-muted-foreground">{t('ratingLabel')}</p>
+                    {item.averageRating !== null && item.averageRating !== undefined && item.reviewCount !== undefined ? (
+                        <p className="text-foreground">{t('averageRatingDisplay', { averageRating: item.averageRating.toFixed(1), reviewCount: item.reviewCount })}</p>
+                    ) : (
+                        <p className="text-foreground">{t('noReviewsYet')}</p>
+                    )}
+                </div>
+              </div>
             </div>
           </CardContent>
-           {/* CardFooter with order button removed */}
         </Card>
+        <ServiceReviewForm
+          itemId={item.id}
+          itemType={item.itemType}
+          currentAverageRating={item.averageRating ?? 0}
+          currentReviewCount={item.reviewCount ?? 0}
+          currentTotalRatingSum={item.totalRatingSum ?? 0}
+          onReviewSubmitted={onReviewSubmitted}
+        />
       </div>
     </div>
   );

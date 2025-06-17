@@ -25,7 +25,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
         const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
           description: detail.description || '',
           imageUrl: detail.imageUrl || '',
-          name: detail.name || undefined, // Assuming 'name' might exist for showcase items
+          name: detail.name || undefined, 
         }));
 
         return {
@@ -34,7 +34,9 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           imageUrl: finalImageUrl,
           description: nestedData.taniltsuulga || nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
-          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+          averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+          reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+          totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'factory' as ItemType,
           dataAiHint: nestedData.dataAiHint || "factory item",

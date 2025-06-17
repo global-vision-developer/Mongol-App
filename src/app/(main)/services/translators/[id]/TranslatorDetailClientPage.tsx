@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info, ShoppingBag } from "lucide-react";
 import { format } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
+import { ServiceReviewForm } from "@/components/ServiceReviewForm"; // Added import
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; translationFieldsValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean }> = ({ labelKey, value, icon: Icon, cityValue, translationFieldsValue, languageLevelValue, dailyRateValue }) => {
   const { t, language } = useTranslation();
@@ -47,8 +48,8 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     } else if (cityValue && typeof value === 'string') {
       const city = CITIES.find(c => c.value === value);
       displayValue = city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : value.toString();
-    } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      displayValue = `${value.toFixed(1)} / 5`;
+    } else if (labelKey === 'ratingLabel' && typeof value === 'number') { // This specific handling for ratingLabel might be redundant now
+      displayValue = `${value.toFixed(1)} / 10`;
     } else {
       displayValue = value.toString();
     }
@@ -143,13 +144,14 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 wechatId: nestedData.wechatId,
                 wechatQrImageUrl: finalWeChatQrUrl,
                 city: nestedData.khot || nestedData.currentCityInChina,
-                rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+                averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+                reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+                totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
                 description: nestedData.setgegdel || nestedData.description || '',
                 itemType: entryData.categoryName as ItemType, 
                 registeredAt: registeredAtDate,
                 isActive: nestedData.isActive,
                 isProfileComplete: nestedData.isProfileComplete,
-                reviewCount: nestedData.reviewCount,
                 views: nestedData.views,
               } as Translator);
             } else {
@@ -196,8 +198,6 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
       
-      // Removed addPointsToUser call
-
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
         descriptionKey: 'orderSuccessNotificationDescription',
@@ -221,6 +221,17 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
       toast({ title: t('orderCreationFailed'), variant: "destructive" });
     } finally {
       setIsProcessingPayment(false);
+    }
+  };
+
+  const onReviewSubmitted = (newAverageRating: number, newReviewCount: number, newTotalRatingSum: number) => {
+    if (translator) {
+      setTranslator(prevTranslator => prevTranslator ? ({
+        ...prevTranslator,
+        averageRating: newAverageRating,
+        reviewCount: newReviewCount,
+        totalRatingSum: newTotalRatingSum,
+      }) : null);
     }
   };
   
@@ -288,7 +299,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
       </div>
 
       <div className="container mx-auto py-2 md:py-6 px-2">
-        <Card className="overflow-hidden shadow-xl">
+        <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
               src={translator.photoUrl || "https://placehold.co/600x400.png"}
@@ -308,15 +319,15 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                     </Avatar>
                     <div>
                         <CardTitle className="text-2xl md:text-3xl font-headline text-white mb-1">{translator.name}</CardTitle>
-                         <DetailItem labelKey="ratingLabel" value={typeof translator.rating === 'number' ? translator.rating : undefined} icon={Star} />
-                          {translator.reviewCount !== undefined && translator.reviewCount > 0 && (
-                            <span className="text-xs text-gray-300 ml-1">
-                                ({t('basedOnReviews', {reviewCount: translator.reviewCount})})
-                            </span>
-                        )}
-                        { (translator.reviewCount === undefined || translator.reviewCount === 0) && typeof translator.rating !== 'number' && (
-                             <span className="text-xs text-gray-300 ml-1">({t('noReviewsYet')})</span>
-                        )}
+                         
+                        <div className="flex items-center gap-1 text-sm text-amber-500">
+                            <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
+                            {translator.averageRating !== null && translator.averageRating !== undefined && translator.reviewCount !== undefined ? (
+                                <span>{t('averageRatingDisplay', { averageRating: translator.averageRating.toFixed(1), reviewCount: translator.reviewCount })}</span>
+                            ) : (
+                                <span>{t('noReviewsYet')}</span>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -380,6 +391,15 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
             </CardFooter>
           )}
         </Card>
+        
+        <ServiceReviewForm
+          itemId={translator.id}
+          itemType={itemType}
+          currentAverageRating={translator.averageRating ?? 0}
+          currentReviewCount={translator.reviewCount ?? 0}
+          currentTotalRatingSum={translator.totalRatingSum ?? 0}
+          onReviewSubmitted={onReviewSubmitted}
+        />
       </div>
 
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
@@ -407,3 +427,4 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
     </div>
   );
 }
+
