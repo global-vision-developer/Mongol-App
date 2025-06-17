@@ -1,13 +1,50 @@
 
 import type { Metadata } from 'next';
 import FactoryDetailClientPage from './FactoryDetailClientPage';
-import { collection, getDocs, type DocumentData, query, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, type DocumentData, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
+import type { RecommendedItem, ItemType } from '@/types';
+
+async function getItemData(id: string): Promise<RecommendedItem | null> {
+  try {
+    const docRef = doc(db, "entries", id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const entryData = docSnap.data();
+      if (entryData.categoryName === "factories") { 
+        const nestedData = entryData.data || {};
+        const rawImageUrl = nestedData['nuur-zurag-url'];
+        let finalImageUrl: string | undefined = undefined;
+        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+          finalImageUrl = rawImageUrl.trim();
+        }
+
+        return {
+          id: docSnap.id,
+          name: nestedData.name || 'Unnamed Factory',
+          imageUrl: finalImageUrl,
+          description: nestedData.setgegdel || '',
+          location: nestedData.khot || undefined,
+          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+          price: nestedData.price === undefined ? null : nestedData.price,
+          itemType: 'factory' as ItemType,
+          dataAiHint: nestedData.dataAiHint || "factory item",
+        } as RecommendedItem;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching factory data for pre-rendering:", error);
+    return null;
+  }
+}
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const item = await getItemData(params.id);
   return {
-    title: `Factory ${params.id}`,
+    title: item ? item.name : `Factory ${params.id}`,
   };
 }
 
@@ -26,6 +63,7 @@ export async function generateStaticParams(): Promise<Params[]> {
   }
 }
 
-export default function FactoryDetailPageServer({ params }: { params: { id: string } }) {
-  return <FactoryDetailClientPage params={params} itemType="factory" />;
+export default async function FactoryDetailPageServer({ params }: { params: { id: string } }) {
+  const itemData = await getItemData(params.id);
+  return <FactoryDetailClientPage itemData={itemData} params={params} itemType="factory" />;
 }

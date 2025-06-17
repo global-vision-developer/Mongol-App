@@ -2,9 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp } from "firebase/firestore"; 
+import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -23,10 +23,8 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     if (Array.isArray(value)) {
       displayValue = value.join(', ');
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      // Assuming rating is out of 5 for now, adjust if needed for 1-10 scale
-      displayValue = `${value.toFixed(1)} / 5`; 
-    }
-     else {
+      displayValue = `${value.toFixed(1)} / 5`;
+    } else {
       displayValue = value.toString();
     }
   }
@@ -42,78 +40,73 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
   );
 };
 
-interface HotelItemClient extends RecommendedItem {
-  // rooms field is already in RecommendedItem
-}
-
 interface HotelDetailClientPageProps {
   params: { id: string };
-  itemType: 'hotel'; 
+  itemType: 'hotel';
+  itemData: RecommendedItem | null;
 }
 
-export default function HotelDetailClientPage({ params, itemType }: HotelDetailClientPageProps) {
+export default function HotelDetailClientPage({ params, itemType, itemData }: HotelDetailClientPageProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, addPointsToUser } = useAuth(); 
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  const [item, setItem] = useState<HotelItemClient | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [item, setItem] = useState<RecommendedItem | null>(itemData);
+  const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id); // True if itemData is not passed and ID exists
   const [isBooking, setIsBooking] = useState(false);
-  const itemId = params.id;
 
   useEffect(() => {
-    if (itemId) {
+    if (itemData) {
+      setItem(itemData);
+      setLoadingInitial(false);
+    } else if (params.id && !itemData) { // Fallback: if itemData is null (e.g. error on server fetch)
       const fetchItem = async () => {
-        setLoading(true);
+        setLoadingInitial(true);
         try {
-          const docRef = doc(db, "entries", itemId); 
+          const docRef = doc(db, "entries", params.id);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
-            // Ensure the fetched item's categoryName matches the expected itemType for this page ('hotel' which maps to 'hotels' in Firestore)
-            if (entryData.categoryName === "hotels") { 
+            if (entryData.categoryName === "hotels") {
               const nestedData = entryData.data || {};
-
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
-              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com') ) {
-                 finalImageUrl = rawImageUrl.trim();
+              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+                finalImageUrl = rawImageUrl.trim();
               }
-              
-              setItem({ 
-                id: docSnap.id, 
+              setItem({
+                id: docSnap.id,
                 name: nestedData.name || t('serviceUnnamed'),
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
                 rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-                price: nestedData.price === undefined ? null : nestedData.price, 
-                itemType: itemType, // Use the prop itemType which is 'hotel' (singular)
+                price: nestedData.price === undefined ? null : nestedData.price,
+                itemType: 'hotel',
                 dataAiHint: nestedData.dataAiHint || "hotel item",
                 rooms: (nestedData.uruunuud || []).map((room: any) => ({
-                    description: room.description || t('noRoomDescription'),
-                    imageUrl: room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.description || 'Room')}`,
-                    name: room.name, // Optional room name
+                  description: room.description || t('noRoomDescription'),
+                  imageUrl: room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.description || 'Room')}`,
+                  name: room.name || undefined,
                 })),
-              } as HotelItemClient);
+              } as RecommendedItem);
             } else {
-              console.warn(`Fetched item ${itemId} is not a ${itemType}, but ${entryData.categoryName}`);
               setItem(null);
             }
           } else {
             setItem(null);
           }
         } catch (error) {
-          console.error("Error fetching hotel entry:", error);
+          console.error("Error fetching hotel entry client-side:", error);
           setItem(null);
         } finally {
-          setLoading(false);
+          setLoadingInitial(false);
         }
       };
       fetchItem();
     }
-  }, [itemId, itemType, t]);
+  }, [itemData, params.id, t]);
 
   const handleBookNow = async () => {
     if (!user) {
@@ -127,7 +120,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
     try {
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
-        serviceType: "hotel", // Use singular 'hotel' or plural 'hotels' depending on Order type definition
+        serviceType: "hotel",
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
@@ -138,17 +131,7 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
 
-      if (user?.uid) {
-          // TODO: Fetch user's current points before adding
-          // const userRef = doc(db, "users", user.uid);
-          // const userSnap = await getDoc(userRef);
-          // const currentPoints = userSnap.data()?.points || 0;
-          // await updateDoc(userRef, { points: currentPoints + 15 });
-          // For now, directly call addPointsToUser if it handles Firestore update
-          // This function is not available in the provided AuthContext
-          // await addPointsToUser(15); 
-          console.log("Points addition would happen here if addPointsToUser was available and implemented.");
-      }
+      // Removed addPointsToUser call
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -156,33 +139,33 @@ export default function HotelDetailClientPage({ params, itemType }: HotelDetailC
         descriptionPlaceholders: { serviceName: item.name || t('serviceUnnamed') },
         date: serverTimestamp(),
         read: false,
-        itemType: "hotel", // Consistent with orderData.serviceType
+        itemType: "hotel",
         link: `/orders`,
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "hotel building",
       };
       if (user?.uid) {
-          await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+        await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
       }
 
       toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
     } catch (error) {
       console.error("Error booking hotel:", error);
-      toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', {serviceName: item.name || t('serviceUnnamed') }), variant: "destructive" });
+      toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }), variant: "destructive" });
     } finally {
       setIsBooking(false);
     }
   };
 
-  if (loading) {
-     return (
+  if (loadingInitial) {
+    return (
       <div className="space-y-4 p-4">
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md -mx-4 px-4">
-            <div className="container mx-auto flex items-center justify-between h-16">
-                <Skeleton className="h-10 w-10" />
-                <Skeleton className="h-6 w-1/2" />
-                <div className="w-10"></div>
-            </div>
+          <div className="container mx-auto flex items-center justify-between h-16">
+            <Skeleton className="h-10 w-10" />
+            <Skeleton className="h-6 w-1/2" />
+            <div className="w-10"></div>
+          </div>
         </div>
         <Skeleton className="w-full h-64 rounded-lg" />
         <Skeleton className="h-8 w-3/4 mt-4" />

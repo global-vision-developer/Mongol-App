@@ -44,14 +44,12 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     } else if (dailyRateValue && typeof value === 'string') {
         const rateKey = `rate${value.replace('-', 'to').replace('+', 'plus')}`;
         displayValue = t(rateKey);
-    }
-     else if (cityValue && typeof value === 'string') {
+    } else if (cityValue && typeof value === 'string') {
       const city = CITIES.find(c => c.value === value);
       displayValue = city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : value.toString();
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      displayValue = `${value.toFixed(1)} / 5`; // Assuming 0-5 scale for translators for now
-    }
-     else {
+      displayValue = `${value.toFixed(1)} / 5`;
+    } else {
       displayValue = value.toString();
     }
   }
@@ -79,97 +77,97 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
 interface TranslatorDetailClientPageProps {
   params: { id: string };
   itemType: 'translator';
+  itemData: Translator | null;
 }
 
-export default function TranslatorDetailClientPage({ params, itemType }: TranslatorDetailClientPageProps) {
+export default function TranslatorDetailClientPage({ params, itemType, itemData }: TranslatorDetailClientPageProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, addPointsToUser } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  const [translator, setTranslator] = useState<Translator | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [translator, setTranslator] = useState<Translator | null>(itemData);
+  const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
   const [showContactInfo, setShowContactInfo] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  const translatorId = params.id;
-
   useEffect(() => {
-    if (translatorId) {
+    if (itemData) {
+      setTranslator(itemData);
+      setLoadingInitial(false);
+    } else if (params.id && !itemData) {
       const fetchTranslator = async () => {
-        setLoading(true);
+        setLoadingInitial(true);
         try {
-          const docRef = doc(db, "entries", translatorId); 
+          const docRef = doc(db, "entries", params.id);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
-             if (entryData.categoryName === itemType) { 
-                const nestedData = entryData.data || {};
-                const registeredAtRaw = nestedData.registeredAt;
-                const registeredAtDate = registeredAtRaw instanceof Timestamp 
-                                          ? registeredAtRaw.toDate() 
-                                          : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
-                
-                const rawImageUrl = nestedData['nuur-zurag-url'];
-                let finalImageUrl: string | undefined = undefined;
-                if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
-                    finalImageUrl = rawImageUrl.trim();
-                }
-                
-                const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
-                let finalWeChatQrUrl: string | undefined = undefined;
-                if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
-                    finalWeChatQrUrl = rawWeChatQrUrl.trim();
-                }
+            if (entryData.categoryName === "translators") {
+              const nestedData = entryData.data || {};
+              const registeredAtRaw = nestedData.registeredAt;
+              const registeredAtDate = registeredAtRaw instanceof Timestamp 
+                                        ? registeredAtRaw.toDate() 
+                                        : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
+              
+              const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
+              let finalImageUrl: string | undefined = undefined;
+              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+                  finalImageUrl = rawImageUrl.trim();
+              }
+              
+              const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
+              let finalWeChatQrUrl: string | undefined = undefined;
+              if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
+                  finalWeChatQrUrl = rawWeChatQrUrl.trim();
+              }
 
-
-                setTranslator({ 
-                  id: docSnap.id, 
-                  uid: nestedData.uid || docSnap.id,
-                  name: nestedData.name || t('serviceUnnamed'),
-                  photoUrl: finalImageUrl,
-                  nationality: nestedData.nationality,
-                  inChinaNow: nestedData.inChinaNow,
-                  yearsInChina: nestedData.yearsInChina,
-                  currentCityInChina: nestedData.currentCityInChina,
-                  chineseExamTaken: nestedData.chineseExamTaken,
-                  speakingLevel: nestedData.speakingLevel,
-                  writingLevel: nestedData.writingLevel,
-                  workedAsTranslator: nestedData.workedAsTranslator,
-                  translationFields: nestedData.translationFields,
-                  canWorkInOtherCities: nestedData.canWorkInOtherCities,
-                  dailyRate: nestedData.dailyRate,
-                  chinaPhoneNumber: nestedData.chinaPhoneNumber,
-                  wechatId: nestedData.wechatId,
-                  wechatQrImageUrl: finalWeChatQrUrl,
-                  city: nestedData.khot || nestedData.currentCityInChina,
-                  rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
-                  description: nestedData.setgegdel || nestedData.description || '',
-                  itemType: entryData.categoryName as ItemType, 
-                  registeredAt: registeredAtDate,
-                  isActive: nestedData.isActive,
-                  isProfileComplete: nestedData.isProfileComplete,
-                  reviewCount: nestedData.reviewCount,
-                  views: nestedData.views,
-                } as Translator);
+              setTranslator({ 
+                id: docSnap.id, 
+                uid: nestedData.uid || docSnap.id,
+                name: nestedData.name || t('serviceUnnamed'),
+                photoUrl: finalImageUrl,
+                nationality: nestedData.nationality as Nationality,
+                inChinaNow: nestedData.inChinaNow,
+                yearsInChina: nestedData.yearsInChina,
+                currentCityInChina: nestedData.currentCityInChina,
+                chineseExamTaken: nestedData.chineseExamTaken,
+                speakingLevel: nestedData.speakingLevel as LanguageLevel,
+                writingLevel: nestedData.writingLevel as LanguageLevel,
+                workedAsTranslator: nestedData.workedAsTranslator,
+                translationFields: nestedData.translationFields as TranslationField[],
+                canWorkInOtherCities: nestedData.canWorkInOtherCities,
+                dailyRate: nestedData.dailyRate as DailyRateRange,
+                chinaPhoneNumber: nestedData.chinaPhoneNumber,
+                wechatId: nestedData.wechatId,
+                wechatQrImageUrl: finalWeChatQrUrl,
+                city: nestedData.khot || nestedData.currentCityInChina,
+                rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+                description: nestedData.setgegdel || nestedData.description || '',
+                itemType: entryData.categoryName as ItemType, 
+                registeredAt: registeredAtDate,
+                isActive: nestedData.isActive,
+                isProfileComplete: nestedData.isProfileComplete,
+                reviewCount: nestedData.reviewCount,
+                views: nestedData.views,
+              } as Translator);
             } else {
-                console.warn(`Fetched item ${translatorId} is not a ${itemType}, but ${entryData.categoryName}`);
-                setTranslator(null);
+              setTranslator(null);
             }
           } else {
-            console.log("No such translator entry!");
             setTranslator(null);
           }
         } catch (error) {
-          console.error("Error fetching translator entry:", error);
+          console.error("Error fetching translator entry client-side:", error);
+          setTranslator(null);
         } finally {
-          setLoading(false);
+          setLoadingInitial(false);
         }
       };
       fetchTranslator();
     }
-  }, [translatorId, itemType, t]);
+  }, [itemData, params.id, t]);
 
   const handleGetContactInfo = async () => {
     if (!user) {
@@ -184,10 +182,6 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
     if (!user || !translator) return;
     setIsProcessingPayment(true);
     try {
-      // Simulate payment processing if needed, or directly create order
-      // For now, assume payment is successful immediately for demo purposes.
-      // await new Promise(resolve => setTimeout(resolve, 1500)); 
-
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
         serviceType: itemType, 
@@ -202,9 +196,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
       
-      if (user?.uid) {
-          await addPointsToUser(15);
-      }
+      // Removed addPointsToUser call
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -218,7 +210,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
         dataAiHint: "translator portrait"
       };
       if (user?.uid) {
-          await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+        await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
       }
 
       toast({ title: t('orderCreatedSuccess') });
@@ -235,8 +227,7 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
   const mainImageShouldUnoptimize = translator?.photoUrl?.startsWith('data:') || translator?.photoUrl?.includes('lh3.googleusercontent.com');
   const qrImageShouldUnoptimize = translator?.wechatQrImageUrl?.startsWith('data:') || translator?.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
 
-
-  if (loading) {
+  if (loadingInitial) {
     return (
       <div className="space-y-4 p-4">
          <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md -mx-4 px-4">
@@ -278,10 +269,9 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
   }
 
   const dailyRateDisplay = translator.dailyRate ? t(`rate${translator.dailyRate.replace('-', 'to').replace('+', 'plus')}`) : t('notProvided');
-  const registeredAtDate = translator.registeredAt instanceof Timestamp
-    ? translator.registeredAt.toDate()
-    : (translator.registeredAt ? new Date(translator.registeredAt as string) : null);
-
+  const registeredAtDate = translator.registeredAt instanceof Date
+    ? translator.registeredAt
+    : (translator.registeredAt instanceof Timestamp ? translator.registeredAt.toDate() : null);
 
   return (
     <div className="pb-20">
@@ -417,14 +407,3 @@ export default function TranslatorDetailClientPage({ params, itemType }: Transla
     </div>
   );
 }
-
-// Add to LanguageContext:
-// mn: {
-//   ratingLabel: "Үнэлгээ",
-//   notProvided: "Оруулаагүй"
-// },
-// cn: {
-//   ratingLabel: "评分",
-//   notProvided: "未提供"
-// }
-

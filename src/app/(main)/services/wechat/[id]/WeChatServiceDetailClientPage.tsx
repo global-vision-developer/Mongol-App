@@ -22,9 +22,8 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     if (Array.isArray(value)) {
       displayValue = value.join(', ');
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      displayValue = `${value.toFixed(1)} / 5`; // Assuming 0-5 scale
-    }
-     else {
+      displayValue = `${value.toFixed(1)} / 5`;
+    } else {
       displayValue = value.toString();
     }
   }
@@ -42,46 +41,46 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
 interface WeChatServiceDetailClientPageProps {
   params: { id: string };
   itemType: 'wechat';
+  itemData: RecommendedItem | null;
 }
 
-export default function WeChatServiceDetailClientPage({ params, itemType }: WeChatServiceDetailClientPageProps) {
+export default function WeChatServiceDetailClientPage({ params, itemType, itemData }: WeChatServiceDetailClientPageProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, addPointsToUser } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
-  const [item, setItem] = useState<RecommendedItem | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [item, setItem] = useState<RecommendedItem | null>(itemData);
+  const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
   const [isBooking, setIsBooking] = useState(false);
-  const itemId = params.id;
 
   useEffect(() => {
-    if (itemId) {
+    if (itemData) {
+      setItem(itemData);
+      setLoadingInitial(false);
+    } else if (params.id && !itemData) {
       const fetchItem = async () => {
-        setLoading(true);
+        setLoadingInitial(true);
         try {
-          const docRef = doc(db, "entries", itemId); 
+          const docRef = doc(db, "entries", params.id);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
             if (entryData.categoryName === itemType) {
               const nestedData = entryData.data || {};
-
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
-                 finalImageUrl = rawImageUrl.trim();
+                finalImageUrl = rawImageUrl.trim();
               }
-              
-              const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
+              const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
               let finalWeChatQrUrl: string | undefined = undefined;
-               if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
-                  finalWeChatQrUrl = rawWeChatQrUrl.trim();
+              if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
+                finalWeChatQrUrl = rawWeChatQrUrl.trim();
               }
-
-              setItem({ 
-                id: docSnap.id, 
-                name: nestedData.name || t('serviceUnnamed'), 
+              setItem({
+                id: docSnap.id,
+                name: nestedData.name || t('serviceUnnamed'),
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
@@ -89,26 +88,25 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
                 price: nestedData.price === undefined ? null : nestedData.price,
                 itemType: entryData.categoryName as ItemType,
                 dataAiHint: nestedData.dataAiHint || "wechat item",
-                wechatId: nestedData.wechatId, 
-                wechatQrImageUrl: finalWeChatQrUrl, 
+                wechatId: nestedData.wechatId,
+                wechatQrImageUrl: finalWeChatQrUrl,
               } as RecommendedItem);
             } else {
-              console.warn(`Fetched item ${itemId} is not a ${itemType}, but ${entryData.categoryName}`);
               setItem(null);
             }
           } else {
             setItem(null);
           }
         } catch (error) {
-          console.error("Error fetching WeChat entry:", error);
+          console.error("Error fetching WeChat entry client-side:", error);
           setItem(null);
         } finally {
-          setLoading(false);
+          setLoadingInitial(false);
         }
       };
       fetchItem();
     }
-  }, [itemId, itemType, t]);
+  }, [itemData, params.id, itemType, t]);
 
   const handleBookNow = async () => {
     if (!user) {
@@ -126,16 +124,14 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
-        status: 'confirmed', 
+        status: 'confirmed',
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "wechat service item",
         amount: item.price === undefined ? null : item.price,
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
-      
-      if (user?.uid) {
-          await addPointsToUser(15);
-      }
+
+      // Removed addPointsToUser call
 
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
@@ -149,31 +145,30 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
         dataAiHint: item.dataAiHint || "wechat service item",
       };
       if (user?.uid) {
-          await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
+        await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
       }
 
       toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
     } catch (error) {
       console.error("Error ordering WeChat Service:", error);
-      toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', {serviceName: item.name || t('serviceUnnamed') }), variant: "destructive" });
+      toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }), variant: "destructive" });
     } finally {
       setIsBooking(false);
     }
   };
-  
+
   const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com');
   const qrImageShouldUnoptimize = item?.wechatQrImageUrl?.startsWith('data:') || item?.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
 
-
-  if (loading) {
-     return (
+  if (loadingInitial) {
+    return (
       <div className="space-y-4 p-4">
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md -mx-4 px-4">
-            <div className="container mx-auto flex items-center justify-between h-16">
-                <Skeleton className="h-10 w-10" />
-                <Skeleton className="h-6 w-1/2" />
-                <div className="w-10"></div>
-            </div>
+          <div className="container mx-auto flex items-center justify-between h-16">
+            <Skeleton className="h-10 w-10" />
+            <Skeleton className="h-6 w-1/2" />
+            <div className="w-10"></div>
+          </div>
         </div>
         <Skeleton className="w-full h-64 rounded-lg" />
         <Skeleton className="h-8 w-3/4 mt-4" />
@@ -195,8 +190,8 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
     );
   }
 
-  const wechatId = item.wechatId; 
-  const wechatQrImageUrl = item.wechatQrImageUrl; 
+  const wechatId = item.wechatId;
+  const wechatQrImageUrl = item.wechatQrImageUrl;
 
   return (
     <div className="pb-20">
@@ -267,7 +262,3 @@ export default function WeChatServiceDetailClientPage({ params, itemType }: WeCh
     </div>
   );
 }
-
-// Add to LanguageContext:
-// mn: { ratingLabel: "Үнэлгээ", notProvided: "Оруулаагүй" },
-// cn: { ratingLabel: "评分", notProvided: "未提供" }

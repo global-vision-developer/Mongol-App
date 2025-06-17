@@ -1,18 +1,84 @@
 
 import type { Metadata } from 'next';
 import TranslatorDetailClientPage from './TranslatorDetailClientPage';
-import { collection, getDocs, type DocumentData, query, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, type DocumentData, query, where, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
+import type { Translator, ItemType, Nationality, LanguageLevel, DailyRateRange, TranslationField } from '@/types';
+
+async function getItemData(id: string): Promise<Translator | null> {
+  try {
+    const docRef = doc(db, "entries", id);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const entryData = docSnap.data();
+      if (entryData.categoryName === "translators") {
+        const nestedData = entryData.data || {};
+        const registeredAtRaw = nestedData.registeredAt;
+        const registeredAtDate = registeredAtRaw instanceof Timestamp
+                                  ? registeredAtRaw.toDate()
+                                  : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
+        
+        const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
+        let finalImageUrl: string | undefined = undefined;
+        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+            finalImageUrl = rawImageUrl.trim();
+        }
+        
+        const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
+        let finalWeChatQrUrl: string | undefined = undefined;
+        if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
+            finalWeChatQrUrl = rawWeChatQrUrl.trim();
+        }
+
+        return {
+          id: docSnap.id,
+          uid: nestedData.uid || docSnap.id,
+          name: nestedData.name || 'Unnamed Translator',
+          photoUrl: finalImageUrl,
+          nationality: nestedData.nationality as Nationality,
+          inChinaNow: nestedData.inChinaNow,
+          yearsInChina: nestedData.yearsInChina,
+          currentCityInChina: nestedData.currentCityInChina,
+          chineseExamTaken: nestedData.chineseExamTaken,
+          speakingLevel: nestedData.speakingLevel as LanguageLevel,
+          writingLevel: nestedData.writingLevel as LanguageLevel,
+          workedAsTranslator: nestedData.workedAsTranslator,
+          translationFields: nestedData.translationFields as TranslationField[],
+          canWorkInOtherCities: nestedData.canWorkInOtherCities,
+          dailyRate: nestedData.dailyRate as DailyRateRange,
+          chinaPhoneNumber: nestedData.chinaPhoneNumber,
+          wechatId: nestedData.wechatId,
+          wechatQrImageUrl: finalWeChatQrUrl,
+          city: nestedData.khot || nestedData.currentCityInChina,
+          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+          description: nestedData.setgegdel || nestedData.description || '',
+          itemType: 'translator' as ItemType,
+          registeredAt: registeredAtDate,
+          isActive: nestedData.isActive,
+          isProfileComplete: nestedData.isProfileComplete,
+          reviewCount: nestedData.reviewCount,
+          views: nestedData.views,
+        } as Translator;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching translator data for pre-rendering:", error);
+    return null;
+  }
+}
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const item = await getItemData(params.id);
   return {
-    title: `Translator ${params.id}`, 
+    title: item ? item.name : `Translator ${params.id}`,
   };
 }
 
 export async function generateStaticParams(): Promise<Params[]> {
-   try {
+  try {
     const entriesRef = collection(db, "entries");
     const q = query(entriesRef, where("categoryName", "==", "translators"));
     const snapshot = await getDocs(q);
@@ -26,6 +92,7 @@ export async function generateStaticParams(): Promise<Params[]> {
   }
 }
 
-export default function TranslatorDetailPage({ params }: { params: { id: string } }) {
-  return <TranslatorDetailClientPage params={params} itemType="translator" />;
+export default async function TranslatorDetailPageServer({ params }: { params: { id: string } }) {
+  const itemData = await getItemData(params.id);
+  return <TranslatorDetailClientPage itemData={itemData} params={params} itemType="translator" />;
 }
