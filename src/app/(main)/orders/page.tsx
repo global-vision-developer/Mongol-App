@@ -5,7 +5,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Briefcase, ShoppingBag } from 'lucide-react'; // Added ShoppingBag
+import { Plane, BedDouble, Users, Smartphone, ShoppingBag } from 'lucide-react'; // Removed ShoppingCart, FactoryIcon, HospitalIcon, Landmark
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
@@ -75,10 +75,7 @@ export default function OrdersPage() {
     { value: "hotel", labelKey: "hotels", icon: BedDouble },
     { value: "translator", labelKey: "translators", icon: Users },
     { value: "wechat", labelKey: "wechatOrdersTab", icon: Smartphone },
-    { value: "market", labelKey: "marketsOrdersTab", icon: ShoppingCart },
-    { value: "factory", labelKey: "factoriesOrdersTab", icon: FactoryIcon },
-    { value: "hospital", labelKey: "hospitalsOrdersTab", icon: HospitalIcon },
-    { value: "embassy", labelKey: "embassiesOrdersTab", icon: Landmark },
+    // Removed Market, Factory, Hospital, Embassy tabs
   ];
 
   useEffect(() => {
@@ -94,7 +91,6 @@ export default function OrdersPage() {
 
     setLoadingOrders(true);
     const ordersColRef = collection(db, "orders");
-    // The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/setgelzuin-app/firestore/indexes?create_composite=Ck1wcm9qZWN0cy9zZXRnZWx6dWluLWFwcC9kYXRhYmFzZXMvKGRlZmF1bHQpL2NvbGxlY3Rpb25Hcm91cHMvb3JkZXJzL2luZGV4ZXMvXxABGgoKBnVzZXJJZBABGg0KCW9yZGVyRGF0ZRACGgwKCF9fbmFtZV9fEAI
     const q = query(ordersColRef, where("userId", "==", user.uid), orderBy("orderDate", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -104,7 +100,7 @@ export default function OrdersPage() {
           id: doc.id,
           ...data,
           serviceType: data.serviceType as ItemType,
-          orderDate: data.orderDate as Timestamp, // Assuming it's always a Timestamp
+          orderDate: data.orderDate as Timestamp, 
         } as AppOrder;
       });
       setOrders(fetchedOrders);
@@ -112,7 +108,6 @@ export default function OrdersPage() {
     }, (error) => {
       console.error("Error fetching orders:", error);
       setLoadingOrders(false);
-      // Optionally show a toast for error fetching orders
     });
 
     return () => unsubscribe();
@@ -120,7 +115,7 @@ export default function OrdersPage() {
 
 
   const filteredOrders = orders.filter(order => {
-    if (activeTab === 'flights') return order.serviceType === 'flight'; // Assuming 'flight' is an ItemType or special case
+    if (activeTab === 'flights') return order.serviceType === 'flight'; 
     return order.serviceType === activeTab;
   });
 
@@ -168,7 +163,7 @@ export default function OrdersPage() {
       <h1 className="text-2xl font-headline font-semibold text-center">{t('orders')}</h1>
 
       <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as ItemType | 'flights')} className="w-full">
-        <TabsList className="grid w-full grid-cols-4"> {/* Kept grid-cols-4, will wrap to 2 rows */}
+        <TabsList className="grid w-full grid-cols-4"> {/* Adjusted grid-cols based on remaining tabs */}
           {tabCategories.map(category => (
             <TabsTrigger key={category.value} value={category.value}>
               {t(category.labelKey)}
@@ -211,4 +206,3 @@ export default function OrdersPage() {
     </div>
   );
 }
-

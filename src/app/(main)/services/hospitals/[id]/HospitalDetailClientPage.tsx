@@ -4,16 +4,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType } from "@/types";
+import type { RecommendedItem, ItemType } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { ArrowLeft, Star, MapPin, AlertTriangle, Info, ShoppingBag } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Star, MapPin, AlertTriangle, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -47,12 +46,10 @@ interface HospitalDetailClientPageProps {
 export default function HospitalDetailClientPage({ params, itemType, itemData }: HospitalDetailClientPageProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user } = useAuth(); // Keep useAuth if needed for other purposes
 
   const [item, setItem] = useState<RecommendedItem | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
-  const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
     if (itemData) {
@@ -101,55 +98,6 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
     }
   }, [itemData, params.id, itemType, t]);
 
-  const handleBookNow = async () => {
-    if (!user) {
-      toast({ title: t('loginToProceed'), description: t('loginToBookService'), variant: "destructive" });
-      router.push('/auth/login');
-      return;
-    }
-    if (!item) return;
-
-    setIsBooking(true);
-    try {
-      const orderData: Omit<AppOrder, 'id'> = {
-        userId: user.uid,
-        serviceType: itemType,
-        serviceId: item.id,
-        serviceName: item.name || t('serviceUnnamed'),
-        orderDate: serverTimestamp(),
-        status: 'pending_confirmation',
-        imageUrl: item.imageUrl || null,
-        dataAiHint: item.dataAiHint || "hospital building interior",
-        amount: item.price === undefined ? null : item.price,
-      };
-      await addDoc(firestoreCollection(db, "orders"), orderData);
-
-      // Removed addPointsToUser call
-
-      const notificationData: Omit<NotificationItem, 'id'> = {
-        titleKey: 'orderSuccessNotificationTitle',
-        descriptionKey: 'orderSuccessNotificationDescription',
-        descriptionPlaceholders: { serviceName: item.name || t('serviceUnnamed') },
-        date: serverTimestamp(),
-        read: false,
-        itemType: itemType,
-        link: `/orders`,
-        imageUrl: item.imageUrl || null,
-        dataAiHint: item.dataAiHint || "hospital building interior",
-      };
-      if (user?.uid) {
-        await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
-      }
-
-      toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
-    } catch (error) {
-      console.error("Error booking Hospital appointment:", error);
-      toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }), variant: "destructive" });
-    } finally {
-      setIsBooking(false);
-    }
-  };
-
   const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com');
 
   if (loadingInitial) {
@@ -167,7 +115,6 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-4 w-2/3 mt-2" />
         <Skeleton className="h-4 w-1/2 mt-2" />
-        <Skeleton className="h-12 w-full rounded-lg mt-6" />
       </div>
     );
   }
@@ -224,20 +171,7 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
               <DetailItem labelKey="ratingLabel" value={typeof item.rating === 'number' ? item.rating : undefined} icon={Star} />
             </div>
           </CardContent>
-           <CardFooter className="p-4 md:p-6 border-t">
-            <Button
-              className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-3 text-base h-12"
-              onClick={handleBookNow}
-              disabled={isBooking}
-            >
-              {isBooking ? t('loading') : (
-                 <>
-                  <ShoppingBag className="mr-2 h-5 w-5" />
-                  {t('bookNowButton')}
-                </>
-              )}
-            </Button>
-          </CardFooter>
+          {/* CardFooter with order button removed */}
         </Card>
       </div>
     </div>
