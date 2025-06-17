@@ -74,7 +74,9 @@ export default function HotelsPage() {
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
             location: nestedData.khot || undefined,
-            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
+            averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+            reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+            totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
             price: nestedData.price === undefined ? null : nestedData.price,
             itemType: mapCategoryToSingularItemType(entryData.categoryName),
             dataAiHint: nestedData.dataAiHint || "hotel item",
@@ -122,9 +124,15 @@ export default function HotelsPage() {
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('allSectionTitle')}</h2>
 
         {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, idx) => (
-              <Skeleton key={idx} className="h-48 rounded-lg" />
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {[...Array(4)].map((_, idx) => ( // Changed to 4 skeletons for 2x2 mobile
+               <div key={`skeleton-hotel-${idx}`} className="flex flex-col space-y-3">
+                <Skeleton className="h-[180px] w-full rounded-xl aspect-[3/4]" />
+                <div className="space-y-2 p-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -138,7 +146,7 @@ export default function HotelsPage() {
         )}
 
         {!loading && !error && recommendations.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {recommendations.map((item) => (
               <ServiceCard key={item.id} item={item} />
             ))}
