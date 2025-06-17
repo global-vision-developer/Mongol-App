@@ -418,6 +418,20 @@ const translations: Record<Language, Record<string, string>> = {
     roomsTitle: "Өрөөнүүд",
     roomImageAlt: "Өрөөний зураг",
     noRoomDescription: "Өрөөний тайлбар байхгүй.",
+    // Review Form
+    giveRatingTitle: "Үнэлгээ өгөх",
+    ratingScaleBad: "Муу",
+    ratingScaleGood: "Сайн",
+    reviewCommentTitle: "Сэтгэгдэл",
+    reviewCommentPlaceholder: "Сэтгэгдэл бичих...",
+    submitReviewButton: "Илгээх",
+    loginToReview: "Сэтгэгдэл бичихийн тулд нэвтэрнэ үү.",
+    reviewSubmittedSuccess: "Таны үнэлгээ, сэтгэгдэл амжилттай хадгалагдлаа.",
+    reviewSubmitError: "Үнэлгээ, сэтгэгдэл хадгалахад алдаа гарлаа.",
+    selectRatingPrompt: "Үнэлгээгээ сонгоно уу (1-10).",
+    reviewFormCardTitle: "Үнэлгээ болон сэтгэгдэл",
+    yourRating: "Таны үнэлгээ",
+    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} үнэлгээ)", // e.g. 4.5 (10 үнэлгээ)
   },
   cn: {
     bookNowButton: "立即预订",
@@ -822,6 +836,20 @@ const translations: Record<Language, Record<string, string>> = {
     roomsTitle: "房间",
     roomImageAlt: "房间图片",
     noRoomDescription: "暂无房间描述。",
+    // Review Form
+    giveRatingTitle: "评价",
+    ratingScaleBad: "差",
+    ratingScaleGood: "好",
+    reviewCommentTitle: "评论",
+    reviewCommentPlaceholder: "写下您的评论...",
+    submitReviewButton: "提交",
+    loginToReview: "请登录以发表评论。",
+    reviewSubmittedSuccess: "您的评价已成功提交。",
+    reviewSubmitError: "提交评价时出错。",
+    selectRatingPrompt: "请选择您的评分 (1-10)。",
+    reviewFormCardTitle: "评分与评论",
+    yourRating: "您的评分",
+    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} 条评价)", // e.g. 4.5 (10 条评价)
   },
 };
 
@@ -865,3 +893,6 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
+
+
+    

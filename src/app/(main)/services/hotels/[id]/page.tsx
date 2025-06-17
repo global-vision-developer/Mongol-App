@@ -27,7 +27,9 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           imageUrl: finalImageUrl,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
-          rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+          averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null, // Use unelgee for averageRating
+          reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+          totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'hotel' as ItemType,
           dataAiHint: nestedData.dataAiHint || "hotel item",
@@ -72,3 +74,5 @@ export default async function HotelDetailPageServer({ params }: { params: { id: 
   const itemData = await getItemData(params.id);
   return <HotelDetailClientPage itemData={itemData} params={params} itemType="hotel" />;
 }
+
+    

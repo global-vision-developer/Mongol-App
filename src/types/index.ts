@@ -58,35 +58,34 @@ export interface RecommendedItem {
   hasWorkedBefore?: boolean;
   possibleFields?: string[];
   availableCities?: string[] | string;
-  price?: number | string | null; // Can be a string like "100-200" or a number, allow null
-  rating?: number | null; // Allow null
+  price?: number | string | null;
+  averageRating?: number | null; // Changed from rating
+  reviewCount?: number;
+  totalRatingSum?: number; // Added for calculation
   location?: string;
   primaryLanguage?: string;
   availabilityStatus?: string;
   dataAiHint?: string;
-  itemType: ItemType; // Made mandatory
-  // Fields from Translator type that might appear in RecommendedItem if it's a translator
+  itemType: ItemType;
   nationality?: Nationality;
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
   currentCityInChina?: string | null;
   chineseExamTaken?: boolean | null;
   translationFields?: TranslationField[];
-  dailyRate?: DailyRateRange | null; // Allow null
-  chinaPhoneNumber?: string | null; // Keep for type consistency, but control visibility
-  wechatId?: string | null; // Keep for type consistency, but control visibility
-  // For WeChat items
+  dailyRate?: DailyRateRange | null;
+  chinaPhoneNumber?: string | null;
+  wechatId?: string | null;
   wechatQrImageUrl?: string;
-  // For Hotel items / Factory items with multiple showcases
-  rooms?: Array<{ // For Hotels
+  rooms?: Array<{
     description: string;
     imageUrl: string;
     name?: string;
     [key: string]: any;
   }>;
-  showcaseItems?: ShowcaseItem[]; // For Factories or other items with detailed showcases
-  isMainSection?: boolean; // from data.golheseg for factories for example
-  taniltsuulga?: string; // Introduction field specifically for factories if needed
+  showcaseItems?: ShowcaseItem[];
+  isMainSection?: boolean;
+  taniltsuulga?: string;
 }
 
 export interface UserProfile {
@@ -100,24 +99,24 @@ export interface UserProfile {
   dateOfBirth?: string | null; // Store as ISO string (YYYY-MM-DD)
   gender?: 'male' | 'female' | 'other' | null;
   homeAddress?: string | null;
-  fcmTokens?: string[]; // Store FCM tokens for the user
-  lastTokenUpdate?: Timestamp; // When the token list was last updated
+  fcmTokens?: string[];
+  lastTokenUpdate?: Timestamp;
   points?: number;
 }
 
 export interface Order {
-  id: string; // Firestore document ID
-  userId: string; // User who made the order
-  serviceType: ItemType; // Type of service, matches ItemType
-  serviceId: string; // ID of the translator, flight, etc.
-  serviceName: string; // Name of the service/translator
-  orderDate: Timestamp | any; // Firestore Timestamp for when the order was placed
+  id: string;
+  userId: string;
+  serviceType: ItemType;
+  serviceId: string;
+  serviceName: string;
+  orderDate: Timestamp | any;
   status: 'pending_payment' | 'pending_confirmation' | 'confirmed' | 'cancelled' | 'completed' | 'contact_revealed';
-  amount?: number | string | null; // Amount paid or price range
-  paymentDetails?: any; // Details about the payment
-  contactInfoRevealed?: boolean; // Specifically for translator orders
-  imageUrl?: string | null; // Image of the service/item ordered
-  dataAiHint?: string | null; // AI hint for the image
+  amount?: number | string | null;
+  paymentDetails?: any;
+  contactInfoRevealed?: boolean;
+  imageUrl?: string | null;
+  dataAiHint?: string | null;
 }
 
 
@@ -127,17 +126,17 @@ export interface SavedDocData extends RecommendedItem {
 
 
 export interface NotificationItem {
-  id: string; // Firestore document ID
-  titleKey: string; // Can be a direct title string or a translation key
-  descriptionKey: string; // Can be a direct description string or a translation key
-  descriptionPlaceholders?: Record<string, string | number>; // For dynamic text like {{serviceName}}
-  date: Timestamp | any; // Firestore Timestamp
+  id: string;
+  titleKey: string;
+  descriptionKey: string;
+  descriptionPlaceholders?: Record<string, string | number>;
+  date: Timestamp | any;
   read: boolean;
-  imageUrl?: string | null; // Optional image for the notification
-  dataAiHint?: string | null; // Optional AI hint for the image
-  link?: string | null; // Optional link to navigate to when clicked
-  itemType: ItemType; // Type of item this notification relates to (e.g., 'order', 'promo')
-  isGlobal?: boolean; // True if it's a global notification, false/undefined for user-specific
+  imageUrl?: string | null;
+  dataAiHint?: string | null;
+  link?: string | null;
+  itemType: ItemType;
+  isGlobal?: boolean;
 }
 
 export interface HospitalCategory {
@@ -167,7 +166,6 @@ export interface WeChatCategoryItem {
   href: string;
 }
 
-// For Translator Registration Form
 export type Nationality = 'mongolian' | 'chinese' | 'inner_mongolian' | '';
 export type LanguageLevel = 'good' | 'intermediate' | 'basic' | '';
 export type DailyRateRange = '100-200' | '200-300' | '300-400' | '400-500' | '500+' | '';
@@ -179,7 +177,6 @@ export interface Translator {
   uid: string;
   name: string;
   photoUrl?: string | null;
-
   nationality?: Nationality | null;
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
@@ -191,29 +188,41 @@ export interface Translator {
   translationFields?: TranslationField[] | null;
   canWorkInOtherCities?: string[] | null;
   dailyRate?: DailyRateRange | null;
-  chinaPhoneNumber?: string | null; // Sensitive
-  wechatId?: string | null; // Sensitive
-
-  // Generic fields that might overlap with RecommendedItem, ensure consistency
-  city?: string; // This is 'currentCityInChina' if in China, or primary operating city
-  rating?: number | null;
-  description?: string; // Could be a short bio
-  gender?: 'male' | 'female' | 'other' | null; // From user profile eventually
+  chinaPhoneNumber?: string | null;
+  wechatId?: string | null;
+  city?: string;
+  averageRating?: number | null; // Changed from rating
+  reviewCount?: number;
+  totalRatingSum?: number; // Added
+  description?: string;
+  gender?: 'male' | 'female' | 'other' | null;
   itemType: ItemType;
-
   idCardFrontImageUrl?: string;
   idCardBackImageUrl?: string;
   selfieImageUrl?: string;
   wechatQrImageUrl?: string;
-
   registeredAt?: Timestamp | any;
   isActive?: boolean;
   isProfileComplete?: boolean;
-  reviewCount?: number;
-  views?: number; // For display like "10/10 (436 views)"
+  views?: number;
 }
 
 
 export interface SavedPageItem extends RecommendedItem {
   savedAt: Timestamp | any;
 }
+
+export interface Review {
+  id: string; // userId of the reviewer for this item
+  itemId: string;
+  itemType: ItemType;
+  userId: string;
+  userName?: string | null;
+  userPhotoUrl?: string | null;
+  rating: number; // 1-10
+  comment?: string;
+  createdAt: Timestamp | any;
+  updatedAt?: Timestamp | any;
+}
+
+    

@@ -15,6 +15,7 @@ import { ArrowLeft, Star, MapPin, AlertTriangle, Info, ShoppingBag, BedDouble } 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ServiceReviewForm } from "@/components/ServiceReviewForm"; // Import the new review form
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -23,7 +24,8 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     if (Array.isArray(value)) {
       displayValue = value.join(', ');
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      displayValue = `${value.toFixed(1)} / 5`;
+      // This part might need adjustment based on how averageRating and reviewCount are displayed
+      displayValue = `${value.toFixed(1)} / 10`; // Assuming 1-10 scale for display if needed
     } else {
       displayValue = value.toString();
     }
@@ -53,14 +55,14 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
   const { toast } = useToast();
 
   const [item, setItem] = useState<RecommendedItem | null>(itemData);
-  const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id); // True if itemData is not passed and ID exists
+  const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
   const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
     if (itemData) {
       setItem(itemData);
       setLoadingInitial(false);
-    } else if (params.id && !itemData) { // Fallback: if itemData is null (e.g. error on server fetch)
+    } else if (params.id && !itemData) {
       const fetchItem = async () => {
         setLoadingInitial(true);
         try {
@@ -81,7 +83,9 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined,
-                rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : undefined,
+                averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+                reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+                totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
                 price: nestedData.price === undefined ? null : nestedData.price,
                 itemType: 'hotel',
                 dataAiHint: nestedData.dataAiHint || "hotel item",
@@ -131,8 +135,6 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
 
-      // Removed addPointsToUser call
-
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
         descriptionKey: 'orderSuccessNotificationDescription',
@@ -154,6 +156,17 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
       toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }), variant: "destructive" });
     } finally {
       setIsBooking(false);
+    }
+  };
+  
+  const onReviewSubmitted = (newAverageRating: number, newReviewCount: number, newTotalRatingSum: number) => {
+    if (item) {
+      setItem(prevItem => prevItem ? ({
+        ...prevItem,
+        averageRating: newAverageRating,
+        reviewCount: newReviewCount,
+        totalRatingSum: newTotalRatingSum,
+      }) : null);
     }
   };
 
@@ -203,7 +216,7 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
       </div>
 
       <div className="container mx-auto py-2 md:py-6 px-2">
-        <Card className="overflow-hidden shadow-xl">
+        <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
               src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Hotel')}`}
@@ -227,7 +240,18 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
-              <DetailItem labelKey="ratingLabel" value={typeof item.rating === 'number' ? item.rating : undefined} icon={Star} />
+              {/* Updated Rating Display */}
+              <div className="flex items-start text-sm">
+                <Star className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />
+                <div>
+                    <p className="font-medium text-muted-foreground">{t('ratingLabel')}</p>
+                    {item.averageRating !== null && item.averageRating !== undefined && item.reviewCount !== undefined ? (
+                        <p className="text-foreground">{t('averageRatingDisplay', { averageRating: item.averageRating.toFixed(1), reviewCount: item.reviewCount })}</p>
+                    ) : (
+                        <p className="text-foreground">{t('noReviewsYet')}</p>
+                    )}
+                </div>
+              </div>
             </div>
 
             {item.rooms && item.rooms.length > 0 && (
@@ -276,7 +300,20 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
             </Button>
           </CardFooter>
         </Card>
+
+        {/* Review Form Section */}
+        <ServiceReviewForm
+          itemId={item.id}
+          itemType={item.itemType}
+          currentAverageRating={item.averageRating ?? 0}
+          currentReviewCount={item.reviewCount ?? 0}
+          currentTotalRatingSum={item.totalRatingSum ?? 0}
+          onReviewSubmitted={onReviewSubmitted}
+        />
+        {/* TODO: Add ReviewList component here later */}
       </div>
     </div>
   );
 }
+
+    
