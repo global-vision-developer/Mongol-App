@@ -22,7 +22,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Altan Zam',
+  title: 'Mongol',
   description: 'Your super app for all needs in China.',
   // PWA specific metadata removed for debugging
   // manifest: "/manifest.json",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   // appleWebApp: {
   //   capable: true,
   //   statusBarStyle: "default",
-  //   title: "Altan Zam",
+  //   title: "Mongol",
   // },
   // formatDetection: {
   //  telephone: false,
@@ -49,7 +49,7 @@ export default function RootLayout({
         {/* <meta name="theme-color" content="#3F51B5" /> */}
         {/* <meta name="apple-mobile-web-app-capable" content="yes" /> */}
         {/* <meta name="apple-mobile-web-app-status-bar-style" content="default" /> */}
-        {/* <meta name="apple-mobile-web-app-title" content="Altan Zam" /> */}
+        {/* <meta name="apple-mobile-web-app-title" content="Mongol" /> */}
         {/* <link rel="apple-touch-icon" href="/icons/icon-192x192.png" /> */}
       </head>
       <body className="font-body antialiased">
