@@ -16,7 +16,8 @@ import { useCity } from "@/contexts/CityContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Helper function to map Firestore categoryName to singular ItemType for ServiceCard
-const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
+// Made robust for potentially undefined categoryName
+const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
   const lowerCategoryName = categoryName?.toLowerCase();
   switch (lowerCategoryName) {
     case 'hotels': return 'hotel';
@@ -25,8 +26,8 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
     case 'factories': return 'factory';
     case 'hospitals': return 'hospital';
     case 'embassies': return 'embassy';
-    case 'wechat': return 'wechat'; // Assuming 'wechat' is already singular
-    default: return lowerCategoryName as ItemType; // Fallback
+    case 'wechat': return 'wechat';
+    default: return (lowerCategoryName || 'service') as ItemType; // Fallback to 'service'
   }
 };
 
@@ -51,27 +52,27 @@ export default function HomePage() {
     }
   }, [user, authLoading, router]);
 
+  // Data fetching useEffect
   useEffect(() => {
     const fetchEntriesByCategory = async (
-      categoryNameFilter: string, // This will be plural e.g., "hotels", "translators"
+      categoryNameFilter: string,
       count: number,
       cityValue?: string
     ): Promise<RecommendedItem[]> => {
       const entriesRef = collection(db, "entries");
-      let firestoreQuery: FirestoreQueryType<DocumentData>;
-
       const queryConstraints = [where("categoryName", "==", categoryNameFilter)];
       if (cityValue && cityValue !== "all") {
         queryConstraints.push(where("data.khot", "==", cityValue));
       }
       queryConstraints.push(limit(count));
 
-      firestoreQuery = query(entriesRef, ...queryConstraints);
+      const firestoreQuery: FirestoreQueryType<DocumentData> = query(entriesRef, ...queryConstraints);
       
       const snapshot = await getDocs(firestoreQuery);
       return snapshot.docs.map(doc => {
         const entryData = doc.data();
         const nestedData = entryData.data || {};
+        const categoryNameFromDoc = entryData.categoryName;
         
         let finalImageUrl: string | undefined = undefined;
         const rawImageUrl = nestedData['nuur-zurag-url'];
@@ -83,35 +84,43 @@ export default function HomePage() {
           id: doc.id, 
           name: nestedData.name || t('serviceUnnamed'),
           imageUrl: finalImageUrl,
-          description: nestedData.setgegdel || '',
+          description: nestedData.taniltsuulga || nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
           rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
           price: nestedData.price === undefined ? null : nestedData.price, 
-          itemType: mapCategoryToSingularItemType(entryData.categoryName), // Use mapping here
-          dataAiHint: nestedData.dataAiHint || `${entryData.categoryName || 'item'} item`,
-          ...(entryData.categoryName === 'translators' && { // Check original categoryName for specific fields
+          itemType: mapCategoryToSingularItemType(categoryNameFromDoc),
+          dataAiHint: nestedData.dataAiHint || `${categoryNameFromDoc || 'item'} item`,
+          ...(categoryNameFromDoc === 'translators' && {
             nationality: nestedData.nationality,
             speakingLevel: nestedData.speakingLevel,
             writingLevel: nestedData.writingLevel,
             dailyRate: nestedData.dailyRate,
           }),
           rooms: nestedData.uruunuud || [],
+          showcaseItems: nestedData.delgerengui || [],
+          isMainSection: typeof nestedData.golheseg === 'boolean' ? nestedData.golheseg : undefined,
         } as RecommendedItem;
       });
     };
 
-    const fetchData = async () => {
-      if (!selectedCity) {
+    const loadDataForPage = async () => {
+      if (!user) { // If no user, ensure loading is false and clear data
         setDataLoading(false);
         setTranslators([]);
         setHotels([]);
+        setWeChatItems([]);
         setMarkets([]);
         setFactories([]);
         setHospitals([]);
         setEmbassies([]);
-        setWeChatItems([]);
         return;
       }
+
+      if (!selectedCity) { // If no city selected (should be initialized by context)
+        setDataLoading(false); // Still set loading to false
+        return;
+      }
+
       setDataLoading(true);
       try {
         const [
@@ -123,13 +132,13 @@ export default function HomePage() {
           embassiesData,
           wechatData,
         ] = await Promise.all([
-          fetchEntriesByCategory("translators", 8, selectedCity?.value),
-          fetchEntriesByCategory("hotels", 8, selectedCity?.value),
-          fetchEntriesByCategory("markets", 8, selectedCity?.value),
-          fetchEntriesByCategory("factories", 8, selectedCity?.value),
-          fetchEntriesByCategory("hospitals", 8, selectedCity?.value),
-          fetchEntriesByCategory("embassies", 8, selectedCity?.value),
-          fetchEntriesByCategory("wechat", 8, selectedCity?.value),
+          fetchEntriesByCategory("translators", 8, selectedCity.value),
+          fetchEntriesByCategory("hotels", 8, selectedCity.value),
+          fetchEntriesByCategory("markets", 8, selectedCity.value),
+          fetchEntriesByCategory("factories", 8, selectedCity.value),
+          fetchEntriesByCategory("hospitals", 8, selectedCity.value),
+          fetchEntriesByCategory("embassies", 8, selectedCity.value),
+          fetchEntriesByCategory("wechat", 8, selectedCity.value),
         ]);
         
         setTranslators(translatorsData);
@@ -142,30 +151,27 @@ export default function HomePage() {
 
       } catch (error) {
         console.error("Error fetching recommended items:", error);
+        // Clear arrays on error to avoid showing stale data
+        setTranslators([]);
+        setHotels([]);
+        setWeChatItems([]);
+        setMarkets([]);
+        setFactories([]);
+        setHospitals([]);
+        setEmbassies([]);
       } finally {
         setDataLoading(false);
       }
     };
 
-    if (user) { 
-      fetchData();
-    } else if (!authLoading && !user) { 
-      setDataLoading(false);
-      setTranslators([]);
-      setHotels([]);
-      setMarkets([]);
-      setFactories([]);
-      setHospitals([]);
-      setEmbassies([]);
-      setWeChatItems([]);
-    }
-  }, [user, selectedCity, authLoading, t]);
+    loadDataForPage();
+
+  }, [user, selectedCity, t]); // `t` is kept as translation keys are used in data mapping
 
   const renderServiceItem = (item: RecommendedItem) => <ServiceCard item={item} />;
   const narrowerCarouselItemWidthClass = "w-[calc(46%-0.375rem)] sm:w-[calc(46%-0.5rem)]";
 
   const showFullPageLoader = authLoading || 
-                             (!user && !authLoading) || 
                              (user && dataLoading && 
                                !translators.length && 
                                !hotels.length && 
@@ -207,7 +213,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && translators.length === 0}
+        isLoading={dataLoading && translators.length === 0 && !!user}
       />
 
       <RecommendedCarouselSection
@@ -216,7 +222,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8} 
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && hotels.length === 0}
+        isLoading={dataLoading && hotels.length === 0 && !!user}
       />
       
       <RecommendedCarouselSection
@@ -225,7 +231,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && weChatItems.length === 0}
+        isLoading={dataLoading && weChatItems.length === 0 && !!user}
       />
 
       <RecommendedCarouselSection
@@ -234,7 +240,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && markets.length === 0}
+        isLoading={dataLoading && markets.length === 0 && !!user}
       />
 
       <RecommendedCarouselSection
@@ -243,7 +249,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && factories.length === 0}
+        isLoading={dataLoading && factories.length === 0 && !!user}
       />
 
       <RecommendedCarouselSection
@@ -252,7 +258,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && hospitals.length === 0}
+        isLoading={dataLoading && hospitals.length === 0 && !!user}
       />
 
       <RecommendedCarouselSection
@@ -261,8 +267,9 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && embassies.length === 0}
+        isLoading={dataLoading && embassies.length === 0 && !!user}
       />
     </div>
   );
 }
+
