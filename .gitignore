@@ -3,12 +3,8 @@
 # dependencies
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
+.yarn/install-state.gz
 
 # testing
 /coverage
@@ -16,9 +12,6 @@
 # next.js
 /.next/
 /out/
-
-# production
-/build
 
 # misc
 .DS_Store
@@ -28,7 +21,11 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+
+# local env files
+.env*.local
+# .env # Keep .env if it's a template, otherwise ignore if it contains secrets
 
 # vercel
 .vercel
@@ -37,9 +34,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.genkit/*
-.env*
+# Capacitor
+/android/
+/ios/
+/node_modules/.cache/capacitor/
+# capacitor.config.ts is checked in, but if they generate a json one by mistake
+# capacitor.config.json
 
-# firebase
-firebase-debug.log
-firestore-debug.log
+# Firebase (if using firebase CLI locally for emulators etc)
+# .firebase/
+# firebase-debug.log
+
+# IDX specific (if applicable)
+# .idx/
