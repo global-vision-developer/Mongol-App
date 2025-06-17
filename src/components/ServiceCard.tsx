@@ -165,30 +165,31 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
           </Button>
         )}
       </CardHeader>
-      <CardContent className="p-3 flex-grow flex flex-col justify-between"> {/* Changed padding to p-3 and added flex-col justify-between */}
+      <CardContent className="p-3 flex-grow flex flex-col justify-between">
         <div>
-            <CardTitle className="text-base font-headline mb-1 line-clamp-2 group-hover:text-primary">{item.name || t('serviceUnnamed')}</CardTitle> {/* text-lg to text-base */}
+            {/* Changed title to text-md, truncate and font-semibold to match TranslatorCard style */}
+            <CardTitle className="text-md font-semibold truncate mb-1 group-hover:text-primary">{item.name || t('serviceUnnamed')}</CardTitle>
             {item.location && (
             <div className="flex items-center text-xs text-muted-foreground mb-1">
                 <MapPin className="h-3 w-3 mr-1 shrink-0" />
-                <span className="line-clamp-1">{item.location}</span>
+                <span className="truncate">{item.location}</span> {/* Changed to truncate */}
             </div>
             )}
-            <CardDescription className="text-xs line-clamp-2 mb-2">{item.description || ''}</CardDescription> {/* text-sm to text-xs, line-clamp-3 to line-clamp-2 */}
+            {/* Changed description to truncate and mb-1 */}
+            <CardDescription className="text-xs truncate mb-1">{item.description || ''}</CardDescription>
         </div>
         
-        <div className="flex justify-between items-center mt-2"> {/* Moved rating and button to a new div for bottom alignment */}
+        <div className="flex justify-between items-center mt-2">
             {ratingNumber !== null && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground"> {/* text-sm to text-xs */}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Star className="h-4 w-4 text-accent fill-accent" />
                 <span>{ratingNumber.toFixed(1)}</span>
             </div>
             )}
-             {/* Spacer to push button to the right if rating is not present */}
             {ratingNumber === null && <div className="flex-grow"></div>}
 
             {cardItselfIsLink ? (
-            <span className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-2.5"> {/* text-sm to text-xs, h-9 to h-8, px-3 to px-2.5 */}
+            <span className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-2.5">
                 {t('viewDetails')}
             </span>
             ) : (
@@ -196,14 +197,13 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
                 variant="outline"
                 size="sm"
                 disabled={true}
-                className="opacity-50 cursor-not-allowed h-8 px-2.5 text-xs" /* Adjusted size and text */
+                className="opacity-50 cursor-not-allowed h-8 px-2.5 text-xs"
             >
                 {t('viewDetails')}
             </Button>
             )}
         </div>
       </CardContent>
-      {/* CardFooter is removed as its content is moved into CardContent for better layout control */}
     </Card>
   );
 
@@ -219,3 +219,4 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 }
 
 export const ServiceCard = React.memo(ServiceCardComponent);
+
