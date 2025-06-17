@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, Heart, MapPin } from "lucide-react";
-import type { RecommendedItem } from '@/types';
+import type { RecommendedItem, SavedDocData } from '@/types'; // Added SavedDocData
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -39,6 +39,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       setIsFavorite(docSnap.exists());
     } catch (error) {
       console.error("Error checking favorite status:", error);
+      // Optionally set isFavorite to false or show a toast
     } finally {
       setIsProcessingFavorite(false);
     }
@@ -53,6 +54,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
     if (isMounted && user && item.id) {
       checkFavoriteStatus();
     } else if (!user) {
+      // If user logs out, reset favorite state
       setIsFavorite(false); 
     }
   }, [user, item.id, checkFavoriteStatus, isMounted]);
@@ -66,7 +68,11 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       toast({ title: t('loginToProceed'), description: t('loginToSave'), variant: "destructive" });
       return;
     }
-    if (!item || !item.id) return;
+    if (!item || !item.id) {
+      console.error("Item or item.id is missing in toggleFavorite.");
+      return;
+    }
+
 
     setIsProcessingFavorite(true);
     const favDocRef = doc(db, "users", user.uid, "savedItems", item.id);
@@ -77,19 +83,24 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
         setIsFavorite(false);
         toast({ title: t('itemRemovedFromSaved') });
       } else {
-        // Prepare item data for saving, exclude 'id' if it's the doc key itself
-        const { id, ...itemDataToSave } = item; 
+        const { id, ...itemDataFromItem } = item;
         
-        await setDoc(favDocRef, {
-          ...itemDataToSave,
-          // Ensure all fields from RecommendedItem that are needed on saved page are here
-          // For example, if ServiceCard on saved page relies on item.name, item.imageUrl, etc.
-          // they must be present in itemDataToSave.
-          // Also, explicitly add itemType and originalId if needed.
-          originalItemId: id, // Store original item id if doc id is different or for reference
-          itemType: item.itemType, // Crucial for routing from saved page
+        // Create a new object for Firestore, explicitly handling undefined values
+        const cleanedItemData: { [key: string]: any } = {};
+        for (const key in itemDataFromItem) {
+          if (Object.prototype.hasOwnProperty.call(itemDataFromItem, key)) {
+            const value = (itemDataFromItem as any)[key];
+            cleanedItemData[key] = value === undefined ? null : value;
+          }
+        }
+        
+        const firestoreData: Partial<SavedDocData> = {
+          ...cleanedItemData,
+          originalItemId: id, 
           savedAt: serverTimestamp(),
-        });
+        };
+
+        await setDoc(favDocRef, firestoreData);
         setIsFavorite(true);
         toast({ title: t('itemSaved') });
       }
@@ -127,12 +138,15 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
         detailPageLink = `/services/wechat/${item.id}`;
         break;
       // Add other cases if needed
+      // default:
+      //   console.warn(`No detail page link configured for itemType: ${item.itemType}`);
     }
   }
 
   const cardItselfIsLink = !!detailPageLink;
-  const placeholderImage = `https://placehold.co/400x300.png?text=${encodeURIComponent(item.name || t('serviceUnnamed'))}`;
+  const placeholderImage = `https://placehold.co/300x400.png?text=${encodeURIComponent(item.name || t('serviceUnnamed'))}`;
   const imageUrlToDisplay = item.imageUrl || placeholderImage;
+  // Check if image is from data URI or Google User Content, which might not need optimization or cause issues with it
   const shouldUnoptimize = item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com');
 
 
@@ -143,14 +157,14 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
             <Image
                 src={imageUrlToDisplay}
                 alt={item.name || t('serviceImageDefaultAlt')}
-                fill
-                className="object-cover"
+                fill // Use fill for responsive image sizing within the aspect ratio container
+                className="object-cover" // Removed rounded-t-lg as parent Card has overflow hidden and rounded-lg
                 data-ai-hint={item.dataAiHint || "item image"}
-                unoptimized={shouldUnoptimize}
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                unoptimized={shouldUnoptimize} // Set unoptimized based on image source
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" // Provide sizes for optimized images
             />
         </div>
-        {isMounted && (
+        {isMounted && ( // Only render Heart button if component is mounted to avoid hydration issues
           <Button
             size="icon"
             variant="ghost"
@@ -190,7 +204,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
             <Button
                 variant="outline"
                 size="sm"
-                disabled={true}
+                disabled={true} // Keep disabled if no link, but maybe add a tooltip explaining why
                 className="opacity-50 cursor-not-allowed h-8 px-2.5 text-xs"
             >
                 {t('viewDetails')}
@@ -213,3 +227,4 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 }
 
 export const ServiceCard = React.memo(ServiceCardComponent);
+
