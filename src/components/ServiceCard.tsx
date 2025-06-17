@@ -39,7 +39,6 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       setIsFavorite(docSnap.exists());
     } catch (error) {
       console.error("Error checking favorite status:", error);
-      // Do not show toast for this type of error on load
     } finally {
       setIsProcessingFavorite(false);
     }
@@ -54,7 +53,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
     if (isMounted && user && item.id) {
       checkFavoriteStatus();
     } else if (!user) {
-      setIsFavorite(false); // Reset if user logs out
+      setIsFavorite(false); 
     }
   }, [user, item.id, checkFavoriteStatus, isMounted]);
 
@@ -78,14 +77,13 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
         setIsFavorite(false);
         toast({ title: t('itemRemovedFromSaved') });
       } else {
-        // Ensure all necessary fields from RecommendedItem are saved
         const itemToSave: any = { ...item };
-        delete itemToSave.id; // Don't save the ID as a field in the document if it's the doc ID
+        delete itemToSave.id; 
         
         await setDoc(favDocRef, {
           ...itemToSave,
           savedAt: serverTimestamp(),
-          itemType: item.itemType, // Ensure itemType is explicitly saved
+          itemType: item.itemType, 
         });
         setIsFavorite(true);
         toast({ title: t('itemSaved') });
@@ -97,8 +95,6 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       setIsProcessingFavorite(false);
     }
   };
-
-  const ratingNumber = typeof item.rating === "number" ? item.rating : null;
 
   let detailPageLink: string | undefined = undefined;
 
@@ -125,7 +121,6 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       case 'wechat':
         detailPageLink = `/services/wechat/${item.id}`;
         break;
-      // Add other cases as needed for new service types
     }
   }
 
@@ -146,7 +141,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
                 className="object-cover"
                 data-ai-hint={item.dataAiHint || "item image"}
                 unoptimized={shouldUnoptimize}
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" // Example sizes, adjust as needed
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
         </div>
         {isMounted && (
@@ -167,27 +162,16 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       </CardHeader>
       <CardContent className="p-3 flex-grow flex flex-col justify-between">
         <div>
-            {/* Changed title to text-md, truncate and font-semibold to match TranslatorCard style */}
             <CardTitle className="text-md font-semibold truncate mb-1 group-hover:text-primary">{item.name || t('serviceUnnamed')}</CardTitle>
             {item.location && (
             <div className="flex items-center text-xs text-muted-foreground mb-1">
                 <MapPin className="h-3 w-3 mr-1 shrink-0" />
-                <span className="truncate">{item.location}</span> {/* Changed to truncate */}
+                <span className="truncate">{item.location}</span>
             </div>
             )}
-            {/* Changed description to truncate and mb-1 */}
-            <CardDescription className="text-xs truncate mb-1">{item.description || ''}</CardDescription>
         </div>
         
-        <div className="flex justify-between items-center mt-2">
-            {ratingNumber !== null && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Star className="h-4 w-4 text-accent fill-accent" />
-                <span>{ratingNumber.toFixed(1)}</span>
-            </div>
-            )}
-            {ratingNumber === null && <div className="flex-grow"></div>}
-
+        <div className="flex justify-end items-center mt-2">
             {cardItselfIsLink ? (
             <span className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-xs font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-2.5">
                 {t('viewDetails')}
