@@ -45,18 +45,28 @@ export default function SavedPage() {
             return null;
           }
 
+          // Ensure all fields expected by RecommendedItem are present, defaulting to null/undefined if not
+          const cleanedData: Partial<SavedPageItem> = {};
+          const recommendedItemKeys: (keyof SavedPageItem)[] = [
+            'name', 'imageUrl', 'description', 'gender', 'city', 'testLevel', 
+            'speakingLevel', 'writingLevel', 'hasWorkedBefore', 'possibleFields', 
+            'availableCities', 'price', 'rating', 'location', 'primaryLanguage', 
+            'availabilityStatus', 'dataAiHint', 'itemType', 'nationality', 
+            'inChinaNow', 'yearsInChina', 'currentCityInChina', 'chineseExamTaken', 
+            'translationFields', 'dailyRate', 'chinaPhoneNumber', 'wechatId', 
+            'wechatQrImageUrl', 'rooms', 'showcaseItems', 'isMainSection', 'taniltsuulga', 'savedAt'
+          ];
+          
+          recommendedItemKeys.forEach(key => {
+            (cleanedData as any)[key] = data[key] === undefined ? null : data[key];
+          });
+
+
           return {
             id: doc.id, // The original item's ID is the document ID here
-            name: data.name || t('serviceUnnamed'),
-            imageUrl: data.imageUrl,
-            description: data.description,
-            rating: data.rating,
-            location: data.location,
-            itemType: itemType,
-            dataAiHint: data.dataAiHint,
-            // Include any other fields from RecommendedItem that ServiceCard might use
-            // and ensure 'savedAt' is present for ordering or display if needed
-            savedAt: data.savedAt,
+            ...cleanedData, // Spread the cleaned data
+            name: data.name || t('serviceUnnamed'), // Ensure name has a fallback
+            itemType: itemType, // Ensure itemType is correctly set
           } as SavedPageItem;
         })
         .filter((item): item is SavedPageItem => item !== null); // Filter out null items
@@ -77,10 +87,10 @@ export default function SavedPage() {
      return (
         <div className="space-y-6">
             <h1 className="text-2xl font-headline font-semibold text-center">{t('saved')}</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {[...Array(3)].map((_, i) => (
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4"> {/* Updated grid for skeleton */}
+                {[...Array(4)].map((_, i) => ( // Show 4 skeletons for 2x2 mobile grid
                     <div key={`skeleton-saved-${i}`} className="flex flex-col space-y-3">
-                        <Skeleton className="h-[180px] w-full rounded-xl aspect-video" />
+                        <Skeleton className="h-[180px] w-full rounded-xl aspect-[3/4]" /> {/* Use aspect ratio */}
                         <div className="space-y-2 p-2">
                             <Skeleton className="h-4 w-3/4" />
                             <Skeleton className="h-4 w-1/2" />
@@ -109,10 +119,8 @@ export default function SavedPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4"> {/* Updated grid for items */}
           {savedItems.map(item => (
-            // Ensure the item passed to ServiceCard conforms to RecommendedItem
-            // The 'id' of the item for ServiceCard should be the original item's ID
             <ServiceCard key={item.id} item={item} />
           ))}
         </div>
