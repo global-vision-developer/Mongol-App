@@ -1,17 +1,17 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Removed CardFooter
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, runTransaction, collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, runTransaction, getDoc } from 'firebase/firestore'; // Added getDoc
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { ItemType, Review } from '@/types';
@@ -37,9 +37,9 @@ interface ServiceReviewFormProps {
 export function ServiceReviewForm({
   itemId,
   itemType,
-  currentAverageRating,
-  currentReviewCount,
-  currentTotalRatingSum,
+  // currentAverageRating, // No longer directly used in this component for display
+  // currentReviewCount,   // No longer directly used in this component for display
+  // currentTotalRatingSum, // No longer directly used in this component for display
   onReviewSubmitted,
 }: ServiceReviewFormProps) {
   const { user } = useAuth();
@@ -47,10 +47,45 @@ export function ServiceReviewForm({
   const { toast } = useToast();
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingReview, setIsFetchingReview] = useState(true);
+
 
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<ReviewFormData>({
     resolver: zodResolver(reviewSchema),
   });
+
+  useEffect(() => {
+    const fetchUserReview = async () => {
+      if (!user || !itemId) {
+        setIsFetchingReview(false);
+        return;
+      }
+      setIsFetchingReview(true);
+      try {
+        const reviewDocRef = doc(db, `entries/${itemId}/reviews`, user.uid);
+        const reviewSnap = await getDoc(reviewDocRef);
+        if (reviewSnap.exists()) {
+          const existingReview = reviewSnap.data() as Review;
+          setSelectedRating(existingReview.rating);
+          setValue('rating', existingReview.rating);
+          setValue('comment', existingReview.comment || '');
+        } else {
+          // No existing review, reset form state for this item
+          setSelectedRating(null);
+          setValue('rating', 0, { shouldValidate: false }); // Clear rating validation error
+          setValue('comment', '');
+        }
+      } catch (error) {
+        console.error("Error fetching existing review:", error);
+        // Optionally show a toast, but for now, just log and proceed
+      } finally {
+        setIsFetchingReview(false);
+      }
+    };
+
+    fetchUserReview();
+  }, [user, itemId, setValue]);
+
 
   const handleRatingSelect = (rating: number) => {
     setSelectedRating(rating);
@@ -78,7 +113,7 @@ export function ServiceReviewForm({
         if (!entryDoc.exists()) {
           throw new Error("Service item document does not exist!");
         }
-        const entryData = entryDoc.data()?.data || {}; // Access nested 'data' field
+        const entryData = entryDoc.data()?.data || {};
 
         const oldReviewDoc = await transaction.get(reviewRef);
         let oldRatingValue = 0;
@@ -87,8 +122,8 @@ export function ServiceReviewForm({
 
         if (oldReviewDoc.exists()) {
           oldRatingValue = oldReviewDoc.data()?.rating || 0;
-          ratingDelta = selectedRating - oldRatingValue; // Difference in rating
-          reviewCountDelta = 0; // Existing review is being updated, so count doesn't change
+          ratingDelta = selectedRating - oldRatingValue;
+          reviewCountDelta = 0; 
         }
 
         const newReview: Omit<Review, 'id'> = {
@@ -104,7 +139,6 @@ export function ServiceReviewForm({
         };
         transaction.set(reviewRef, newReview);
 
-        // Update aggregate fields on the main entry document
         const newTotalRatingSum = (entryData.totalRatingSum || 0) + ratingDelta;
         const newReviewCount = (entryData.reviewCount || 0) + reviewCountDelta;
         const newAverageRating = newReviewCount > 0 ? newTotalRatingSum / newReviewCount : 0;
@@ -112,19 +146,18 @@ export function ServiceReviewForm({
         const updatePayload: Record<string, any> = {
           'data.totalRatingSum': newTotalRatingSum,
           'data.reviewCount': newReviewCount,
-          'data.unelgee': parseFloat(newAverageRating.toFixed(2)), // Store average rating in 'unelgee'
+          'data.unelgee': parseFloat(newAverageRating.toFixed(2)),
         };
         
         transaction.update(entryRef, updatePayload);
 
-        // Call the callback to update parent component state
         onReviewSubmitted(parseFloat(newAverageRating.toFixed(2)), newReviewCount, newTotalRatingSum);
       });
 
       toast({ title: t('reviewSubmittedSuccess') });
-      reset({ comment: '' }); // Reset comment field
-      setSelectedRating(null); // Reset rating selection
-      // The rating on the UI will be updated via onReviewSubmitted callback
+      // Don't reset form here if we want to keep showing the submitted/updated review data
+      // reset({ comment: '' }); 
+      // setSelectedRating(null); // Keep selectedRating to show the current/updated rating
     } catch (error) {
       console.error("Error submitting review:", error);
       toast({ title: t('reviewSubmitError'), description: (error as Error).message, variant: 'destructive' });
@@ -132,6 +165,28 @@ export function ServiceReviewForm({
       setIsSubmitting(false);
     }
   };
+
+  if (isFetchingReview) {
+    return (
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl font-headline">{t('reviewFormCardTitle')}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="animate-pulse">
+            <div className="h-6 bg-muted rounded w-1/3 mb-4"></div>
+            <div className="grid grid-cols-10 gap-1.5 mb-2">
+              {[...Array(10)].map((_, i) => (
+                <div key={i} className="h-9 w-9 bg-muted rounded-full"></div>
+              ))}
+            </div>
+            <div className="h-6 bg-muted rounded w-1/4 mb-2 mt-4"></div>
+            <div className="h-20 bg-muted rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-lg">
@@ -200,11 +255,8 @@ export function ServiceReviewForm({
             {errors.comment && <p className="text-xs text-destructive pt-1">{errors.comment.message}</p>}
           </div>
         </CardContent>
-        {/* Footer removed to place submit button with textarea */}
+        {/* Removed CardFooter, submit button is now part of Textarea block */}
       </form>
     </Card>
   );
 }
-
-
-    
