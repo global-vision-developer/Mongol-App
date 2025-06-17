@@ -2,12 +2,13 @@
 // lib/firebase.ts
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
-import { getAnalytics, isSupported, type Analytics } from 'firebase/analytics';
+import { getAnalytics, isSupported as isAnalyticsSupported, type Analytics } from 'firebase/analytics';
 import { getFirestore, type Firestore } from "firebase/firestore";
 import {
   getMessaging,
   getToken,
   onMessage,
+  isSupported as isMessagingSupported,
   type Messaging
 } from 'firebase/messaging';
 
@@ -32,28 +33,46 @@ console.log("Auth and Firestore initialized");
 
 // Optional: Analytics
 let analytics: Analytics | undefined;
-isSupported().then((supported) => {
-  if (supported) {
-    analytics = getAnalytics(app);
-    console.log("Firebase Analytics initialized");
-  } else {
-    console.log("Firebase Analytics not supported on this browser.");
-  }
-});
+if (typeof window !== 'undefined') {
+  isAnalyticsSupported().then((supported) => {
+    if (supported) {
+      analytics = getAnalytics(app);
+      console.log("Firebase Analytics initialized");
+    } else {
+      console.log("Firebase Analytics not supported on this browser.");
+    }
+  }).catch(err => {
+    console.error("Error checking Analytics support or initializing Analytics:", err);
+  });
+} else {
+  console.log("Not in a browser environment, Firebase Analytics not initialized.");
+}
 
 // Messaging
 let messagingInstance: Messaging | null = null;
-if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator) {
-  try {
-    console.log("Attempting to initialize Firebase Messaging SDK...");
-    messagingInstance = getMessaging(app);
-    console.log("Firebase Messaging SDK initialized successfully.");
-  } catch (err) {
-    console.error('Failed to initialize Firebase Messaging SDK:', err);
-  }
+if (typeof window !== 'undefined') {
+  isMessagingSupported().then(supported => {
+    if (supported) {
+      try {
+        console.log("Attempting to initialize Firebase Messaging SDK...");
+        messagingInstance = getMessaging(app);
+        console.log("Firebase Messaging SDK initialized successfully.");
+      } catch (err) {
+        console.error('Failed to initialize Firebase Messaging SDK:', err);
+        messagingInstance = null; // Ensure it's null on error
+      }
+    } else {
+      console.log("Firebase Messaging is not supported by isMessagingSupported().");
+      messagingInstance = null;
+    }
+  }).catch(err => {
+    console.error("Error checking Messaging support or initializing Messaging:", err);
+    messagingInstance = null; // Ensure it's null on error
+  });
 } else {
-  console.log("Firebase Messaging not supported or not in a browser environment.");
+  console.log("Not in a browser environment, Firebase Messaging not initialized.");
 }
+
 
 // ✅ FCM Token авах функц
 export const requestForToken = async (): Promise<string | null> => {
@@ -62,14 +81,7 @@ export const requestForToken = async (): Promise<string | null> => {
     return null;
   }
 
-  // =====================================================================================
-  // ЭНЭ БОЛ ТАНЫ FIREBASE ТӨСЛИЙН ЖИНХЭНЭ VAPID KEY (PUBLIC KEY PAIR)
-  // Firebase Console > Project Settings > Cloud Messaging таб > Web Push certificates хэсэгт "Key pair" гэсэн утга.
-  // =====================================================================================
   const vapidKeyFromServer = "BNz9Zeh0p8jBbVb9Ib_JudJkS5kfKI6-xkezgpEoomhJQ6vn1GyRAPst2W2FJ-H-I3f2kD_KwEU1tE73gB5ledQ";
-  // const vapidKeyFromServer = "YOUR_GENERATED_VAPID_KEY_FROM_FIREBASE_CONSOLE";
-
-  
   console.log("Attempting to get FCM token with VAPID key:", vapidKeyFromServer);
 
   try {
@@ -95,15 +107,21 @@ export const requestForToken = async (): Promise<string | null> => {
 
 // ✅ Foreground Notification хүлээн авах
 export const onMessageListener = (): Promise<any> =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     if (!messagingInstance) {
       console.warn('Firebase Messaging instance is not available. Cannot listen for messages.');
       return resolve(null); 
     }
-    onMessage(messagingInstance, (payload) => {
-      console.log('📩 Foreground message received:', payload);
-      resolve(payload);
-    });
+    try {
+      onMessage(messagingInstance, (payload) => {
+        console.log('📩 Foreground message received:', payload);
+        resolve(payload);
+      });
+    } catch (error) {
+       console.error("Error setting up onMessage listener:", error);
+       reject(error);
+    }
   });
 
 export { app, auth, db, analytics, messagingInstance as messaging };
+
