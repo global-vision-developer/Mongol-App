@@ -27,16 +27,17 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           imageUrl: finalImageUrl,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
-          averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null, // Use unelgee for averageRating
+          averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
           totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'hotel' as ItemType,
           dataAiHint: nestedData.dataAiHint || "hotel item",
           rooms: (nestedData.uruunuud || []).map((room: any) => ({
-            description: room.description || 'No description',
-            imageUrl: room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.description || 'Room')}`,
             name: room.name || undefined,
+            description: room.description || 'No description',
+            imageUrl: room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.name || 'Room')}`,
+            dataAiHint: room.dataAiHint || "hotel room interior" // Add a default data-ai-hint for rooms
           })),
         } as RecommendedItem;
       }
@@ -74,5 +75,3 @@ export default async function HotelDetailPageServer({ params }: { params: { id: 
   const itemData = await getItemData(params.id);
   return <HotelDetailClientPage itemData={itemData} params={params} itemType="hotel" />;
 }
-
-    

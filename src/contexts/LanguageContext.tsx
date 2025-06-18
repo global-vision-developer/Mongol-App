@@ -17,6 +17,7 @@ const translations: Record<Language, Record<string, string>> = {
   mn: {
     bookNowButton: "Захиалах",
     orderNowButton: "Одоо захиалах",
+    inquireButton: "Судлуулах",
     orderSuccessNotificationTitle: "Захиалга амжилттай",
     orderSuccessNotificationDescription: "{{serviceName}} үйлчилгээний захиалга баталгаажлаа.",
     orderFailedNotificationTitle: "Захиалга амжилтгүй",
@@ -78,10 +79,6 @@ const translations: Record<Language, Record<string, string>> = {
     ordersNoPurchasesMade: "Та худалдан авалт хийгээгүй байна",
     ordersNeedsTab: "Хэрэгцээ", // This key might be unused now
     wechatOrdersTab: "WeChat",
-    marketsOrdersTab: "Захууд", // Will be removed
-    factoriesOrdersTab: "Үйлдвэр", // Will be removed
-    hospitalsOrdersTab: "Эмнэлэг", // Will be removed
-    embassiesOrdersTab: "Элчин сайд", // Will be removed
     ordersPaymentFilter: "Төлбөр",
     ordersTicketFilter: "Тасалбар",
     ordersRefundFilter: "Буцаалт",
@@ -423,6 +420,10 @@ const translations: Record<Language, Record<string, string>> = {
     roomsTitle: "Өрөөнүүд",
     roomImageAlt: "Өрөөний зураг",
     noRoomDescription: "Өрөөний тайлбар байхгүй.",
+    hotelInquiryPaymentModalTitle: "Лавлагааны төлбөр",
+    hotelInquiryPaymentModalDescription: "{{serviceName}} буудлын талаар лавлагаа хийхэд {{amount}} юанийн үйлчилгээний хураамжтай.",
+    hotelInquirySubmittedTitle: "Лавлагаа амжилттай",
+    hotelInquirySubmittedDesc: "{{serviceName}} буудлын талаарх таны лавлагааг хүлээн авлаа. Дэлгэрэнгүй мэдээллийг захиалга хэсгээс харна уу.",
     // Review Form
     giveRatingTitle: "Үнэлгээ өгөх",
     ratingScaleBad: "Муу",
@@ -450,6 +451,7 @@ const translations: Record<Language, Record<string, string>> = {
   cn: {
     bookNowButton: "立即预订",
     orderNowButton: "立即下单",
+    inquireButton: "咨询",
     orderSuccessNotificationTitle: "订单成功",
     orderSuccessNotificationDescription: "您已成功预订 {{serviceName}} 服务。",
     orderFailedNotificationTitle: "订单失败",
@@ -510,10 +512,6 @@ const translations: Record<Language, Record<string, string>> = {
     ordersNoPurchasesMade: "您还没有购买任何商品",
     ordersNeedsTab: "需求", // This key might be unused now
     wechatOrdersTab: "微信服务",
-    marketsOrdersTab: "市场", // Will be removed
-    factoriesOrdersTab: "工厂", // Will be removed
-    hospitalsOrdersTab: "医院", // Will be removed
-    embassiesOrdersTab: "大使馆", // Will be removed
     ordersPaymentFilter: "付款",
     ordersTicketFilter: "票务",
     ordersRefundFilter: "退款",
@@ -855,6 +853,10 @@ const translations: Record<Language, Record<string, string>> = {
     roomsTitle: "房间",
     roomImageAlt: "房间图片",
     noRoomDescription: "暂无房间描述。",
+    hotelInquiryPaymentModalTitle: "咨询费用",
+    hotelInquiryPaymentModalDescription: "咨询 {{serviceName}} 酒店需支付 {{amount}} 元服务费。",
+    hotelInquirySubmittedTitle: "咨询成功",
+    hotelInquirySubmittedDesc: "已收到您对 {{serviceName}} 酒店的咨询。详情请查看订单。",
     // Review Form
     giveRatingTitle: "评价",
     ratingScaleBad: "差",

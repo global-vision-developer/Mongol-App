@@ -11,11 +11,13 @@ import { useTranslation } from "@/hooks/useTranslation";
 import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ArrowLeft, Star, MapPin, AlertTriangle, Info, ShoppingBag, BedDouble } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { ServiceReviewForm } from "@/components/ServiceReviewForm"; // Import the new review form
+import { ServiceReviewForm } from "@/components/ServiceReviewForm";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -24,8 +26,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     if (Array.isArray(value)) {
       displayValue = value.join(', ');
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      // This part might need adjustment based on how averageRating and reviewCount are displayed
-      displayValue = `${value.toFixed(1)} / 10`; // Assuming 1-10 scale for display if needed
+      displayValue = `${value.toFixed(1)} / 10`;
     } else {
       displayValue = value.toString();
     }
@@ -56,7 +57,8 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
 
   const [item, setItem] = useState<RecommendedItem | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
-  const [isBooking, setIsBooking] = useState(false);
+  const [isProcessingInquiry, setIsProcessingInquiry] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     if (itemData) {
@@ -86,13 +88,13 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
-                price: nestedData.price === undefined ? null : nestedData.price,
+                price: nestedData.price === undefined ? null : nestedData.price, // Used for inquiry fee, if any
                 itemType: 'hotel',
                 dataAiHint: nestedData.dataAiHint || "hotel item",
                 rooms: (nestedData.uruunuud || []).map((room: any) => ({
-                  description: room.description || t('noRoomDescription'),
-                  imageUrl: room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.description || 'Room')}`,
                   name: room.name || undefined,
+                  description: room.description || t('noRoomDescription'),
+                  imageUrl: room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.name || 'Room')}`,
                 })),
               } as RecommendedItem);
             } else {
@@ -112,15 +114,19 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
     }
   }, [itemData, params.id, t]);
 
-  const handleBookNow = async () => {
+  const handleInquireNow = async () => {
     if (!user) {
       toast({ title: t('loginToProceed'), description: t('loginToBookService'), variant: "destructive" });
       router.push('/auth/login');
       return;
     }
     if (!item) return;
+    setIsPaymentModalOpen(true);
+  };
 
-    setIsBooking(true);
+  const handlePaymentConfirm = async () => {
+    if (!user || !item) return;
+    setIsProcessingInquiry(true);
     try {
       const orderData: Omit<AppOrder, 'id'> = {
         userId: user.uid,
@@ -128,16 +134,16 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
-        status: 'pending_confirmation',
-        amount: item.price === undefined ? null : item.price,
+        status: 'contact_revealed', // Or a new status like 'inquiry_submitted'
+        amount: item.price === undefined ? null : item.price, // This could be an inquiry fee
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "hotel building",
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
 
       const notificationData: Omit<NotificationItem, 'id'> = {
-        titleKey: 'orderSuccessNotificationTitle',
-        descriptionKey: 'orderSuccessNotificationDescription',
+        titleKey: 'hotelInquirySubmittedTitle',
+        descriptionKey: 'hotelInquirySubmittedDesc',
         descriptionPlaceholders: { serviceName: item.name || t('serviceUnnamed') },
         date: serverTimestamp(),
         read: false,
@@ -150,12 +156,13 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
         await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
       }
 
-      toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
+      toast({ title: t('hotelInquirySubmittedTitle'), description: t('hotelInquirySubmittedDesc', { serviceName: item.name || t('serviceUnnamed') }) });
+      setIsPaymentModalOpen(false);
     } catch (error) {
-      console.error("Error booking hotel:", error);
+      console.error("Error submitting hotel inquiry:", error);
       toast({ title: t('orderFailedNotificationTitle'), description: t('orderFailedNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }), variant: "destructive" });
     } finally {
-      setIsBooking(false);
+      setIsProcessingInquiry(false);
     }
   };
   
@@ -240,7 +247,6 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
-              {/* Updated Rating Display */}
               <div className="flex items-start text-sm">
                 <Star className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />
                 <div>
@@ -257,51 +263,53 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
             {item.rooms && item.rooms.length > 0 && (
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-xl font-semibold text-foreground flex items-center">
-                  <BedDouble className="h-6 w-6 mr-2 text-primary"/>{t('roomsTitle') || "Өрөөнүүд"}
+                  <BedDouble className="h-6 w-6 mr-2 text-primary"/>{t('roomsTitle')}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {item.rooms.map((room, index) => (
-                    <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                      <div className="relative aspect-video">
-                        <Image
-                          src={room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.description || 'Room')}`}
-                          alt={room.description || t('roomImageAlt') || 'Room image'}
-                          layout="fill"
-                          objectFit="cover"
-                          className="bg-muted"
-                          data-ai-hint={room.description ? room.description.substring(0,15) : "hotel room"}
-                          unoptimized={room.imageUrl?.startsWith('data:') || room.imageUrl?.includes('lh3.googleusercontent.com')}
-                        />
-                      </div>
-                      <CardContent className="p-3">
-                        <CardDescription className="text-sm text-muted-foreground line-clamp-2">
-                          {room.description || t('noRoomDescription') || 'No description available.'}
-                        </CardDescription>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                <ScrollArea className="w-full whitespace-nowrap rounded-md">
+                    <div className="flex space-x-4 pb-4">
+                    {item.rooms.map((room, index) => (
+                        <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow w-[200px] flex-shrink-0">
+                        <div className="relative aspect-video">
+                            <Image
+                            src={room.imageUrl || `https://placehold.co/200x150.png?text=${encodeURIComponent(room.name || 'Room')}`}
+                            alt={room.name || room.description || t('roomImageAlt')}
+                            layout="fill"
+                            objectFit="cover"
+                            className="bg-muted"
+                            data-ai-hint={room.name ? room.name.substring(0,15) : "hotel room interior"}
+                            unoptimized={room.imageUrl?.startsWith('data:') || room.imageUrl?.includes('lh3.googleusercontent.com')}
+                            />
+                        </div>
+                        <CardContent className="p-3">
+                            {room.name && <CardTitle className="text-sm font-semibold mb-1 line-clamp-1">{room.name}</CardTitle>}
+                            <CardDescription className="text-xs text-muted-foreground line-clamp-2">
+                            {room.description || t('noRoomDescription')}
+                            </CardDescription>
+                        </CardContent>
+                        </Card>
+                    ))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
               </div>
             )}
-
           </CardContent>
            <CardFooter className="p-4 md:p-6 border-t">
             <Button
               className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-3 text-base h-12"
-              onClick={handleBookNow}
-              disabled={isBooking}
+              onClick={handleInquireNow}
+              disabled={isProcessingInquiry}
             >
-              {isBooking ? t('loading') : (
+              {isProcessingInquiry ? t('loading') : (
                 <>
                   <ShoppingBag className="mr-2 h-5 w-5" />
-                  {t('bookNowButton')}
+                  {t('inquireButton')}
                 </>
               )}
             </Button>
           </CardFooter>
         </Card>
 
-        {/* Review Form Section */}
         <ServiceReviewForm
           itemId={item.id}
           itemType={item.itemType}
@@ -310,10 +318,29 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
           currentTotalRatingSum={item.totalRatingSum ?? 0}
           onReviewSubmitted={onReviewSubmitted}
         />
-        {/* TODO: Add ReviewList component here later */}
       </div>
+
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('hotelInquiryPaymentModalTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('hotelInquiryPaymentModalDescription', { serviceName: item.name, amount: item.price || t('n_a') })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">{t('contactInfoPaymentPlaceholder')}</p>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+                <Button variant="outline" disabled={isProcessingInquiry}>{t('cancel')}</Button>
+            </DialogClose>
+            <Button onClick={handlePaymentConfirm} disabled={isProcessingInquiry}>
+              {isProcessingInquiry ? t('loading') : t('payButton')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
-    
