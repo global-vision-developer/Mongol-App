@@ -10,14 +10,16 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useEffect, useState } from 'react';
 import { Search, ArrowLeft } from 'lucide-react';
-import { SearchBar } from '@/components/SearchBar'; // Import SearchBar
-import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
+import { SearchBar } from '@/components/SearchBar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useSearch } from '@/contexts/SearchContext'; // Import useSearch
 
 export function Header() {
   const { user, loading } = useAuth();
   const { t } = useTranslation();
   const [isMounted, setIsMounted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { setSearchTerm } = useSearch(); // Get setSearchTerm from context
 
   useEffect(() => {
     setIsMounted(true);
@@ -29,6 +31,7 @@ export function Header() {
 
   const handleCloseSearch = () => {
     setIsSearchOpen(false);
+    setSearchTerm(""); // Clear search term when closing search UI
   };
 
   return (
@@ -42,7 +45,6 @@ export function Header() {
             <div className="flex-grow mx-2">
               <SearchBar />
             </div>
-            {/* Keep LanguageSwitcher and UserMenu on the right */}
             <div className="flex items-center gap-1">
               <LanguageSwitcher />
               {isMounted && (
@@ -51,29 +53,24 @@ export function Header() {
                 ) : user ? (
                   <UserMenu user={user} />
                 ) : (
-                  null // Don't render login button here, handled by auth routes
+                  null
                 )
               )}
             </div>
           </>
         ) : (
           <>
-            {/* Left: CitySelector */}
             <div className="flex items-center">
               <CitySelector />
             </div>
-
-            {/* Center: App Name */}
             <Link
               href="/services"
-              className="flex items-center" // Removed absolute positioning
+              className="flex items-center"
               aria-label="Home page"
             >
               <span className="font-headline text-xl font-semibold text-primary">Mongol</span>
             </Link>
-
-            {/* Right: Search Icon, Language Switcher, User Menu */}
-            <div className="flex items-center gap-1"> {/* Removed ml-auto */}
+            <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={handleSearchClick} aria-label={t('search')}>
                 <Search className="h-5 w-5" />
               </Button>
@@ -84,7 +81,7 @@ export function Header() {
                 ) : user ? (
                   <UserMenu user={user} />
                 ) : (
-                  null // Don't render login button here, handled by auth routes
+                  null
                 )
               )}
             </div>

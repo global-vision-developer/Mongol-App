@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { CarouselBanner } from "@/components/CarouselBanner";
@@ -13,10 +13,9 @@ import { collection, getDocs, limit, query, where, type Query as FirestoreQueryT
 import { db } from "@/lib/firebase";
 import type { RecommendedItem, ItemType } from "@/types";
 import { useCity } from "@/contexts/CityContext";
+import { useSearch } from "@/contexts/SearchContext"; // Import useSearch
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Helper function to map Firestore categoryName to singular ItemType for ServiceCard
-// Made robust for potentially undefined categoryName
 const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
   const lowerCategoryName = categoryName?.toLowerCase();
   switch (lowerCategoryName) {
@@ -27,7 +26,7 @@ const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
     case 'hospitals': return 'hospital';
     case 'embassies': return 'embassy';
     case 'wechat': return 'wechat';
-    default: return (lowerCategoryName || 'service') as ItemType; // Fallback to 'service'
+    default: return (lowerCategoryName || 'service') as ItemType;
   }
 };
 
@@ -36,14 +35,15 @@ export default function HomePage() {
   const router = useRouter();
   const { t } = useTranslation();
   const { selectedCity } = useCity();
+  const { searchTerm } = useSearch(); // Get searchTerm from context
 
-  const [translators, setTranslators] = useState<RecommendedItem[]>([]);
-  const [hotels, setHotels] = useState<RecommendedItem[]>([]);
-  const [weChatItems, setWeChatItems] = useState<RecommendedItem[]>([]);
-  const [markets, setMarkets] = useState<RecommendedItem[]>([]);
-  const [factories, setFactories] = useState<RecommendedItem[]>([]);
-  const [hospitals, setHospitals] = useState<RecommendedItem[]>([]);
-  const [embassies, setEmbassies] = useState<RecommendedItem[]>([]);
+  const [allTranslators, setAllTranslators] = useState<RecommendedItem[]>([]);
+  const [allHotels, setAllHotels] = useState<RecommendedItem[]>([]);
+  const [allWeChatItems, setAllWeChatItems] = useState<RecommendedItem[]>([]);
+  const [allMarkets, setAllMarkets] = useState<RecommendedItem[]>([]);
+  const [allFactories, setAllFactories] = useState<RecommendedItem[]>([]);
+  const [allHospitals, setAllHospitals] = useState<RecommendedItem[]>([]);
+  const [allEmbassies, setAllEmbassies] = useState<RecommendedItem[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
@@ -52,7 +52,6 @@ export default function HomePage() {
     }
   }, [user, authLoading, router]);
 
-  // Data fetching useEffect
   useEffect(() => {
     const fetchEntriesByCategory = async (
       categoryNameFilter: string,
@@ -65,7 +64,6 @@ export default function HomePage() {
         queryConstraints.push(where("data.khot", "==", cityValue));
       }
       queryConstraints.push(limit(count));
-
       const firestoreQuery: FirestoreQueryType<DocumentData> = query(entriesRef, ...queryConstraints);
       
       const snapshot = await getDocs(firestoreQuery);
@@ -82,10 +80,11 @@ export default function HomePage() {
 
         return { 
           id: doc.id, 
-          name: nestedData.name || t('serviceUnnamed'),
+          name: nestedData.name || nestedData.title || t('serviceUnnamed'), // Added nestedData.title as fallback
           imageUrl: finalImageUrl,
           description: nestedData.taniltsuulga || nestedData.setgegdel || '',
-          location: nestedData.khot || undefined,
+          location: nestedData.khot || undefined, // Ensure location is present for filtering
+          city: nestedData.khot || undefined, // Alias for location if needed
           rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
           price: nestedData.price === undefined ? null : nestedData.price, 
           itemType: mapCategoryToSingularItemType(categoryNameFromDoc),
@@ -104,88 +103,82 @@ export default function HomePage() {
     };
 
     const loadDataForPage = async () => {
-      if (!user) { // If no user, ensure loading is false and clear data
+      if (!user) { 
         setDataLoading(false);
-        setTranslators([]);
-        setHotels([]);
-        setWeChatItems([]);
-        setMarkets([]);
-        setFactories([]);
-        setHospitals([]);
-        setEmbassies([]);
+        setAllTranslators([]); setAllHotels([]); setAllWeChatItems([]); setAllMarkets([]);
+        setAllFactories([]); setAllHospitals([]); setAllEmbassies([]);
         return;
       }
-
-      if (!selectedCity) { // If no city selected (should be initialized by context)
-        setDataLoading(false); // Still set loading to false
+      if (!selectedCity) { 
+        setDataLoading(false); 
         return;
       }
 
       setDataLoading(true);
       try {
         const [
-          translatorsData,
-          hotelsData,
-          marketsData,
-          factoriesData,
-          hospitalsData,
-          embassiesData,
-          wechatData,
+          translatorsData, hotelsData, marketsData, factoriesData,
+          hospitalsData, embassiesData, wechatData,
         ] = await Promise.all([
-          fetchEntriesByCategory("translators", 8, selectedCity.value),
-          fetchEntriesByCategory("hotels", 8, selectedCity.value),
-          fetchEntriesByCategory("markets", 8, selectedCity.value),
-          fetchEntriesByCategory("factories", 8, selectedCity.value),
-          fetchEntriesByCategory("hospitals", 8, selectedCity.value),
-          fetchEntriesByCategory("embassies", 8, selectedCity.value),
-          fetchEntriesByCategory("wechat", 8, selectedCity.value),
+          fetchEntriesByCategory("translators", 20, selectedCity.value), // Fetch more for better search results
+          fetchEntriesByCategory("hotels", 20, selectedCity.value),
+          fetchEntriesByCategory("markets", 20, selectedCity.value),
+          fetchEntriesByCategory("factories", 20, selectedCity.value),
+          fetchEntriesByCategory("hospitals", 20, selectedCity.value),
+          fetchEntriesByCategory("embassies", 20, selectedCity.value),
+          fetchEntriesByCategory("wechat", 20, selectedCity.value),
         ]);
         
-        setTranslators(translatorsData);
-        setHotels(hotelsData);
-        setMarkets(marketsData);
-        setFactories(factoriesData);
-        setHospitals(hospitalsData);
-        setEmbassies(embassiesData);
-        setWeChatItems(wechatData);
+        setAllTranslators(translatorsData); setAllHotels(hotelsData); setAllMarkets(marketsData);
+        setAllFactories(factoriesData); setAllHospitals(hospitalsData); setAllEmbassies(embassiesData);
+        setAllWeChatItems(wechatData);
 
       } catch (error) {
         console.error("Error fetching recommended items:", error);
-        // Clear arrays on error to avoid showing stale data
-        setTranslators([]);
-        setHotels([]);
-        setWeChatItems([]);
-        setMarkets([]);
-        setFactories([]);
-        setHospitals([]);
-        setEmbassies([]);
+        setAllTranslators([]); setAllHotels([]); setAllWeChatItems([]); setAllMarkets([]);
+        setAllFactories([]); setAllHospitals([]); setAllEmbassies([]);
       } finally {
         setDataLoading(false);
       }
     };
 
     loadDataForPage();
+  }, [user, selectedCity, t]);
 
-  }, [user, selectedCity, t]); // `t` is kept as translation keys are used in data mapping
+  const filterItems = (items: RecommendedItem[], term: string): RecommendedItem[] => {
+    if (!term.trim()) {
+      return items.slice(0, 8); // Return original first 8 if no search term
+    }
+    const lowerSearchTerm = term.toLowerCase();
+    return items.filter(item => {
+      const nameMatch = item.name?.toLowerCase().includes(lowerSearchTerm);
+      const locationMatch = item.location?.toLowerCase().includes(lowerSearchTerm);
+      const cityMatch = item.city?.toLowerCase().includes(lowerSearchTerm); // Added for flexibility if 'city' field is used
+      return nameMatch || locationMatch || cityMatch;
+    }).slice(0, 8); // Limit to 8 after filtering for display in carousel
+  };
+
+  const filteredTranslators = useMemo(() => filterItems(allTranslators, searchTerm), [allTranslators, searchTerm]);
+  const filteredHotels = useMemo(() => filterItems(allHotels, searchTerm), [allHotels, searchTerm]);
+  const filteredWeChatItems = useMemo(() => filterItems(allWeChatItems, searchTerm), [allWeChatItems, searchTerm]);
+  const filteredMarkets = useMemo(() => filterItems(allMarkets, searchTerm), [allMarkets, searchTerm]);
+  const filteredFactories = useMemo(() => filterItems(allFactories, searchTerm), [allFactories, searchTerm]);
+  const filteredHospitals = useMemo(() => filterItems(allHospitals, searchTerm), [allHospitals, searchTerm]);
+  const filteredEmbassies = useMemo(() => filterItems(allEmbassies, searchTerm), [allEmbassies, searchTerm]);
 
   const renderServiceItem = (item: RecommendedItem) => <ServiceCard item={item} />;
   const narrowerCarouselItemWidthClass = "w-[calc(46%-0.375rem)] sm:w-[calc(46%-0.5rem)]";
 
   const showFullPageLoader = authLoading || 
                              (user && dataLoading && 
-                               !translators.length && 
-                               !hotels.length && 
-                               !markets.length && 
-                               !factories.length && 
-                               !hospitals.length && 
-                               !embassies.length && 
-                               !weChatItems.length);
+                               !allTranslators.length && !allHotels.length && !allMarkets.length && 
+                               !allFactories.length && !allHospitals.length && !allEmbassies.length && !allWeChatItems.length);
 
   if (showFullPageLoader) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-20 w-full" /> {/* Placeholder for ServiceGroupGrid */}
-        <Skeleton className="h-48 md:h-64 lg:h-80 w-full" /> {/* Placeholder for CarouselBanner */}
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-48 md:h-64 lg:h-80 w-full" />
         {[...Array(3)].map((_, i) => (
           <div key={i} className="space-y-3 mb-6">
             <Skeleton className="h-6 w-1/2 px-1" />
@@ -209,67 +202,60 @@ export default function HomePage() {
 
       <RecommendedCarouselSection
         titleKey="recommended_translators"
-        items={translators}
+        items={filteredTranslators}
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && translators.length === 0 && !!user}
+        isLoading={dataLoading && filteredTranslators.length === 0 && !!user && !searchTerm} // Only show skeleton if initial load and no search
       />
-
       <RecommendedCarouselSection
         titleKey="recommended_hotels"
-        items={hotels}
+        items={filteredHotels}
         renderItem={renderServiceItem}
         maxTotalItems={8} 
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && hotels.length === 0 && !!user}
+        isLoading={dataLoading && filteredHotels.length === 0 && !!user && !searchTerm}
       />
-      
       <RecommendedCarouselSection
         titleKey="recommendedWeChatServices"
-        items={weChatItems}
+        items={filteredWeChatItems}
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && weChatItems.length === 0 && !!user}
+        isLoading={dataLoading && filteredWeChatItems.length === 0 && !!user && !searchTerm}
       />
-
       <RecommendedCarouselSection
         titleKey="recommended_markets"
-        items={markets}
+        items={filteredMarkets}
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && markets.length === 0 && !!user}
+        isLoading={dataLoading && filteredMarkets.length === 0 && !!user && !searchTerm}
       />
-
       <RecommendedCarouselSection
         titleKey="recommended_factories"
-        items={factories}
+        items={filteredFactories}
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && factories.length === 0 && !!user}
+        isLoading={dataLoading && filteredFactories.length === 0 && !!user && !searchTerm}
       />
-
       <RecommendedCarouselSection
         titleKey="recommended_hospitals"
-        items={hospitals}
+        items={filteredHospitals}
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && hospitals.length === 0 && !!user}
+        isLoading={dataLoading && filteredHospitals.length === 0 && !!user && !searchTerm}
       />
-
       <RecommendedCarouselSection
         titleKey="recommended_embassies"
-        items={embassies}
+        items={filteredEmbassies}
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && embassies.length === 0 && !!user}
+        isLoading={dataLoading && filteredEmbassies.length === 0 && !!user && !searchTerm}
       />
     </div>
   );
 }
-
