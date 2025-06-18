@@ -59,9 +59,9 @@ export interface RecommendedItem {
   possibleFields?: string[];
   availableCities?: string[] | string;
   price?: number | string | null;
-  averageRating?: number | null; // Changed from rating
+  averageRating?: number | null;
   reviewCount?: number;
-  totalRatingSum?: number; // Added for calculation
+  totalRatingSum?: number;
   location?: string;
   primaryLanguage?: string;
   availabilityStatus?: string;
@@ -117,6 +117,10 @@ export interface Order {
   contactInfoRevealed?: boolean;
   imageUrl?: string | null;
   dataAiHint?: string | null;
+  // Fields for translator contact info if revealed
+  chinaPhoneNumber?: string | null;
+  wechatId?: string | null;
+  wechatQrImageUrl?: string | null;
 }
 
 
@@ -129,7 +133,7 @@ export interface NotificationItem {
   id: string;
   titleKey: string;
   descriptionKey: string;
-  descriptionPlaceholders?: Record<string, string | number>;
+  descriptionPlaceholders?: Record<string, string | number | null | undefined>; // Allow null/undefined
   date: Timestamp | any;
   read: boolean;
   imageUrl?: string | null;
@@ -191,9 +195,9 @@ export interface Translator {
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
   city?: string;
-  averageRating?: number | null; // Changed from rating
+  averageRating?: number | null;
   reviewCount?: number;
-  totalRatingSum?: number; // Added
+  totalRatingSum?: number;
   description?: string;
   gender?: 'male' | 'female' | 'other' | null;
   itemType: ItemType;
@@ -224,5 +228,3 @@ export interface Review {
   createdAt: Timestamp | any;
   updatedAt?: Timestamp | any;
 }
-
-    

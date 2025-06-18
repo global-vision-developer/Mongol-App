@@ -7,7 +7,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string, replacements?: Record<string, string | number>) => string;
+  t: (key: string, replacements?: Record<string, string | number | null | undefined>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -78,10 +78,10 @@ const translations: Record<Language, Record<string, string>> = {
     ordersNoPurchasesMade: "Та худалдан авалт хийгээгүй байна",
     ordersNeedsTab: "Хэрэгцээ", // This key might be unused now
     wechatOrdersTab: "WeChat",
-    marketsOrdersTab: "Захууд",
-    factoriesOrdersTab: "Үйлдвэр",
-    hospitalsOrdersTab: "Эмнэлэг",
-    embassiesOrdersTab: "Элчин сайд",
+    marketsOrdersTab: "Захууд", // Will be removed
+    factoriesOrdersTab: "Үйлдвэр", // Will be removed
+    hospitalsOrdersTab: "Эмнэлэг", // Will be removed
+    embassiesOrdersTab: "Элчин сайд", // Will be removed
     ordersPaymentFilter: "Төлбөр",
     ordersTicketFilter: "Тасалбар",
     ordersRefundFilter: "Буцаалт",
@@ -125,6 +125,7 @@ const translations: Record<Language, Record<string, string>> = {
     notification_update_desc: "Аппликейшн шинэчлэгдлээ. Шинэ боломжуудтай танилцана уу.",
     unknownNotificationTitle: "Мэдэгдэл",
     unknownNotificationDescription: "Танд шинэ мэдэгдэл ирлээ.",
+    translatorContactRevealedNotificationDescription: "Орчуулагч {{serviceName}}: Утас: {{translatorPhoneNumber}}, WeChat: {{translatorWeChatId}}.",
     // Flight Search Page
     flightsPageTitle: "Нислэг",
     fromAirport: "Хаанаас",
@@ -371,6 +372,7 @@ const translations: Record<Language, Record<string, string>> = {
     paymentModalDescription: "{{rate}} юанийн төлбөр хийснээр орчуулагчийн холбоо барих мэдээллийг авах боломжтой.",
     payButton: "Төлөх",
     orderCreatedSuccess: "Захиалга амжилттай үүслээ!",
+    contactInfoAvailableInOrders: "Холбоо барих мэдээлэл таны захиалга болон мэдэгдэл хэсэгт харагдах болно.",
     orderCreationFailed: "Захиалга үүсгэхэд алдаа гарлаа.",
     contactInformation: "Холбоо барих мэдээлэл",
     overallRating: "Ерөнхий үнэлгээ",
@@ -405,6 +407,9 @@ const translations: Record<Language, Record<string, string>> = {
     day: "өдөр",
     loadingOrders: "Захиалга уншиж байна...",
     status: "Төлөв",
+    translatorContactPhoneLabel: "Утас",
+    translatorContactWeChatLabel: "WeChat ID",
+    translatorContactWeChatQrLabel: "WeChat QR",
     // Notification Deletion
     deleteNotification: "Мэдэгдэл устгах",
     confirmDeletionTitle: "Устгахдаа итгэлтэй байна уу?",
@@ -505,10 +510,10 @@ const translations: Record<Language, Record<string, string>> = {
     ordersNoPurchasesMade: "您还没有购买任何商品",
     ordersNeedsTab: "需求", // This key might be unused now
     wechatOrdersTab: "微信服务",
-    marketsOrdersTab: "市场",
-    factoriesOrdersTab: "工厂",
-    hospitalsOrdersTab: "医院",
-    embassiesOrdersTab: "大使馆",
+    marketsOrdersTab: "市场", // Will be removed
+    factoriesOrdersTab: "工厂", // Will be removed
+    hospitalsOrdersTab: "医院", // Will be removed
+    embassiesOrdersTab: "大使馆", // Will be removed
     ordersPaymentFilter: "付款",
     ordersTicketFilter: "票务",
     ordersRefundFilter: "退款",
@@ -552,6 +557,7 @@ const translations: Record<Language, Record<string, string>> = {
     notification_update_desc: "应用程序已更新。查看新功能。",
     unknownNotificationTitle: "通知",
     unknownNotificationDescription: "您有一条新通知。",
+    translatorContactRevealedNotificationDescription: "翻译员 {{serviceName}}: 电话: {{translatorPhoneNumber}}, 微信: {{translatorWeChatId}}.",
     // Flight Search Page
     flightsPageTitle: "航班",
     fromAirport: "从哪里",
@@ -798,6 +804,7 @@ const translations: Record<Language, Record<string, string>> = {
     paymentModalDescription: "支付 {{rate}} 元后即可获取翻译员联系方式。",
     payButton: "支付",
     orderCreatedSuccess: "订单创建成功！",
+    contactInfoAvailableInOrders: "联系信息将在您的订单和通知中显示。",
     orderCreationFailed: "订单创建失败。",
     contactInformation: "联系信息",
     overallRating: "综合评分",
@@ -832,6 +839,9 @@ const translations: Record<Language, Record<string, string>> = {
     day: "天",
     loadingOrders: "正在加载订单...",
     status: "状态",
+    translatorContactPhoneLabel: "电话",
+    translatorContactWeChatLabel: "微信号",
+    translatorContactWeChatQrLabel: "微信二维码",
     // Notification Deletion
     deleteNotification: "删除通知",
     confirmDeletionTitle: "确认删除吗？",
@@ -886,11 +896,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('appLanguage', lang);
   };
 
-  const t = (key: string, replacements?: Record<string, string | number>): string => {
+  const t = (key: string, replacements?: Record<string, string | number | null | undefined>): string => {
     let translation = translations[language]?.[key] || translations['mn']?.[key] || key;
     if (replacements) {
       Object.entries(replacements).forEach(([placeholder, value]) => {
-        const valueStr = typeof value === 'number' ? value.toString() : value;
+        const valueStr = (value === null || value === undefined) ? '' : (typeof value === 'number' ? value.toString() : value);
         translation = translation.replace(new RegExp(`{{${placeholder}}}`, 'g'), valueStr);
       });
     }

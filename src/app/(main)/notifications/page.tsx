@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import type { NotificationItem as NotificationItemType } from '@/types';
 import { format } from 'date-fns';
-import { Bell, Trash2 } from 'lucide-react';
+import { Bell, Trash2, Phone, MessageCircle } from 'lucide-react'; // Added Phone, MessageCircle
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
@@ -229,9 +229,26 @@ export default function NotificationsPage() {
                 )}
                 <div className="flex-1">
                   <CardTitle className="text-md font-semibold mb-1">{t(item.titleKey, item.descriptionPlaceholders)}</CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground line-clamp-2">
+                  <CardDescription className="text-sm text-muted-foreground"> {/* Removed line-clamp-2 to show full message */}
                     {t(item.descriptionKey, item.descriptionPlaceholders)}
                   </CardDescription>
+                  {/* Display translator contact info if available in placeholders */}
+                  {item.itemType === 'translator' && item.descriptionPlaceholders?.translatorPhoneNumber && (
+                    <div className="mt-1.5 text-xs text-muted-foreground">
+                      <div className="flex items-center">
+                        <Phone className="h-3.5 w-3.5 mr-1.5" />
+                        <span>{t('translatorContactPhoneLabel')}: {item.descriptionPlaceholders.translatorPhoneNumber}</span>
+                      </div>
+                    </div>
+                  )}
+                   {item.itemType === 'translator' && item.descriptionPlaceholders?.translatorWeChatId && (
+                     <div className="mt-0.5 text-xs text-muted-foreground">
+                        <div className="flex items-center">
+                            <MessageCircle className="h-3.5 w-3.5 mr-1.5" />
+                            <span>{t('translatorContactWeChatLabel')}: {item.descriptionPlaceholders.translatorWeChatId}</span>
+                        </div>
+                     </div>
+                   )}
                 </div>
                 {!item.isGlobal && !item.read && (
                    <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1 shrink-0" />
@@ -293,27 +310,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-
-// Placeholder translation keys (add these to your LanguageContext)
-// mn: {
-//   deleteNotification: "Мэдэгдэл устгах",
-//   confirmDeletionTitle: "Устгахдаа итгэлтэй байна уу?",
-//   confirmDeletionNotificationDesc: "Энэ мэдэгдлийг устгах уу? Энэ үйлдлийг буцаах боломжгүй.",
-//   deleteButtonConfirm: "Устгах",
-//   notificationDeletedSuccessTitle: "Амжилттай",
-//   notificationDeletedSuccessDesc: "Мэдэгдэл устгагдлаа.",
-//   notificationDeletionErrorGeneric: "Мэдэгдэл устгахад алдаа гарлаа.",
-//   notificationDeletionErrorFirebase: "Firestore-оос мэдэгдэл устгахад алдаа гарлаа.",
-// }
-// cn: {
-//   deleteNotification: "删除通知",
-//   confirmDeletionTitle: "确认删除吗？",
-//   confirmDeletionNotificationDesc: "您确定要删除此通知吗？此操作无法撤销。",
-//   deleteButtonConfirm: "删除",
-//   notificationDeletedSuccessTitle: "成功",
-//   notificationDeletedSuccessDesc: "通知已删除。",
-//   notificationDeletionErrorGeneric: "删除通知时出错。",
-//   notificationDeletionErrorFirebase: "从 Firestore 删除通知时出错。",
-// }
-
-    

@@ -8,7 +8,7 @@ import { doc, getDoc, serverTimestamp, addDoc, collection as firestoreCollection
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { Translator, City, Order as AppOrder, TranslationField, LanguageLevel, DailyRateRange, NotificationItem, ItemType } from "@/types";
+import type { Translator, City, Order as AppOrder, TranslationField, LanguageLevel, DailyRateRange, NotificationItem, ItemType, Nationality } from "@/types";
 import { CITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info, ShoppingBag } from "lucide-react";
 import { format } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
-import { ServiceReviewForm } from "@/components/ServiceReviewForm"; // Added import
+import { ServiceReviewForm } from "@/components/ServiceReviewForm";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; translationFieldsValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean }> = ({ labelKey, value, icon: Icon, cityValue, translationFieldsValue, languageLevelValue, dailyRateValue }) => {
   const { t, language } = useTranslation();
@@ -48,7 +48,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     } else if (cityValue && typeof value === 'string') {
       const city = CITIES.find(c => c.value === value);
       displayValue = city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : value.toString();
-    } else if (labelKey === 'ratingLabel' && typeof value === 'number') { // This specific handling for ratingLabel might be redundant now
+    } else if (labelKey === 'ratingLabel' && typeof value === 'number') { 
       displayValue = `${value.toFixed(1)} / 10`;
     } else {
       displayValue = value.toString();
@@ -89,7 +89,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
 
   const [translator, setTranslator] = useState<Translator | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
-  const [showContactInfo, setShowContactInfo] = useState(false);
+  // const [showContactInfo, setShowContactInfo] = useState(false); // Removed, contact info not shown here
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -195,13 +195,21 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
         contactInfoRevealed: true,
         imageUrl: translator.photoUrl || null,
         dataAiHint: "translator portrait",
+        chinaPhoneNumber: translator.chinaPhoneNumber || null,
+        wechatId: translator.wechatId || null,
+        wechatQrImageUrl: translator.wechatQrImageUrl || null,
       };
       await addDoc(firestoreCollection(db, "orders"), orderData);
       
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
-        descriptionKey: 'orderSuccessNotificationDescription',
-        descriptionPlaceholders: { serviceName: translator.name || t('serviceUnnamed') },
+        descriptionKey: 'translatorContactRevealedNotificationDescription', // New key for specific message
+        descriptionPlaceholders: { 
+            serviceName: translator.name || t('serviceUnnamed'),
+            translatorPhoneNumber: translator.chinaPhoneNumber || t('notProvided'),
+            translatorWeChatId: translator.wechatId || t('notProvided'),
+            // QR URL is not suitable for text placeholder
+        },
         date: serverTimestamp(),
         read: false,
         itemType: itemType, 
@@ -213,8 +221,8 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
         await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
       }
 
-      toast({ title: t('orderCreatedSuccess') });
-      setShowContactInfo(true);
+      toast({ title: t('orderCreatedSuccess'), description: t('contactInfoAvailableInOrders') });
+      // setShowContactInfo(true); // Removed
       setIsPaymentModalOpen(false);
     } catch (error) {
       console.error("Error creating order:", error);
@@ -236,7 +244,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
   };
   
   const mainImageShouldUnoptimize = translator?.photoUrl?.startsWith('data:') || translator?.photoUrl?.includes('lh3.googleusercontent.com');
-  const qrImageShouldUnoptimize = translator?.wechatQrImageUrl?.startsWith('data:') || translator?.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
+  // const qrImageShouldUnoptimize = translator?.wechatQrImageUrl?.startsWith('data:') || translator?.wechatQrImageUrl?.includes('lh3.googleusercontent.com'); // No longer displayed here
 
   if (loadingInitial) {
     return (
@@ -356,25 +364,8 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 <DetailItem labelKey="registeredAt" value={format(registeredAtDate, 'yyyy-MM-dd')} icon={UserCheck} />
               )}
             </div>
-
-            {showContactInfo && (
-              <div className="pt-4 border-t">
-                <h3 className="text-lg font-semibold text-primary mb-3">{t('contactInformation')}</h3>
-                <div className="space-y-3">
-                  {translator.chinaPhoneNumber && <DetailItem labelKey="chinaPhoneNumberLabel" value={translator.chinaPhoneNumber} icon={Phone} />}
-                  {translator.wechatId && <DetailItem labelKey="wechatIdLabel" value={translator.wechatId} icon={MessageCircle} />}
-                   {translator.wechatQrImageUrl && (
-                     <div>
-                        <p className="text-sm font-medium text-muted-foreground mb-1">{t('wechatQrImageLabel')}</p>
-                        <Image src={translator.wechatQrImageUrl} alt={t('wechatQrImageLabel')} width={128} height={128} className="rounded-md border" data-ai-hint="qr code" unoptimized={qrImageShouldUnoptimize} />
-                     </div>
-                   )}
-                </div>
-              </div>
-            )}
           </CardContent>
 
-          {!showContactInfo && (
             <CardFooter className="p-4 md:p-6 border-t">
               <Button 
                 className="w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white py-3 text-base h-12" 
@@ -389,7 +380,6 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                  )}
               </Button>
             </CardFooter>
-          )}
         </Card>
         
         <ServiceReviewForm
@@ -427,4 +417,3 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
     </div>
   );
 }
-

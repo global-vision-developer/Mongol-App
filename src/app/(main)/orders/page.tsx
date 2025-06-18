@@ -1,11 +1,11 @@
 
 "use client";
-import React from 'react'; // Added import for React
+import React from 'react'; 
 import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { Plane, BedDouble, Users, Smartphone, ShoppingBag } from 'lucide-react'; // Removed ShoppingCart, FactoryIcon, HospitalIcon, Landmark
+import { Plane, BedDouble, Users, Smartphone, ShoppingBag, Phone, MessageCircle } from 'lucide-react'; 
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { db } from '@/lib/firebase';
@@ -29,6 +29,8 @@ const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
       default: return status;
     }
   };
+  
+  const qrImageShouldUnoptimize = order.wechatQrImageUrl?.startsWith('data:') || order.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
 
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -41,6 +43,7 @@ const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
             height={64}
             className="h-16 w-16 rounded-md object-cover bg-muted"
             data-ai-hint={order.dataAiHint || "service item"}
+            unoptimized={order.imageUrl.startsWith('data:') || order.imageUrl.includes('lh3.googleusercontent.com')}
           />
         )}
         {!order.imageUrl && <div className="h-16 w-16 rounded-md bg-muted flex items-center justify-center"><ShoppingBag className="h-8 w-8 text-muted-foreground" /></div>}
@@ -56,8 +59,38 @@ const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
           <p>{t('status')}: <span className="font-medium text-foreground">{t(getStatusTextKey(order.status))}</span></p>
           {order.amount && <p>{t('orderAmount')}: <span className="font-medium text-foreground">{order.amount}</span></p>}
         </div>
+        {order.serviceType === 'translator' && order.contactInfoRevealed && (
+          <div className="mt-3 pt-3 border-t">
+            <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
+            {order.chinaPhoneNumber && (
+              <div className="flex items-center text-sm mb-1">
+                <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber}</span>
+              </div>
+            )}
+            {order.wechatId && (
+              <div className="flex items-center text-sm mb-1">
+                <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>{t('translatorContactWeChatLabel')}: {order.wechatId}</span>
+              </div>
+            )}
+            {order.wechatQrImageUrl && (
+              <div className="mt-1">
+                <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
+                <Image
+                  src={order.wechatQrImageUrl}
+                  alt={t('translatorContactWeChatQrLabel')}
+                  width={100}
+                  height={100}
+                  className="rounded-md border bg-muted"
+                  data-ai-hint="qr code"
+                  unoptimized={qrImageShouldUnoptimize}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
-      {/* Add footer for actions if needed, e.g., view details for specific order types */}
     </Card>
   );
 };
@@ -75,7 +108,6 @@ export default function OrdersPage() {
     { value: "hotel", labelKey: "hotels", icon: BedDouble },
     { value: "translator", labelKey: "translators", icon: Users },
     { value: "wechat", labelKey: "wechatOrdersTab", icon: Smartphone },
-    // Removed Market, Factory, Hospital, Embassy tabs
   ];
 
   useEffect(() => {
@@ -101,6 +133,10 @@ export default function OrdersPage() {
           ...data,
           serviceType: data.serviceType as ItemType,
           orderDate: data.orderDate as Timestamp, 
+          // Ensure contact info fields are included
+          chinaPhoneNumber: data.chinaPhoneNumber || null,
+          wechatId: data.wechatId || null,
+          wechatQrImageUrl: data.wechatQrImageUrl || null,
         } as AppOrder;
       });
       setOrders(fetchedOrders);
@@ -163,7 +199,7 @@ export default function OrdersPage() {
       <h1 className="text-2xl font-headline font-semibold text-center">{t('orders')}</h1>
 
       <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as ItemType | 'flights')} className="w-full">
-        <TabsList className="grid w-full grid-cols-4"> {/* Adjusted grid-cols based on remaining tabs */}
+        <TabsList className="grid w-full grid-cols-4"> 
           {tabCategories.map(category => (
             <TabsTrigger key={category.value} value={category.value}>
               {t(category.labelKey)}
