@@ -18,7 +18,7 @@ export default function MainLayout({
         <AppInit /> {/* Add AppInit here to run on main app part load */}
         <div className="flex min-h-screen flex-col">
           <Header />
-          <main className="flex-1 container py-6 pb-24 md:pb-6"> {/* Add padding-bottom for bottom nav */}
+          <main className="flex-1 container pt-4 pb-24 md:pb-6"> {/* Reduced py-6 to pt-4 */}
             {children}
           </main>
           <BottomNav />

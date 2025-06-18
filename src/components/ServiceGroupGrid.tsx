@@ -9,7 +9,7 @@ export function ServiceGroupGrid() {
   const { t } = useTranslation();
 
   return (
-    <div className="grid grid-cols-4 gap-x-2 gap-y-4 my-8">
+    <div className="grid grid-cols-4 gap-x-2 gap-y-4 mt-2 mb-6"> {/* Changed my-8 to mt-2 mb-6 */}
       {SERVICE_GROUPS.map((service) => (
         <Link 
           href={service.href} 
