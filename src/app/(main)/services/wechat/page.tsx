@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CitySelector } from "@/components/CitySelector";
 import { SearchBar } from "@/components/SearchBar";
-import { WeChatCategoryGrid } from "@/components/services/WeChatCategoryGrid";
+// import { WeChatCategoryGrid } from "@/components/services/WeChatCategoryGrid"; // Removed import
 import { ServiceCard } from "@/components/ServiceCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
@@ -132,9 +132,9 @@ export default function WeChatPage() {
         </div>
       </div>
 
-      <div className="px-1">
+      {/* <div className="px-1"> // WeChatCategoryGrid removed from here
         <WeChatCategoryGrid />
-      </div>
+      </div> */}
 
       {displayableSubcategories.length > 0 && (
         <div className="px-1 space-y-2">
