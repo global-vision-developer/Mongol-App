@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CitySelector } from "@/components/CitySelector";
@@ -15,14 +15,13 @@ import { useCity } from "@/contexts/CityContext";
 import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { RecommendedItem, ItemType } from "@/types";
+import { cn } from "@/lib/utils";
 
-// Helper function to map Firestore categoryName to singular ItemType for ServiceCard
 const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
   const lowerCategoryName = categoryName?.toLowerCase();
   switch (lowerCategoryName) {
-    case 'wechat': return 'wechat'; // Assuming 'wechat' is already singular and matches ServiceCard
-    // Add other mappings if necessary
-    default: return lowerCategoryName as ItemType; // Fallback
+    case 'wechat': return 'wechat';
+    default: return lowerCategoryName as ItemType;
   }
 };
 
@@ -31,7 +30,10 @@ export default function WeChatPage() {
   const router = useRouter();
   const { selectedCity } = useCity();
 
-  const [productItems, setProductItems] = useState<RecommendedItem[]>([]);
+  const [allWeChatItems, setAllWeChatItems] = useState<RecommendedItem[]>([]);
+  const [displayableSubcategories, setDisplayableSubcategories] = useState<string[]>([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +52,7 @@ export default function WeChatPage() {
         const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
         const snapshot = await getDocs(q);
         
-        const data: RecommendedItem[] = snapshot.docs.map((doc) => {
+        const items: RecommendedItem[] = snapshot.docs.map((doc) => {
           const entryData = doc.data();
           const nestedData = entryData.data || {};
 
@@ -66,17 +68,25 @@ export default function WeChatPage() {
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
             location: nestedData.khot || undefined,
-            rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
+            averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+            reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+            totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
             price: nestedData.price === undefined ? null : nestedData.price,
             itemType: mapCategoryToSingularItemType(entryData.categoryName), 
             dataAiHint: nestedData.dataAiHint || "wechat item",
             wechatId: nestedData.wechatId, 
             wechatQrImageUrl: nestedData.wechatQrImageUrl, 
-            rooms: nestedData.uruunuud || [], // Ensure rooms is always an array
+            subcategory: nestedData.subcategory || null,
+            rooms: nestedData.uruunuud || [],
           } as RecommendedItem;
         });
 
-        setProductItems(data);
+        setAllWeChatItems(items);
+
+        const subcategories = new Set(items.map(item => item.subcategory).filter(Boolean) as string[]);
+        setDisplayableSubcategories(Array.from(subcategories));
+        setSelectedSubcategory(null);
+
       } catch (err: any) {
         console.error("Error fetching WeChat entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа.");
@@ -89,10 +99,18 @@ export default function WeChatPage() {
         fetchWeChatEntries();
     } else {
         setLoading(false);
-        setProductItems([]);
+        setAllWeChatItems([]);
+        setDisplayableSubcategories([]);
     }
 
   }, [selectedCity, t]);
+
+  const filteredItems = useMemo(() => {
+    if (!selectedSubcategory) {
+      return allWeChatItems;
+    }
+    return allWeChatItems.filter(item => item.subcategory === selectedSubcategory);
+  }, [allWeChatItems, selectedSubcategory]);
 
   return (
     <div className="space-y-6">
@@ -118,7 +136,40 @@ export default function WeChatPage() {
         <WeChatCategoryGrid />
       </div>
 
+      {displayableSubcategories.length > 0 && (
+        <div className="px-1 space-y-2">
+          <h3 className="text-sm font-medium text-muted-foreground flex items-center">
+            <Filter className="h-4 w-4 mr-2" />
+            {t('filterBySubcategory')}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={!selectedSubcategory ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedSubcategory(null)}
+              className="rounded-full"
+            >
+              {t('allSubcategories')}
+            </Button>
+            {displayableSubcategories.map(subcat => (
+              <Button
+                key={subcat}
+                variant={selectedSubcategory === subcat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedSubcategory(subcat)}
+                className="rounded-full"
+              >
+                {subcat}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="px-1">
+         {/* This title can be adjusted or removed if subcategory filter implies the listing */}
+        <h2 className="text-2xl font-headline font-semibold mb-4">{selectedSubcategory || t('allSectionTitle')}</h2>
+        
         {loading && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
@@ -136,13 +187,13 @@ export default function WeChatPage() {
           <p className="col-span-full text-destructive">{error}</p>
         )}
 
-        {!loading && !error && productItems.length === 0 && (
+        {!loading && !error && filteredItems.length === 0 && (
           <p className="col-span-full text-muted-foreground">{t('noRecommendations')}</p>
         )}
 
-        {!loading && !error && productItems.length > 0 && (
+        {!loading && !error && filteredItems.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {productItems.map((item) => (
+            {filteredItems.map((item) => (
               <ServiceCard key={item.id} item={item} />
             ))}
           </div>
@@ -151,3 +202,5 @@ export default function WeChatPage() {
     </div>
   );
 }
+
+    
