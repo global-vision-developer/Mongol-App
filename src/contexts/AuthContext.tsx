@@ -90,11 +90,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
+      // onAuthStateChanged will handle setting the user and setLoading(false) eventually
     } catch (error) {
+      setLoading(false); // Ensure loading is false on API error
       throw error;
-    } finally {
-      // setLoading(false); // onAuthStateChanged will handle this
     }
+    // No finally block needed if onAuthStateChanged handles success setLoading,
+    // and catch handles error setLoading. If login is successful, onAuthStateChanged will set user
+    // and its own setLoading(false) will be called.
   };
 
   const register = async (email: string, pass: string, name: string) => {
@@ -103,10 +106,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(result.user, { displayName: name });
       // Firestore document will be created by onAuthStateChanged listener
+      // onAuthStateChanged will handle setting the user and setLoading(false) eventually
     } catch (error) {
+      setLoading(false); // Ensure loading is false on API error
       throw error;
-    } finally {
-      // setLoading(false); // onAuthStateChanged will handle this
     }
   };
 
@@ -114,11 +117,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       await signOut(auth);
-      setUser(null);
+      setUser(null); // Explicitly set user to null on logout
     } catch (error) {
       throw error;
     } finally {
-      setLoading(false);
+      setLoading(false); // Always set loading to false after logout attempt
     }
   };
 
