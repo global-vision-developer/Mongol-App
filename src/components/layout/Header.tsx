@@ -33,7 +33,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
+      <div className={`container flex h-16 items-center ${isSearchOpen ? '' : 'justify-between'}`}>
         {isSearchOpen ? (
           <>
             <Button variant="ghost" size="icon" onClick={handleCloseSearch} aria-label={t('back')}>
@@ -51,7 +51,7 @@ export function Header() {
                 ) : user ? (
                   <UserMenu user={user} />
                 ) : (
-                  null
+                  null // Don't render login button here, handled by auth routes
                 )
               )}
             </div>
@@ -65,15 +65,15 @@ export function Header() {
 
             {/* Center: App Name */}
             <Link
-              href="/services" // Changed href to /services
-              className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center"
+              href="/services"
+              className="flex items-center" // Removed absolute positioning
               aria-label="Home page"
             >
               <span className="font-headline text-xl font-semibold text-primary">Mongol</span>
             </Link>
 
             {/* Right: Search Icon, Language Switcher, User Menu */}
-            <div className="ml-auto flex items-center gap-1">
+            <div className="flex items-center gap-1"> {/* Removed ml-auto */}
               <Button variant="ghost" size="icon" onClick={handleSearchClick} aria-label={t('search')}>
                 <Search className="h-5 w-5" />
               </Button>
@@ -84,7 +84,7 @@ export function Header() {
                 ) : user ? (
                   <UserMenu user={user} />
                 ) : (
-                  null
+                  null // Don't render login button here, handled by auth routes
                 )
               )}
             </div>
