@@ -438,7 +438,7 @@ const translations: Record<Language, Record<string, string>> = {
     selectRatingPrompt: "Үнэлгээгээ сонгоно уу (1-10).",
     reviewFormCardTitle: "Үнэлгээ болон сэтгэгдэл",
     yourRating: "Таны үнэлгээ",
-    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} үнэлгээ)", // e.g. 4.5 (10 үнэлгээ)
+    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} үнэлгээ)", 
     // Auth Error Messages
     authErrorTitle: "Алдаа",
     authErrorInvalidCredential: "И-мэйл эсвэл нууц үг буруу байна.",
@@ -451,6 +451,11 @@ const translations: Record<Language, Record<string, string>> = {
     // Subcategory filtering
     allSubcategories: "Бүх дэд ангилал",
     filterBySubcategory: "Дэд ангиллаар шүүх",
+    allCategoriesFilter: "Бүгд", // For Saved page filter
+    genderMale: "Эр",
+    genderFemale: "Эм",
+    genderOther: "Бусад",
+
   },
   cn: {
     bookNowButton: "立即预订",
@@ -514,7 +519,7 @@ const translations: Record<Language, Record<string, string>> = {
     myNotifications: "我的通知",
     noOrdersPlaceholder: "您目前没有订单。",
     ordersNoPurchasesMade: "您还没有购买任何商品",
-    ordersNeedsTab: "需求", // This key might be unused now
+    ordersNeedsTab: "需求", 
     wechatOrdersTab: "微信服务",
     ordersPaymentFilter: "付款",
     ordersTicketFilter: "票务",
@@ -875,7 +880,7 @@ const translations: Record<Language, Record<string, string>> = {
     selectRatingPrompt: "请选择您的评分 (1-10)。",
     reviewFormCardTitle: "评分与评论",
     yourRating: "您的评分",
-    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} 条评价)", // e.g. 4.5 (10 条评价)
+    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} 条评价)", 
     // Auth Error Messages
     authErrorTitle: "错误",
     authErrorInvalidCredential: "电子邮件或密码错误。",
@@ -888,6 +893,10 @@ const translations: Record<Language, Record<string, string>> = {
     // Subcategory filtering
     allSubcategories: "所有子类别",
     filterBySubcategory: "按子类别筛选",
+    allCategoriesFilter: "全部", // For Saved page filter
+    genderMale: "男",
+    genderFemale: "女",
+    genderOther: "其他",
   },
 };
 

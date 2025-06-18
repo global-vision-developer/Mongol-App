@@ -50,8 +50,8 @@ export interface RecommendedItem {
   name: string;
   imageUrl?: string;
   description?: string;
-  gender?: string;
-  city?: string;
+  gender?: 'male' | 'female' | 'other' | null; // Ensure gender is part of RecommendedItem
+  city?: string; // General city/location if applicable
   testLevel?: string;
   speakingLevel?: string;
   writingLevel?: string;
@@ -62,7 +62,7 @@ export interface RecommendedItem {
   averageRating?: number | null;
   reviewCount?: number;
   totalRatingSum?: number;
-  location?: string;
+  location?: string; // More specific location if different from city
   primaryLanguage?: string;
   availabilityStatus?: string;
   dataAiHint?: string;
@@ -70,7 +70,7 @@ export interface RecommendedItem {
   nationality?: Nationality;
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
-  currentCityInChina?: string | null;
+  currentCityInChina?: string | null; // Specifically for translators if needed
   chineseExamTaken?: boolean | null;
   translationFields?: TranslationField[];
   dailyRate?: DailyRateRange | null;
@@ -86,7 +86,7 @@ export interface RecommendedItem {
   showcaseItems?: ShowcaseItem[];
   isMainSection?: boolean;
   taniltsuulga?: string;
-  subcategory?: string | null; // Added for subcategory filtering
+  subcategory?: string | null; 
 }
 
 export interface UserProfile {
@@ -118,14 +118,13 @@ export interface Order {
   contactInfoRevealed?: boolean;
   imageUrl?: string | null;
   dataAiHint?: string | null;
-  // Fields for translator contact info if revealed
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
   wechatQrImageUrl?: string | null;
 }
 
 
-export interface SavedDocData extends RecommendedItem {
+export interface SavedDocData extends RecommendedItem { // SavedDocData inherits RecommendedItem, so gender will be there
   savedAt: Timestamp | any;
 }
 
@@ -134,7 +133,7 @@ export interface NotificationItem {
   id: string;
   titleKey: string;
   descriptionKey: string;
-  descriptionPlaceholders?: Record<string, string | number | null | undefined>; // Allow null/undefined
+  descriptionPlaceholders?: Record<string, string | number | null | undefined>; 
   date: Timestamp | any;
   read: boolean;
   imageUrl?: string | null;
@@ -206,26 +205,29 @@ export interface Translator {
   idCardBackImageUrl?: string;
   selfieImageUrl?: string;
   wechatQrImageUrl?: string;
-  registeredAt?: Timestamp | any;
+  registeredAt?: Timestamp | Date | string; // Allow Date or string for flexibility
   isActive?: boolean;
   isProfileComplete?: boolean;
   views?: number;
 }
 
 
-export interface SavedPageItem extends RecommendedItem {
+export interface SavedPageItem extends RecommendedItem { // SavedPageItem inherits RecommendedItem
   savedAt: Timestamp | any;
+  // Ensure fields like gender, currentCityInChina are available from RecommendedItem
 }
 
 export interface Review {
-  id: string; // userId of the reviewer for this item
+  id: string; 
   itemId: string;
   itemType: ItemType;
   userId: string;
   userName?: string | null;
   userPhotoUrl?: string | null;
-  rating: number; // 1-10
+  rating: number; 
   comment?: string;
   createdAt: Timestamp | any;
   updatedAt?: Timestamp | any;
 }
+
+export type SavedItemCategoryFilter = ItemType | 'all';
