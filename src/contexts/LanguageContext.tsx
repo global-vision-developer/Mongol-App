@@ -432,6 +432,15 @@ const translations: Record<Language, Record<string, string>> = {
     reviewFormCardTitle: "Үнэлгээ болон сэтгэгдэл",
     yourRating: "Таны үнэлгээ",
     averageRatingDisplay: "{{averageRating}} ({{reviewCount}} үнэлгээ)", // e.g. 4.5 (10 үнэлгээ)
+    // Auth Error Messages
+    authErrorTitle: "Алдаа",
+    authErrorInvalidCredential: "И-мэйл эсвэл нууц үг буруу байна.",
+    authErrorInvalidEmail: "И-мэйл хаягийн формат буруу байна.",
+    authErrorEmailAlreadyInUse: "Энэ и-мэйл хаяг бүртгэлтэй байна.",
+    authErrorWeakPassword: "Нууц үг хэт сул байна (дор хаяж 6 тэмдэгт).",
+    authErrorTooManyRequests: "Хэт олон амжилтгүй оролдлого. Түр хүлээгээд дахин оролдоно уу.",
+    authErrorGenericLogin: "Нэвтрэхэд алдаа гарлаа. Дахин оролдоно уу.",
+    authErrorGenericRegister: "Бүртгүүлэхэд алдаа гарлаа. Дахин оролдоно уу.",
   },
   cn: {
     bookNowButton: "立即预订",
@@ -850,6 +859,15 @@ const translations: Record<Language, Record<string, string>> = {
     reviewFormCardTitle: "评分与评论",
     yourRating: "您的评分",
     averageRatingDisplay: "{{averageRating}} ({{reviewCount}} 条评价)", // e.g. 4.5 (10 条评价)
+    // Auth Error Messages
+    authErrorTitle: "错误",
+    authErrorInvalidCredential: "电子邮件或密码错误。",
+    authErrorInvalidEmail: "电子邮件格式错误。",
+    authErrorEmailAlreadyInUse: "此电子邮件地址已被注册。",
+    authErrorWeakPassword: "密码太弱 (至少6个字符)。",
+    authErrorTooManyRequests: "尝试次数过多。请稍后再试。",
+    authErrorGenericLogin: "登录时发生错误。请重试。",
+    authErrorGenericRegister: "注册时发生错误。请重试。",
   },
 };
 
@@ -893,6 +911,3 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
-
-
-    

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
+import type { FirebaseError } from "firebase/app";
 
 export function RegisterForm() {
   const [email, setEmail] = useState("");
@@ -27,7 +28,7 @@ export function RegisterForm() {
     if (password !== confirmPassword) {
       toast({
         title: t("error"),
-        description: t("passwordsDoNotMatch"),
+        description: t("passwordsDoNotMatchError"),
         variant: "destructive",
       });
       return;
@@ -39,11 +40,30 @@ export function RegisterForm() {
         title: t("registrationSuccess"),
         description: t("welcome"),
       });
-      router.push("/services"); // Changed redirect to /services
+      router.push("/services"); 
     } catch (error: any) {
+      let errorMessage = t("authErrorGenericRegister");
+      const firebaseError = error as FirebaseError;
+      switch (firebaseError.code) {
+        case "auth/email-already-in-use":
+          errorMessage = t("authErrorEmailAlreadyInUse");
+          break;
+        case "auth/invalid-email":
+          errorMessage = t("authErrorInvalidEmail");
+          break;
+        case "auth/weak-password":
+          errorMessage = t("authErrorWeakPassword");
+          break;
+        case "auth/too-many-requests":
+          errorMessage = t("authErrorTooManyRequests");
+          break;
+        default:
+          // Keep the generic message if no specific code matches
+          break;
+      }
       toast({
         title: t("registrationFailed"),
-        description: error?.message || t("registrationError"),
+        description: errorMessage,
         variant: "destructive",
       });
     }

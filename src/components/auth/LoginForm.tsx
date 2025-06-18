@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "@/hooks/useTranslation";
+import type { FirebaseError } from "firebase/app";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -24,12 +25,30 @@ export function LoginForm() {
     e.preventDefault();
     try {
       await login(email, password);
-      toast({ title: "Login Successful", description: "Welcome back!" });
-      router.push("/services"); // Changed redirect to /services
+      toast({ title: t("login"), description: t("welcome") }); // Use t() for title too
+      router.push("/services"); 
     } catch (error) {
+      let errorMessage = t("authErrorGenericLogin");
+      const firebaseError = error as FirebaseError;
+      switch (firebaseError.code) {
+        case "auth/invalid-credential":
+        case "auth/user-not-found": // Legacy, but good to keep
+        case "auth/wrong-password": // Legacy
+          errorMessage = t("authErrorInvalidCredential");
+          break;
+        case "auth/invalid-email":
+          errorMessage = t("authErrorInvalidEmail");
+          break;
+        case "auth/too-many-requests":
+          errorMessage = t("authErrorTooManyRequests");
+          break;
+        default:
+          // Keep the generic message if no specific code matches
+          break;
+      }
       toast({
-        title: "Login Failed",
-        description: (error as Error).message || "Please check your credentials.",
+        title: t("loginFailed"), // Translate title
+        description: errorMessage,
         variant: "destructive",
       });
     }
