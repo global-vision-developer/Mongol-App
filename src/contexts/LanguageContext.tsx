@@ -380,6 +380,7 @@ const translations: Record<Language, Record<string, string>> = {
     registeredAt: "Бүртгүүлсэн огноо",
     translatorDescription: "Орчуулагчийн танилцуулга",
     notProvided: "Оруулаагүй",
+    viewContactInfoButton: "Холбоо барих мэдээлэл харах",
     // Detail pages for other services
     hotelDetailTitle: "Буудлын дэлгэрэнгүй",
     wechatItemDetailTitle: "WeChat үйлчилгээний дэлгэрэнгүй",
@@ -813,6 +814,7 @@ const translations: Record<Language, Record<string, string>> = {
     registeredAt: "注册日期",
     translatorDescription: "翻译员简介",
     notProvided: "未提供",
+    viewContactInfoButton: "查看联系方式",
     // Detail pages for other services
     hotelDetailTitle: "酒店详情",
     wechatItemDetailTitle: "微信服务详情",

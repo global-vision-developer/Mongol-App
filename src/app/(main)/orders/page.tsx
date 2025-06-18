@@ -1,13 +1,13 @@
 
 "use client";
-import React from 'react'; 
+import React, { useState } from 'react'; // Added useState
 import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Plane, BedDouble, Users, Smartphone, ShoppingBag, Phone, MessageCircle } from 'lucide-react'; 
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, Timestamp, DocumentData } from 'firebase/firestore';
 import type { Order as AppOrder, ItemType } from '@/types';
@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
   const { t } = useTranslation();
+  const [showContactInfo, setShowContactInfo] = useState(false); // New state
 
   const getStatusTextKey = (status: AppOrder['status']) => {
     switch (status) {
@@ -61,32 +62,40 @@ const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
         </div>
         {order.serviceType === 'translator' && order.contactInfoRevealed && (
           <div className="mt-3 pt-3 border-t">
-            <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
-            {order.chinaPhoneNumber && (
-              <div className="flex items-center text-sm mb-1">
-                <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber}</span>
-              </div>
-            )}
-            {order.wechatId && (
-              <div className="flex items-center text-sm mb-1">
-                <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>{t('translatorContactWeChatLabel')}: {order.wechatId}</span>
-              </div>
-            )}
-            {order.wechatQrImageUrl && (
-              <div className="mt-1">
-                <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
-                <Image
-                  src={order.wechatQrImageUrl}
-                  alt={t('translatorContactWeChatQrLabel')}
-                  width={100}
-                  height={100}
-                  className="rounded-md border bg-muted"
-                  data-ai-hint="qr code"
-                  unoptimized={qrImageShouldUnoptimize}
-                />
-              </div>
+            {!showContactInfo ? (
+              <Button onClick={() => setShowContactInfo(true)} size="sm" className="w-full mt-2">
+                {t('viewContactInfoButton')}
+              </Button>
+            ) : (
+              <>
+                <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
+                {order.chinaPhoneNumber && (
+                  <div className="flex items-center text-sm mb-1">
+                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber}</span>
+                  </div>
+                )}
+                {order.wechatId && (
+                  <div className="flex items-center text-sm mb-1">
+                    <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{t('translatorContactWeChatLabel')}: {order.wechatId}</span>
+                  </div>
+                )}
+                {order.wechatQrImageUrl && (
+                  <div className="mt-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
+                    <Image
+                      src={order.wechatQrImageUrl}
+                      alt={t('translatorContactWeChatQrLabel')}
+                      width={100}
+                      height={100}
+                      className="rounded-md border bg-muted"
+                      data-ai-hint="qr code"
+                      unoptimized={qrImageShouldUnoptimize}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -133,7 +142,6 @@ export default function OrdersPage() {
           ...data,
           serviceType: data.serviceType as ItemType,
           orderDate: data.orderDate as Timestamp, 
-          // Ensure contact info fields are included
           chinaPhoneNumber: data.chinaPhoneNumber || null,
           wechatId: data.wechatId || null,
           wechatQrImageUrl: data.wechatQrImageUrl || null,
