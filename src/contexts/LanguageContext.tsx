@@ -448,6 +448,9 @@ const translations: Record<Language, Record<string, string>> = {
     authErrorTooManyRequests: "Хэт олон амжилтгүй оролдлого. Түр хүлээгээд дахин оролдоно уу.",
     authErrorGenericLogin: "Нэвтрэхэд алдаа гарлаа. Дахин оролдоно уу.",
     authErrorGenericRegister: "Бүртгүүлэхэд алдаа гарлаа. Дахин оролдоно уу.",
+    // Subcategory filtering
+    allSubcategories: "Бүх дэд ангилал",
+    filterBySubcategory: "Дэд ангиллаар шүүх",
   },
   cn: {
     bookNowButton: "立即预订",
@@ -882,6 +885,9 @@ const translations: Record<Language, Record<string, string>> = {
     authErrorTooManyRequests: "尝试次数过多。请稍后再试。",
     authErrorGenericLogin: "登录时发生错误。请重试。",
     authErrorGenericRegister: "注册时发生错误。请重试。",
+    // Subcategory filtering
+    allSubcategories: "所有子类别",
+    filterBySubcategory: "按子类别筛选",
   },
 };
 

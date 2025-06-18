@@ -86,6 +86,7 @@ export interface RecommendedItem {
   showcaseItems?: ShowcaseItem[];
   isMainSection?: boolean;
   taniltsuulga?: string;
+  subcategory?: string | null; // Added for subcategory filtering
 }
 
 export interface UserProfile {

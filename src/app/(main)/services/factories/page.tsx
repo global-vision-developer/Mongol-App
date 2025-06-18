@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Filter } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
 import { CitySelector } from "@/components/CitySelector";
@@ -14,19 +14,13 @@ import { useCity } from "@/contexts/CityContext";
 import type { RecommendedItem, ItemType } from "@/types";
 import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { cn } from "@/lib/utils";
 
-// Helper function to map Firestore categoryName to singular ItemType for ServiceCard
 const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
   const lowerCategoryName = categoryName?.toLowerCase();
   switch (lowerCategoryName) {
     case 'factories': return 'factory';
-    case 'hotels': return 'hotel';
-    case 'translators': return 'translator';
-    case 'markets': return 'market';
-    case 'hospitals': return 'hospital';
-    case 'embassies': return 'embassy';
-    case 'wechat': return 'wechat';
-    default: return (lowerCategoryName || 'service') as ItemType; // Fallback, ensure it's a valid ItemType
+    default: return (lowerCategoryName || 'service') as ItemType;
   }
 };
 
@@ -35,7 +29,10 @@ export default function FactoriesPage() {
   const router = useRouter();
   const { selectedCity } = useCity();
 
-  const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
+  const [allFactoryItems, setAllFactoryItems] = useState<RecommendedItem[]>([]);
+  const [displayableSubcategories, setDisplayableSubcategories] = useState<string[]>([]);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,7 +44,7 @@ export default function FactoriesPage() {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [
             where("categoryName", "==", "factories"),
-            limit(20) // Limit to 20 items for performance on listing pages
+            limit(20) 
         ];
 
         if (selectedCity && selectedCity.value !== "all") {
@@ -80,10 +77,15 @@ export default function FactoriesPage() {
             itemType: mapCategoryToSingularItemType(entryData.categoryName),
             dataAiHint: nestedData.dataAiHint || "factory item",
             isMainSection: typeof nestedData.golheseg === 'boolean' ? nestedData.golheseg : undefined,
-            // showcaseItems and rooms are not typically needed for card view, fetched in detail page
+            subcategory: nestedData.subcategory || null,
           } as RecommendedItem;
         });
-        setRecommendations(items);
+        setAllFactoryItems(items);
+
+        const subcategories = new Set(items.map(item => item.subcategory).filter(Boolean) as string[]);
+        setDisplayableSubcategories(Array.from(subcategories));
+        setSelectedSubcategory(null);
+
       } catch (err: any) {
         console.error("Error fetching factory entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа");
@@ -96,9 +98,17 @@ export default function FactoriesPage() {
         fetchFactoryEntries();
     } else {
         setLoading(false);
-        setRecommendations([]);
+        setAllFactoryItems([]);
+        setDisplayableSubcategories([]);
     }
   }, [selectedCity, t]);
+
+  const filteredItems = useMemo(() => {
+    if (!selectedSubcategory) {
+      return allFactoryItems;
+    }
+    return allFactoryItems.filter(item => item.subcategory === selectedSubcategory);
+  }, [allFactoryItems, selectedSubcategory]);
 
   return (
     <div className="space-y-6">
@@ -119,6 +129,36 @@ export default function FactoriesPage() {
           <SearchBar />
         </div>
       </div>
+
+      {displayableSubcategories.length > 0 && (
+        <div className="px-1 space-y-2">
+          <h3 className="text-sm font-medium text-muted-foreground flex items-center">
+            <Filter className="h-4 w-4 mr-2" />
+            {t('filterBySubcategory')}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={!selectedSubcategory ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedSubcategory(null)}
+              className="rounded-full"
+            >
+              {t('allSubcategories')}
+            </Button>
+            {displayableSubcategories.map(subcat => (
+              <Button
+                key={subcat}
+                variant={selectedSubcategory === subcat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedSubcategory(subcat)}
+                className="rounded-full"
+              >
+                {subcat}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
       
       <div className="px-1">
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('allFactoriesSectionTitle')}</h2>
@@ -139,13 +179,13 @@ export default function FactoriesPage() {
 
         {!loading && error && <p className="col-span-full text-destructive">{error}</p>}
         
-        {!loading && !error && recommendations.length === 0 && (
+        {!loading && !error && filteredItems.length === 0 && (
             <p className="col-span-full text-muted-foreground">{t('noRecommendations')}</p>
         )}
 
-        {!loading && !error && recommendations.length > 0 && (
+        {!loading && !error && filteredItems.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {recommendations.map((item) => (
+            {filteredItems.map((item) => (
               <ServiceCard key={item.id} item={item} />
             ))}
           </div>
