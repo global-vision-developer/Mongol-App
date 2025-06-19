@@ -172,7 +172,7 @@ export default function HomePage() {
   const filteredEmbassies = useMemo(() => filterItems(allEmbassies, searchTerm), [allEmbassies, searchTerm]);
 
   const renderServiceItem = (item: RecommendedItem) => <ServiceCard item={item} />;
-  const narrowerCarouselItemWidthClass = "w-[calc(46%-0.375rem)] sm:w-[calc(46%-0.5rem)]";
+  // const narrowerCarouselItemWidthClass = "w-[calc(46%-0.375rem)] sm:w-[calc(46%-0.5rem)]"; // Removed this line
 
   const showFullPageLoader = authLoading || loadingCities ||
                              (user && dataLoading && 
@@ -188,8 +188,8 @@ export default function HomePage() {
           <div key={i} className="space-y-3 mb-6">
             <Skeleton className="h-6 w-1/2 px-1" />
             <div className="flex space-x-3 sm:space-x-4 px-1 pb-3">
-              {[...Array(2)].map((_, j) => (
-                <div key={j} className={`${narrowerCarouselItemWidthClass} flex-shrink-0`}>
+              {[...Array(2)].map((_, j) => ( // Adjusted to use default fixed width for skeleton
+                <div key={j} className="w-40 sm:w-48 md:w-56 flex-shrink-0"> 
                   <Skeleton className="h-64 w-full rounded-lg" />
                 </div>
               ))}
@@ -210,7 +210,7 @@ export default function HomePage() {
         items={filteredTranslators}
         renderItem={renderServiceItem}
         maxTotalItems={8}
-        carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        // carouselItemWidthClass prop removed to use default
         isLoading={dataLoading && filteredTranslators.length === 0 && !!user && !searchTerm} 
       />
       <RecommendedCarouselSection
@@ -218,7 +218,7 @@ export default function HomePage() {
         items={filteredHotels}
         renderItem={renderServiceItem}
         maxTotalItems={8} 
-        carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        // carouselItemWidthClass prop removed to use default
         isLoading={dataLoading && filteredHotels.length === 0 && !!user && !searchTerm}
       />
       <RecommendedCarouselSection
@@ -226,7 +226,7 @@ export default function HomePage() {
         items={filteredWeChatItems}
         renderItem={renderServiceItem}
         maxTotalItems={8}
-        carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        // carouselItemWidthClass prop removed to use default
         isLoading={dataLoading && filteredWeChatItems.length === 0 && !!user && !searchTerm}
       />
       <RecommendedCarouselSection
@@ -234,7 +234,7 @@ export default function HomePage() {
         items={filteredMarkets}
         renderItem={renderServiceItem}
         maxTotalItems={8}
-        carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        // carouselItemWidthClass prop removed to use default
         isLoading={dataLoading && filteredMarkets.length === 0 && !!user && !searchTerm}
       />
       <RecommendedCarouselSection
@@ -242,7 +242,7 @@ export default function HomePage() {
         items={filteredFactories}
         renderItem={renderServiceItem}
         maxTotalItems={8}
-        carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        // carouselItemWidthClass prop removed to use default
         isLoading={dataLoading && filteredFactories.length === 0 && !!user && !searchTerm}
       />
       <RecommendedCarouselSection
@@ -250,7 +250,7 @@ export default function HomePage() {
         items={filteredHospitals}
         renderItem={renderServiceItem}
         maxTotalItems={8}
-        carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        // carouselItemWidthClass prop removed to use default
         isLoading={dataLoading && filteredHospitals.length === 0 && !!user && !searchTerm}
       />
       <RecommendedCarouselSection
@@ -258,7 +258,7 @@ export default function HomePage() {
         items={filteredEmbassies}
         renderItem={renderServiceItem}
         maxTotalItems={8}
-        carouselItemWidthClass={narrowerCarouselItemWidthClass}
+        // carouselItemWidthClass prop removed to use default
         isLoading={dataLoading && filteredEmbassies.length === 0 && !!user && !searchTerm}
       />
     </div>
