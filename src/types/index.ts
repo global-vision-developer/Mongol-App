@@ -29,11 +29,14 @@ export interface ServiceGroup {
 }
 
 export interface CarouselBannerItem {
-  id: string;
+  id: string; // Firestore document ID
   imageUrl: string;
-  altTextKey: string; // translation key
-  dataAiHint: string;
   link?: string;
+  altText?: string; // Use Firestore description or a generic alt text
+  dataAiHint?: string; // Generic hint if not in Firestore data
+  isActive?: boolean;
+  createdAt?: Timestamp | any; // For ordering
+  description?: string; // Original description from Firestore, can be used for altText
 }
 
 export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight' | 'message' | 'order' | 'update';
@@ -231,3 +234,4 @@ export interface Review {
 }
 
 export type SavedItemCategoryFilter = ItemType | 'all';
+

@@ -1,5 +1,5 @@
 
-import type { City, ServiceGroup, CarouselBannerItem, HospitalCategory, EmbassyCategoryItem, WeChatCategoryItem, RecommendedItem, Airport, TranslationField } from '@/types';
+import type { City, ServiceGroup, /* CarouselBannerItem, */ HospitalCategory, EmbassyCategoryItem, WeChatCategoryItem, RecommendedItem, Airport, TranslationField } from '@/types'; // Removed CarouselBannerItem
 import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Grid3x3, BusFront, CarTaxiFront, Copy } from 'lucide-react';
 
 export const CITIES: City[] = [
@@ -40,29 +40,9 @@ export const SERVICE_GROUPS: ServiceGroup[] = [
 ];
 
 
-export const CAROUSEL_BANNER_ITEMS: CarouselBannerItem[] = [
-  { 
-    id: 'promo1', 
-    imageUrl: 'https://placehold.co/1200x400.png', 
-    altTextKey: 'banner_promo1_alt', 
-    dataAiHint: 'city skyline', 
-    link: '/promotions/1' 
-  },
-  { 
-    id: 'promo2', 
-    imageUrl: 'https://placehold.co/1200x400.png', 
-    altTextKey: 'banner_promo2_alt', 
-    dataAiHint: 'travel sale', 
-    link: '/promotions/2' 
-  },
-  { 
-    id: 'promo3', 
-    imageUrl: 'https://placehold.co/1200x400.png', 
-    altTextKey: 'banner_promo1_alt', 
-    dataAiHint: 'modern architecture', 
-    link: '/promotions/3' 
-  },
-];
+// CAROUSEL_BANNER_ITEMS is now removed as data will be fetched from Firestore.
+// export const CAROUSEL_BANNER_ITEMS: CarouselBannerItem[] = [ ... ];
+
 
 export const HOSPITAL_CATEGORIES: HospitalCategory[] = [
   { id: 'traditional', titleKey: 'hospitalCategoryTraditional', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'doctors patient', href: '#' },
@@ -106,3 +86,4 @@ export const TranslationFields: TranslationField[] = [
   'tourism', 'medical', 'equipment', 'exhibition', 
   'official_documents', 'official_speech', 'machinery'
 ];
+
