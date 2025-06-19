@@ -34,16 +34,16 @@ const fileSchema = z.instanceof(File)
 
 const translatorStep1Schema = z.object({
   nationality: z.enum(['mongolian', 'chinese', 'inner_mongolian', ''], { required_error: "requiredError"}).refine(val => val !== '', { message: "requiredError" }),
-  inChinaNow: z.boolean({required_error: "requiredError"}).nullable(), // Made boolean explicitly required by Zod for step 1
+  inChinaNow: z.boolean({required_error: "requiredError"}).nullable(),
   yearsInChina: z.preprocess(
     (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
     z.number({ invalid_type_error: "invalidNumberError" }).positive().nullable()
   ),
   currentCityInChina: z.string().nullable(),
-  chineseExamTaken: z.boolean({required_error: "requiredError"}).nullable(), // Made boolean explicitly required
+  chineseExamTaken: z.boolean({required_error: "requiredError"}).nullable(),
   speakingLevel: z.enum(['good', 'intermediate', 'basic', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
   writingLevel: z.enum(['good', 'intermediate', 'basic', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
-  workedAsTranslator: z.boolean({required_error: "requiredError"}).nullable(), // Made boolean explicitly required
+  workedAsTranslator: z.boolean({required_error: "requiredError"}).nullable(),
   translationFields: z.array(z.string()).min(1, "requiredError"),
   canWorkInOtherCities: z.array(z.string()).optional(),
   dailyRate: z.enum(['100-200', '200-300', '300-400', '400-500', '500+', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
@@ -53,14 +53,14 @@ const translatorStep1Schema = z.object({
   if (data.inChinaNow === false && (data.yearsInChina === null || data.yearsInChina === undefined)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "requiredError", // Ensure this key exists in translations
+      message: "requiredError",
       path: ["yearsInChina"],
     });
   }
   if (data.inChinaNow === true && (data.currentCityInChina === null || data.currentCityInChina === undefined || data.currentCityInChina === '')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "requiredError", // Ensure this key exists in translations
+      message: "requiredError",
       path: ["currentCityInChina"],
     });
   }
@@ -123,7 +123,7 @@ export function RegisterTranslatorForm() {
 
   useEffect(() => {
     if (user) {
-      // Pre-fill if needed, though not part of schema
+      // Pre-fill if needed
     }
   }, [user, setValue]);
 
@@ -168,14 +168,14 @@ export function RegisterTranslatorForm() {
     setIsSubmitting(true);
 
     try {
-      console.log("Simulating image uploads (actual upload not implemented in this step):");
-      if (data.idCardFrontImage) console.log("ID Card Front:", data.idCardFrontImage.name);
-      if (data.idCardBackImage) console.log("ID Card Back:", data.idCardBackImage.name);
-      if (data.selfieImage) console.log("Selfie:", data.selfieImage.name);
-      if (data.wechatQrImage) console.log("WeChat QR:", data.wechatQrImage.name);
+      // Image upload simulation/placeholders - replace with actual Firebase Storage uploads
+      const idCardFrontImageUrl = data.idCardFrontImage ? `placeholder_id_front_${user.uid}` : null;
+      const idCardBackImageUrl = data.idCardBackImage ? `placeholder_id_back_${user.uid}` : null;
+      const selfieImageUrl = data.selfieImage ? `placeholder_selfie_${user.uid}` : null;
+      const wechatQrImageUrl = data.wechatQrImage ? `placeholder_qr_${user.uid}` : null;
 
       // Prepare data for Firestore, ensuring no undefined values
-      const profileToSave: Omit<Translator, 'id' | 'uid' | 'name' | 'photoUrl' | 'averageRating' | 'reviewCount' | 'totalRatingSum' | 'registeredAt' | 'isActive' | 'isProfileComplete' | 'views' | 'itemType' | 'city' | 'description' | 'idCardFrontImageUrl' | 'idCardBackImageUrl' | 'selfieImageUrl' > = {
+      const profileToSave = {
         nationality: (data.nationality === '' || data.nationality === undefined) ? null : data.nationality as Nationality,
         inChinaNow: data.inChinaNow === undefined ? null : data.inChinaNow,
         yearsInChina: data.inChinaNow === false ? (data.yearsInChina === undefined ? null : data.yearsInChina) : null,
@@ -189,30 +189,28 @@ export function RegisterTranslatorForm() {
         dailyRate: (data.dailyRate === '' || data.dailyRate === undefined) ? null : data.dailyRate as DailyRateRange,
         chinaPhoneNumber: (data.chinaPhoneNumber === '' || data.chinaPhoneNumber === undefined) ? null : data.chinaPhoneNumber,
         wechatId: (data.wechatId === '' || data.wechatId === undefined) ? null : data.wechatId,
-        wechatQrImageUrl: data.wechatQrImage ? "placeholder_qr_url" : null, // Placeholder, replace with actual URL after upload
+        idCardFrontImageUrl: idCardFrontImageUrl,
+        idCardBackImageUrl: idCardBackImageUrl,
+        selfieImageUrl: selfieImageUrl,
+        wechatQrImageUrl: wechatQrImageUrl,
       };
       
       const fullTranslatorProfile: Translator = {
         uid: user.uid,
-        id: user.uid, // Using uid also as document id
-        name: user.displayName || "Unknown Name",
-        photoUrl: user.photoURL || null, // User's general profile photo
+        id: user.uid, 
+        name: user.displayName || t('serviceUnnamed'), // Using serviceUnnamed as a fallback for name
+        photoUrl: user.photoURL || null,
         ...profileToSave,
-        // Default/system-set values
         averageRating: null,
         reviewCount: 0,
         totalRatingSum: 0,
-        city: profileToSave.currentCityInChina || undefined, // Or some other logic
-        description: '', // Or a default description, or make it part of the form
-        itemType: 'translator' as ItemType, // Important for type discrimination
+        city: profileToSave.currentCityInChina || null, 
+        description: '', 
+        itemType: 'translator' as ItemType,
         views: 0,
-        // These would be actual URLs from Firebase Storage
-        idCardFrontImageUrl: data.idCardFrontImage ? "placeholder_front_url" : undefined,
-        idCardBackImageUrl: data.idCardBackImage ? "placeholder_back_url" : undefined,
-        selfieImageUrl: data.selfieImage ? "placeholder_selfie_url" : undefined,
         registeredAt: serverTimestamp(),
-        isActive: false, // New translators are inactive by default
-        isProfileComplete: true, // Step 2 submission means profile data is gathered
+        isActive: false, 
+        isProfileComplete: true, 
       };
       
       await setDoc(doc(db, "orchluulagchid", user.uid), fullTranslatorProfile);
@@ -252,7 +250,7 @@ export function RegisterTranslatorForm() {
   ];
 
   const languageLevelOptions: { value: LanguageLevel | ''; labelKey: string }[] = [
-    { value: '', labelKey: 'selectSpeakingLevelPlaceholder' }, // Placeholder can be generic or specific
+    { value: '', labelKey: 'selectSpeakingLevelPlaceholder' },
     { value: 'good', labelKey: 'languageLevelGood' },
     { value: 'intermediate', labelKey: 'languageLevelIntermediate' },
     { value: 'basic', labelKey: 'languageLevelBasic' },
