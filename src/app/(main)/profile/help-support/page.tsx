@@ -30,7 +30,7 @@ export default function HelpSupportPage() {
     const fetchFAQs = async () => {
       setLoadingFaqs(true);
       try {
-        const faqsColRef = collection(db, "faqs");
+        const faqsColRef = collection(db, "help_items"); // Changed "faqs" to "help_items"
         const q = query(faqsColRef, orderBy("topic"), orderBy("createdAt", "asc"));
         const snapshot = await getDocs(q);
         
@@ -74,19 +74,16 @@ export default function HelpSupportPage() {
   }, []);
 
   const getTopicIcon = (topicKey: string) => {
-    const topicAppUsageKey = t('faqTopicAppUsage', undefined, "Аппликэйшн ашиглах заавар");
-    const topicCheapTravelKey = t('faqTopicCheapTravel', undefined, "Хэрхэн хямд аялах вэ?");
-
-    if (topicKey === topicAppUsageKey) {
+    // Directly use the topic string from Firestore for comparison
+    if (topicKey === "Аппликэйшн ашиглах заавар") {
       return <BookOpen className="h-6 w-6 text-primary mr-3" />;
     }
-    if (topicKey === topicCheapTravelKey) {
+    if (topicKey === "Хэрхэн хямд аялах вэ?") {
       return <DollarSign className="h-6 w-6 text-primary mr-3" />;
     }
     return <HelpCircle className="h-6 w-6 text-primary mr-3" />;
   };
 
-  // Use a non-translated placeholder if not on client yet, or an empty string
   const pageTitle = isClient ? t('helpSupportPageTitle') : ''; 
   const backButtonSrText = isClient ? t('back') : 'Back';
 
