@@ -8,12 +8,13 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { RecommendedItem, ItemType } from "@/types";
+import type { RecommendedItem, ItemType, City } from "@/types"; // Added City
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Star, MapPin, AlertTriangle, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ServiceReviewForm } from "@/components/ServiceReviewForm"; // Added import
+import { ServiceReviewForm } from "@/components/ServiceReviewForm";
+import { useCity } from "@/contexts/CityContext"; // Import useCity
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -46,16 +47,24 @@ interface HospitalDetailClientPageProps {
 
 export default function HospitalDetailClientPage({ params, itemType, itemData }: HospitalDetailClientPageProps) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation(); // Added language
   const { user } = useAuth(); 
+  const { availableCities } = useCity(); // Get available cities
 
   const [item, setItem] = useState<RecommendedItem | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
+  const [displayLocationName, setDisplayLocationName] = useState<string | null>(null);
 
   useEffect(() => {
     if (itemData) {
       setItem(itemData);
       setLoadingInitial(false);
+      if (itemData.location && availableCities.length > 0) {
+        const city = availableCities.find(c => c.value === itemData.location); // location is ID
+        setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : itemData.location);
+      } else {
+        setDisplayLocationName(itemData.location || null);
+      }
     } else if (params.id && !itemData) {
       const fetchItem = async () => {
         setLoadingInitial(true);
@@ -71,35 +80,52 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
                 finalImageUrl = rawImageUrl.trim();
               }
-              setItem({
+              const fetchedItem = {
                 id: docSnap.id,
                 name: nestedData.name || t('serviceUnnamed'),
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
-                location: nestedData.khot || undefined,
+                location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
                 price: nestedData.price === undefined ? null : nestedData.price,
                 itemType: entryData.categoryName as ItemType,
                 dataAiHint: nestedData.dataAiHint || "hospital item",
-              } as RecommendedItem);
+              } as RecommendedItem;
+              setItem(fetchedItem);
+              if (fetchedItem.location && availableCities.length > 0) {
+                 const city = availableCities.find(c => c.value === fetchedItem.location);
+                 setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : fetchedItem.location);
+              } else {
+                setDisplayLocationName(fetchedItem.location || null);
+              }
             } else {
               setItem(null);
+              setDisplayLocationName(null);
             }
           } else {
             setItem(null);
+            setDisplayLocationName(null);
           }
         } catch (error) {
           console.error("Error fetching hospital entry client-side:", error);
           setItem(null);
+          setDisplayLocationName(null);
         } finally {
           setLoadingInitial(false);
         }
       };
       fetchItem();
     }
-  }, [itemData, params.id, itemType, t]);
+  }, [itemData, params.id, itemType, t, availableCities, language]);
+  
+  useEffect(() => { // Update displayLocationName when language or availableCities changes
+    if (item?.location && availableCities.length > 0) {
+        const city = availableCities.find(c => c.value === item.location);
+        setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : item.location);
+    }
+  }, [language, availableCities, item?.location, item]);
 
   const onReviewSubmitted = (newAverageRating: number, newReviewCount: number, newTotalRatingSum: number) => {
     if (item) {
@@ -181,7 +207,7 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
+              {displayLocationName && <DetailItem labelKey="locationLabel" value={displayLocationName} icon={MapPin} />}
               <div className="flex items-start text-sm">
                 <Star className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />
                 <div>

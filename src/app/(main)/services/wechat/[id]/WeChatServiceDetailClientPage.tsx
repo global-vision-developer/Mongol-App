@@ -8,13 +8,14 @@ import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType } from "@/types";
+import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType, City } from "@/types"; // Added City
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { ArrowLeft, Star, MapPin, AlertTriangle, Info, MessageCircle, ShoppingBag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { ServiceReviewForm } from "@/components/ServiceReviewForm"; // Added import
+import { ServiceReviewForm } from "@/components/ServiceReviewForm";
+import { useCity } from "@/contexts/CityContext"; // Import useCity
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -47,18 +48,26 @@ interface WeChatServiceDetailClientPageProps {
 
 export default function WeChatServiceDetailClientPage({ params, itemType, itemData }: WeChatServiceDetailClientPageProps) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation(); // Added language
   const { user } = useAuth();
   const { toast } = useToast();
+  const { availableCities } = useCity(); // Get available cities
 
   const [item, setItem] = useState<RecommendedItem | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
   const [isBooking, setIsBooking] = useState(false);
+  const [displayLocationName, setDisplayLocationName] = useState<string | null>(null);
 
   useEffect(() => {
     if (itemData) {
       setItem(itemData);
       setLoadingInitial(false);
+      if (itemData.location && availableCities.length > 0) {
+        const city = availableCities.find(c => c.value === itemData.location); // location is ID
+        setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : itemData.location);
+      } else {
+         setDisplayLocationName(itemData.location || null);
+      }
     } else if (params.id && !itemData) {
       const fetchItem = async () => {
         setLoadingInitial(true);
@@ -79,12 +88,12 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
               if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
                 finalWeChatQrUrl = rawWeChatQrUrl.trim();
               }
-              setItem({
+              const fetchedItem = {
                 id: docSnap.id,
                 name: nestedData.name || t('serviceUnnamed'),
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
-                location: nestedData.khot || undefined,
+                location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
@@ -93,23 +102,40 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
                 dataAiHint: nestedData.dataAiHint || "wechat item",
                 wechatId: nestedData.wechatId,
                 wechatQrImageUrl: finalWeChatQrUrl,
-              } as RecommendedItem);
+              } as RecommendedItem;
+              setItem(fetchedItem);
+              if (fetchedItem.location && availableCities.length > 0) {
+                 const city = availableCities.find(c => c.value === fetchedItem.location);
+                 setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : fetchedItem.location);
+              } else {
+                setDisplayLocationName(fetchedItem.location || null);
+              }
             } else {
               setItem(null);
+              setDisplayLocationName(null);
             }
           } else {
             setItem(null);
+            setDisplayLocationName(null);
           }
         } catch (error) {
           console.error("Error fetching WeChat entry client-side:", error);
           setItem(null);
+          setDisplayLocationName(null);
         } finally {
           setLoadingInitial(false);
         }
       };
       fetchItem();
     }
-  }, [itemData, params.id, itemType, t]);
+  }, [itemData, params.id, itemType, t, availableCities, language]);
+
+  useEffect(() => { // Update displayLocationName when language or availableCities changes
+    if (item?.location && availableCities.length > 0) {
+        const city = availableCities.find(c => c.value === item.location);
+        setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : item.location);
+    }
+  }, [language, availableCities, item?.location, item]);
 
   const handleBookNow = async () => {
     if (!user) {
@@ -127,7 +153,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
-        status: 'confirmed', // Or 'pending_payment' if there's a price
+        status: 'confirmed', 
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "wechat service item",
         amount: item.price === undefined ? null : item.price,
@@ -243,7 +269,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
+              {displayLocationName && <DetailItem labelKey="locationLabel" value={displayLocationName} icon={MapPin} />}
               <div className="flex items-start text-sm">
                 <Star className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />
                 <div>

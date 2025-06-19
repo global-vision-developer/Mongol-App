@@ -14,7 +14,7 @@ import { doc, setDoc, deleteDoc, getDoc, serverTimestamp } from "firebase/firest
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast";
-
+import { useCity } from '@/contexts/CityContext'; // Import useCity
 
 interface ServiceCardProps {
   item: RecommendedItem;
@@ -24,11 +24,16 @@ interface ServiceCardProps {
 function ServiceCardComponent({ item, className }: ServiceCardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const { availableCities } = useCity(); // Get available cities from context
   
   const [isFavorite, setIsFavorite] = useState(false);
   const [isProcessingFavorite, setIsProcessingFavorite] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+
+  const cityId = item.location; // item.location is the city ID
+  const cityObject = cityId ? availableCities.find(c => c.value === cityId) : null;
+  const displayCityName = cityObject ? (language === 'cn' && cityObject.label_cn ? cityObject.label_cn : cityObject.label) : null;
 
   const checkFavoriteStatus = useCallback(async () => {
     if (!user || !item.id || !isMounted) return;
@@ -39,12 +44,10 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       setIsFavorite(docSnap.exists());
     } catch (error) {
       console.error("Error checking favorite status:", error);
-      // Optionally set isFavorite to false or show a toast
     } finally {
       setIsProcessingFavorite(false);
     }
   }, [user, item.id, isMounted]);
-
 
   useEffect(() => {
     setIsMounted(true);
@@ -54,11 +57,9 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
     if (isMounted && user && item.id) {
       checkFavoriteStatus();
     } else if (!user) {
-      // If user logs out, reset favorite state
       setIsFavorite(false); 
     }
   }, [user, item.id, checkFavoriteStatus, isMounted]);
-
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -73,7 +74,6 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       return;
     }
 
-
     setIsProcessingFavorite(true);
     const favDocRef = doc(db, "users", user.uid, "savedItems", item.id);
 
@@ -84,8 +84,6 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
         toast({ title: t('itemRemovedFromSaved') });
       } else {
         const { id, ...itemDataFromItem } = item;
-        
-        // Create a new object for Firestore, explicitly handling undefined values
         const cleanedItemData: { [key: string]: any } = {};
         for (const key in itemDataFromItem) {
           if (Object.prototype.hasOwnProperty.call(itemDataFromItem, key)) {
@@ -137,18 +135,13 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       case 'wechat':
         detailPageLink = `/services/wechat/${item.id}`;
         break;
-      // Add other cases if needed
-      // default:
-      //   console.warn(`No detail page link configured for itemType: ${item.itemType}`);
     }
   }
 
   const cardItselfIsLink = !!detailPageLink;
   const placeholderImage = `https://placehold.co/300x400.png?text=${encodeURIComponent(item.name || t('serviceUnnamed'))}`;
   const imageUrlToDisplay = item.imageUrl || placeholderImage;
-  // Check if image is from data URI or Google User Content, which might not need optimization or cause issues with it
   const shouldUnoptimize = item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com');
-
 
   const cardContent = (
     <Card className={cn("flex flex-col overflow-hidden shadow-lg rounded-lg h-full group-hover:-translate-y-1.5 group-hover:shadow-2xl transition-all duration-300 ease-out", className)}>
@@ -157,14 +150,14 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
             <Image
                 src={imageUrlToDisplay}
                 alt={item.name || t('serviceImageDefaultAlt')}
-                fill // Use fill for responsive image sizing within the aspect ratio container
-                className="object-cover" // Removed rounded-t-lg as parent Card has overflow hidden and rounded-lg
+                fill
+                className="object-cover"
                 data-ai-hint={item.dataAiHint || "item image"}
-                unoptimized={shouldUnoptimize} // Set unoptimized based on image source
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" // Provide sizes for optimized images
+                unoptimized={shouldUnoptimize}
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
         </div>
-        {isMounted && ( // Only render Heart button if component is mounted to avoid hydration issues
+        {isMounted && (
           <Button
             size="icon"
             variant="ghost"
@@ -181,15 +174,13 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
         )}
       </CardHeader>
       <CardContent className="p-3 flex-grow flex flex-col justify-between">
-        <div className="space-y-0.5"> {/* Ensures consistent spacing for text block */}
+        <div className="space-y-0.5">
             <CardTitle className="text-md font-semibold truncate mb-1 group-hover:text-primary">{item.name || t('serviceUnnamed')}</CardTitle>
-            
-            {/* Reserve space for location line, even if item.location is not present */}
-            <div className="h-4"> {/* h-4 is approx 1rem, typical height for text-xs line */}
-              {item.location && (
+            <div className="h-4"> 
+              {displayCityName && (
               <div className="flex items-center text-xs text-muted-foreground">
                   <MapPin className="h-3 w-3 mr-1 shrink-0" />
-                  <span className="truncate">{item.location}</span>
+                  <span className="truncate">{displayCityName}</span>
               </div>
               )}
             </div>
@@ -204,7 +195,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
             <Button
                 variant="outline"
                 size="sm"
-                disabled={true} // Keep disabled if no link, but maybe add a tooltip explaining why
+                disabled={true}
                 className="opacity-50 cursor-not-allowed h-8 px-2.5 text-xs"
             >
                 {t('viewDetails')}
@@ -227,4 +218,3 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 }
 
 export const ServiceCard = React.memo(ServiceCardComponent);
-

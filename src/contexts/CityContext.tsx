@@ -33,9 +33,9 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = doc.data() as DocumentData;
           return {
             id: doc.id,
-            value: data.name, // Using Mongolian name (from cities.name) as the value for filtering
-            label: data.name, // Mongolian name (from cities.name)
-            label_cn: data.nameCN, // Chinese name (from cities.nameCN)
+            value: doc.id, // Use Firestore document ID as the value
+            label: data.name, // Mongolian name (from Firestore 'name' field)
+            label_cn: data.nameCN, // Chinese name (from Firestore 'nameCN' field)
             isMajor: data.cityType === 'major',
             order: data.order,
             cityType: data.cityType as 'major' | 'other',
@@ -55,9 +55,9 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const citiesWithAll = [allOption, ...fetchedCities];
         setAvailableCities(citiesWithAll);
 
-        const savedCityValue = typeof window !== "undefined" ? localStorage.getItem('selectedCity') : null;
+        const savedCityValue = typeof window !== "undefined" ? localStorage.getItem('selectedCityValue') : null; // Store ID now
         if (savedCityValue) {
-          const city = citiesWithAll.find(c => c.value === savedCityValue);
+          const city = citiesWithAll.find(c => c.value === savedCityValue); // Find by ID
           setSelectedCityState(city || allOption);
         } else {
           setSelectedCityState(allOption);
@@ -81,9 +81,9 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    if (typeof window !== 'undefined') { // Ensure localStorage is accessed only on client
+    if (typeof window !== 'undefined') { 
       fetchCities();
-    } else { // For SSR or during build, provide a default empty state or minimal list
+    } else { 
       const allOptionFallback: City = {
           id: 'all',
           value: 'all',
@@ -102,7 +102,7 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setSelectedCity = (city: City) => {
     setSelectedCityState(city);
     if (typeof window !== "undefined") {
-      localStorage.setItem('selectedCity', city.value);
+      localStorage.setItem('selectedCityValue', city.value); // Store ID in localStorage
     }
   };
 

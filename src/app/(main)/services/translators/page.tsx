@@ -30,10 +30,10 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function TranslatorsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
+  const { selectedCity, loadingCities } = useCity(); 
 
   const [translators, setTranslators] = useState<Translator[]>([]); 
-  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
+  const [loadingData, setLoadingData] = useState(true); 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,8 +55,8 @@ export default function TranslatorsPage() {
           where("categoryName", "==", "translators"),
         ];
         
+        // Filter by data.currentCityInChina (city ID) using selectedCity.value (city ID)
         if (selectedCity.value !== "all") {
-          // Filter by the Mongolian name of the city stored in selectedCity.value
           queryConstraints.push(where("data.currentCityInChina", "==", selectedCity.value)); 
         }
         
@@ -86,7 +86,7 @@ export default function TranslatorsPage() {
               nationality: nestedData.nationality,
               inChinaNow: nestedData.inChinaNow,
               yearsInChina: nestedData.yearsInChina,
-              currentCityInChina: nestedData.currentCityInChina,
+              currentCityInChina: nestedData.currentCityInChina, // This is the city ID
               chineseExamTaken: nestedData.chineseExamTaken,
               speakingLevel: nestedData.speakingLevel,
               writingLevel: nestedData.writingLevel,
@@ -96,12 +96,13 @@ export default function TranslatorsPage() {
               dailyRate: nestedData.dailyRate,
               chinaPhoneNumber: nestedData.chinaPhoneNumber,
               wechatId: nestedData.wechatId,
-              city: nestedData.khot || nestedData.currentCityInChina, 
+              city: nestedData.khot || nestedData.currentCityInChina, // City ID to be resolved by TranslatorCard
               rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
               description: nestedData.setgegdel || nestedData.description,
               itemType: mapCategoryToSingularItemType(entryData.categoryName), 
               isActive: nestedData.isActive,
               reviewCount: nestedData.reviewCount,
+              averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null, // Add averageRating for card
             } as Translator;
           })
           .filter((translator): translator is Translator => translator !== null); 
@@ -173,5 +174,3 @@ export default function TranslatorsPage() {
     </div>
   );
 }
-
-```

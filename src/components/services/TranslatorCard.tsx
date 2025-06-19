@@ -10,7 +10,7 @@ import type { Translator } from '@/types';
 import React, { useState, useEffect } from 'react'; 
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
-// CITIES import is removed as city data will be handled differently or passed directly
+import { useCity } from '@/contexts/CityContext'; // Import useCity
 
 interface TranslatorCardProps {
   item: Translator;
@@ -20,13 +20,13 @@ interface TranslatorCardProps {
 function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const { t, language } = useTranslation();
+  const { availableCities } = useCity(); // Get available cities
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
     // Favorite status check logic (if any) would go here
   }, []);
-
 
   const toggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault(); 
@@ -35,16 +35,13 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
     // TODO: Send to backend (add/remove from user's saved translators)
   };
 
-  // Use the city name directly from the item, if available
-  const cityLabel = item.currentCityInChina || item.city;
-  // For Chinese label, you might need a mapping if item doesn't directly provide it
-  // or adjust how city labels are handled in CityContext / fetched data
-  const displayCity = cityLabel || t('n_a'); 
+  const cityId = item.currentCityInChina || item.city; // This is now a city ID
+  const cityObject = cityId ? availableCities.find(c => c.value === cityId) : null;
+  const displayCity = cityObject ? (language === 'cn' && cityObject.label_cn ? cityObject.label_cn : cityObject.label) : t('n_a');
   
   const placeholderImage = `https://placehold.co/300x400.png?text=${encodeURIComponent(item.name || 'T')}`;
   const imageUrlToDisplay = item.photoUrl || placeholderImage;
   const shouldUnoptimize = item.photoUrl?.startsWith('data:') || item.photoUrl?.includes('lh3.googleusercontent.com');
-
 
   if (!isMounted) {
     return null;
@@ -119,5 +116,3 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
 }
 
 export const TranslatorCard = React.memo(TranslatorCardComponent);
-
-```

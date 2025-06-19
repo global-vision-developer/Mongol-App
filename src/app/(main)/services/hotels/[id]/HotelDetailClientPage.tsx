@@ -8,7 +8,7 @@ import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType } from "@/types";
+import type { RecommendedItem, Order as AppOrder, NotificationItem, ItemType, City } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ServiceReviewForm } from "@/components/ServiceReviewForm";
+import { useCity } from "@/contexts/CityContext"; // Import useCity
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -51,19 +52,27 @@ interface HotelDetailClientPageProps {
 
 export default function HotelDetailClientPage({ params, itemType, itemData }: HotelDetailClientPageProps) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation(); // Added language
   const { user } = useAuth();
   const { toast } = useToast();
+  const { availableCities } = useCity(); // Get available cities
 
   const [item, setItem] = useState<RecommendedItem | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
   const [isProcessingInquiry, setIsProcessingInquiry] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [displayLocationName, setDisplayLocationName] = useState<string | null>(null);
 
   useEffect(() => {
     if (itemData) {
       setItem(itemData);
       setLoadingInitial(false);
+      if (itemData.location && availableCities.length > 0) {
+        const city = availableCities.find(c => c.value === itemData.location); // location is ID
+        setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : itemData.location);
+      } else {
+        setDisplayLocationName(itemData.location || null);
+      }
     } else if (params.id && !itemData) {
       const fetchItem = async () => {
         setLoadingInitial(true);
@@ -79,12 +88,12 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
                 finalImageUrl = rawImageUrl.trim();
               }
-              setItem({
+              const fetchedItem = {
                 id: docSnap.id,
                 name: nestedData.name || t('serviceUnnamed'),
                 imageUrl: finalImageUrl,
                 description: nestedData.setgegdel || '',
-                location: nestedData.khot || undefined,
+                location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
@@ -96,23 +105,41 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
                   description: room.description || t('noRoomDescription'),
                   imageUrl: room.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(room.name || 'Room')}`,
                 })),
-              } as RecommendedItem);
+              } as RecommendedItem;
+              setItem(fetchedItem);
+              if (fetchedItem.location && availableCities.length > 0) {
+                 const city = availableCities.find(c => c.value === fetchedItem.location);
+                 setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : fetchedItem.location);
+              } else {
+                setDisplayLocationName(fetchedItem.location || null);
+              }
             } else {
               setItem(null);
+              setDisplayLocationName(null);
             }
           } else {
             setItem(null);
+            setDisplayLocationName(null);
           }
         } catch (error) {
           console.error("Error fetching hotel entry client-side:", error);
           setItem(null);
+          setDisplayLocationName(null);
         } finally {
           setLoadingInitial(false);
         }
       };
       fetchItem();
     }
-  }, [itemData, params.id, t]);
+  }, [itemData, params.id, t, availableCities, language]);
+  
+  useEffect(() => { // Update displayLocationName when language or availableCities changes
+    if (item?.location && availableCities.length > 0) {
+        const city = availableCities.find(c => c.value === item.location);
+        setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : item.location);
+    }
+  }, [language, availableCities, item?.location, item]);
+
 
   const handleInquireNow = async () => {
     if (!user) {
@@ -134,8 +161,8 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
         serviceId: item.id,
         serviceName: item.name || t('serviceUnnamed'),
         orderDate: serverTimestamp(),
-        status: 'contact_revealed', // Or a new status like 'inquiry_submitted'
-        amount: item.price === undefined ? null : item.price, // This could be an inquiry fee
+        status: 'contact_revealed', 
+        amount: item.price === undefined ? null : item.price, 
         imageUrl: item.imageUrl || null,
         dataAiHint: item.dataAiHint || "hotel building",
       };
@@ -246,7 +273,7 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              {item.location && <DetailItem labelKey="locationLabel" value={item.location} icon={MapPin} />}
+              {displayLocationName && <DetailItem labelKey="locationLabel" value={displayLocationName} icon={MapPin} />}
               <div className="flex items-start text-sm">
                 <Star className="h-5 w-5 text-muted-foreground mr-3 mt-0.5 shrink-0" />
                 <div>

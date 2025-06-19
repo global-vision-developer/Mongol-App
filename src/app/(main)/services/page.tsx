@@ -56,14 +56,14 @@ export default function HomePage() {
     const fetchEntriesByCategory = async (
       categoryNameFilter: string,
       count: number,
-      cityValue?: string // This is the Mongolian name of the city (from cities.name) or 'all'
+      cityIdValue?: string // This is the city ID from cities collection or 'all'
     ): Promise<RecommendedItem[]> => {
       const entriesRef = collection(db, "entries");
       const queryConstraints = [where("categoryName", "==", categoryNameFilter)];
       
-      // Filter by data.khot using cityValue if it's provided and not 'all'
-      if (cityValue && cityValue !== "all") {
-        queryConstraints.push(where("data.khot", "==", cityValue));
+      // Filter by data.khot (city ID) using cityIdValue if it's provided and not 'all'
+      if (cityIdValue && cityIdValue !== "all") {
+        queryConstraints.push(where("data.khot", "==", cityIdValue));
       }
       queryConstraints.push(limit(count));
       const firestoreQuery: FirestoreQueryType<DocumentData> = query(entriesRef, ...queryConstraints);
@@ -85,8 +85,8 @@ export default function HomePage() {
           name: nestedData.name || nestedData.title || t('serviceUnnamed'), 
           imageUrl: finalImageUrl,
           description: nestedData.taniltsuulga || nestedData.setgegdel || '',
-          location: nestedData.khot || undefined, // Mongolian city name from entries.data.khot
-          city: nestedData.khot || undefined, 
+          location: nestedData.khot || undefined, // City ID
+          city: nestedData.khot || undefined, // City ID, for search filtering
           rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
           price: nestedData.price === undefined ? null : nestedData.price, 
           itemType: mapCategoryToSingularItemType(categoryNameFromDoc),
@@ -96,6 +96,7 @@ export default function HomePage() {
             speakingLevel: nestedData.speakingLevel,
             writingLevel: nestedData.writingLevel,
             dailyRate: nestedData.dailyRate,
+            currentCityInChina: nestedData.currentCityInChina, // City ID
           }),
           rooms: nestedData.uruunuud || [],
           showcaseItems: nestedData.delgerengui || [],
@@ -105,7 +106,7 @@ export default function HomePage() {
     };
 
     const loadDataForPage = async () => {
-      if (loadingCities || !user) { 
+      if (loadingCities || !user || !selectedCity) { 
         setDataLoading(true);
         if (!loadingCities && !user) { 
             setAllTranslators([]); setAllHotels([]); setAllWeChatItems([]); setAllMarkets([]);
@@ -115,8 +116,7 @@ export default function HomePage() {
         return;
       }
       
-      const currentCityValue = selectedCity?.value; // This is the Mongolian city name from cities.name or 'all'
-
+      const currentCityIdValue = selectedCity?.value; // This is the city ID or 'all'
 
       setDataLoading(true);
       try {
@@ -124,13 +124,13 @@ export default function HomePage() {
           translatorsData, hotelsData, marketsData, factoriesData,
           hospitalsData, embassiesData, wechatData,
         ] = await Promise.all([
-          fetchEntriesByCategory("translators", 20, currentCityValue), 
-          fetchEntriesByCategory("hotels", 20, currentCityValue),
-          fetchEntriesByCategory("markets", 20, currentCityValue),
-          fetchEntriesByCategory("factories", 20, currentCityValue),
-          fetchEntriesByCategory("hospitals", 20, currentCityValue),
-          fetchEntriesByCategory("embassies", 20, currentCityValue),
-          fetchEntriesByCategory("wechat", 20, currentCityValue),
+          fetchEntriesByCategory("translators", 20, currentCityIdValue), 
+          fetchEntriesByCategory("hotels", 20, currentCityIdValue),
+          fetchEntriesByCategory("markets", 20, currentCityIdValue),
+          fetchEntriesByCategory("factories", 20, currentCityIdValue),
+          fetchEntriesByCategory("hospitals", 20, currentCityIdValue),
+          fetchEntriesByCategory("embassies", 20, currentCityIdValue),
+          fetchEntriesByCategory("wechat", 20, currentCityIdValue),
         ]);
         
         setAllTranslators(translatorsData); setAllHotels(hotelsData); setAllMarkets(marketsData);
@@ -156,9 +156,10 @@ export default function HomePage() {
     const lowerSearchTerm = term.toLowerCase();
     return items.filter(item => {
       const nameMatch = item.name?.toLowerCase().includes(lowerSearchTerm);
-      const locationMatch = item.location?.toLowerCase().includes(lowerSearchTerm); // item.location is Mongolian name
-      const cityMatch = item.city?.toLowerCase().includes(lowerSearchTerm); 
-      return nameMatch || locationMatch || cityMatch;
+      // item.location is city ID, search should match city name if possible or other text fields.
+      // For now, only name search for simplicity with city ID in item.location
+      const descriptionMatch = item.description?.toLowerCase().includes(lowerSearchTerm);
+      return nameMatch || descriptionMatch;
     }).slice(0, 8); 
   };
 

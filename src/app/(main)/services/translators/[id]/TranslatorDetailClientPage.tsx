@@ -9,7 +9,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { Translator, City, Order as AppOrder, TranslationField, LanguageLevel, DailyRateRange, NotificationItem, ItemType, Nationality } from "@/types";
-import { CITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants";
+import { CITIES as StaticCITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants"; // Renamed to StaticCITIES
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,16 +20,17 @@ import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDay
 import { format } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceReviewForm } from "@/components/ServiceReviewForm";
+import { useCity } from "@/contexts/CityContext"; // Import useCity
 
-const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; translationFieldsValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean }> = ({ labelKey, value, icon: Icon, cityValue, translationFieldsValue, languageLevelValue, dailyRateValue }) => {
+const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; translationFieldsValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean; isCityName?: boolean; citiesList?: City[] }> = ({ labelKey, value, icon: Icon, cityValue, translationFieldsValue, languageLevelValue, dailyRateValue, isCityName, citiesList }) => {
   const { t, language } = useTranslation();
   let displayValue: string | React.ReactNode = t('notProvided');
 
   if (value !== undefined && value !== null && value !== '') {
     if (Array.isArray(value)) {
-      if (cityValue) {
+      if (cityValue && citiesList) { // City values are now IDs
         displayValue = value.map(v => {
-          const city = CITIES.find(c => c.value === v);
+          const city = citiesList.find(c => c.value === v); // Find city by ID
           return city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : v;
         }).join(', ');
       } else if (translationFieldsValue) {
@@ -45,8 +46,8 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     } else if (dailyRateValue && typeof value === 'string') {
         const rateKey = `rate${value.replace('-', 'to').replace('+', 'plus')}`;
         displayValue = t(rateKey);
-    } else if (cityValue && typeof value === 'string') {
-      const city = CITIES.find(c => c.value === value);
+    } else if (isCityName && typeof value === 'string' && citiesList) { // Value is city ID
+      const city = citiesList.find(c => c.value === value);
       displayValue = city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : value.toString();
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') { 
       displayValue = `${value.toFixed(1)} / 10`;
@@ -83,19 +84,19 @@ interface TranslatorDetailClientPageProps {
 
 export default function TranslatorDetailClientPage({ params, itemType, itemData }: TranslatorDetailClientPageProps) {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation(); // Added language
   const { user } = useAuth();
   const { toast } = useToast();
+  const { availableCities } = useCity(); // Get available cities
 
   const [translator, setTranslator] = useState<Translator | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
-  // const [showContactInfo, setShowContactInfo] = useState(false); // Removed, contact info not shown here
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     if (itemData) {
-      setTranslator(itemData);
+      setTranslator(itemData); // itemData.currentCityInChina will be an ID
       setLoadingInitial(false);
     } else if (params.id && !itemData) {
       const fetchTranslator = async () => {
@@ -132,18 +133,18 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 nationality: nestedData.nationality as Nationality,
                 inChinaNow: nestedData.inChinaNow,
                 yearsInChina: nestedData.yearsInChina,
-                currentCityInChina: nestedData.currentCityInChina,
+                currentCityInChina: nestedData.currentCityInChina, // This is City ID
                 chineseExamTaken: nestedData.chineseExamTaken,
                 speakingLevel: nestedData.speakingLevel as LanguageLevel,
                 writingLevel: nestedData.writingLevel as LanguageLevel,
                 workedAsTranslator: nestedData.workedAsTranslator,
                 translationFields: nestedData.translationFields as TranslationField[],
-                canWorkInOtherCities: nestedData.canWorkInOtherCities,
+                canWorkInOtherCities: nestedData.canWorkInOtherCities, // Array of city IDs
                 dailyRate: nestedData.dailyRate as DailyRateRange,
                 chinaPhoneNumber: nestedData.chinaPhoneNumber,
                 wechatId: nestedData.wechatId,
                 wechatQrImageUrl: finalWeChatQrUrl,
-                city: nestedData.khot || nestedData.currentCityInChina,
+                city: nestedData.khot || nestedData.currentCityInChina, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
@@ -203,12 +204,11 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
       
       const notificationData: Omit<NotificationItem, 'id'> = {
         titleKey: 'orderSuccessNotificationTitle',
-        descriptionKey: 'translatorContactRevealedNotificationDescription', // New key for specific message
+        descriptionKey: 'translatorContactRevealedNotificationDescription', 
         descriptionPlaceholders: { 
             serviceName: translator.name || t('serviceUnnamed'),
             translatorPhoneNumber: translator.chinaPhoneNumber || t('notProvided'),
             translatorWeChatId: translator.wechatId || t('notProvided'),
-            // QR URL is not suitable for text placeholder
         },
         date: serverTimestamp(),
         read: false,
@@ -222,7 +222,6 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
       }
 
       toast({ title: t('orderCreatedSuccess'), description: t('contactInfoAvailableInOrders') });
-      // setShowContactInfo(true); // Removed
       setIsPaymentModalOpen(false);
     } catch (error) {
       console.error("Error creating order:", error);
@@ -244,7 +243,6 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
   };
   
   const mainImageShouldUnoptimize = translator?.photoUrl?.startsWith('data:') || translator?.photoUrl?.includes('lh3.googleusercontent.com');
-  // const qrImageShouldUnoptimize = translator?.wechatQrImageUrl?.startsWith('data:') || translator?.wechatQrImageUrl?.includes('lh3.googleusercontent.com'); // No longer displayed here
 
   if (loadingInitial) {
     return (
@@ -351,7 +349,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <DetailItem labelKey="nationalityLabel" value={t(translator.nationality || 'notProvided')} icon={Globe} />
-              <DetailItem labelKey="currentCityInChinaLabel" value={translator.currentCityInChina || t('notProvided')} icon={Landmark} cityValue />
+              <DetailItem labelKey="currentCityInChinaLabel" value={translator.currentCityInChina} icon={Landmark} isCityName citiesList={availableCities} />
               <DetailItem labelKey="yearsInChinaLabel" value={translator.inChinaNow === false && translator.yearsInChina ? translator.yearsInChina.toString() : (translator.inChinaNow ? t('yes') : t('notProvided'))} icon={CalendarDays} />
               <DetailItem labelKey="chineseExamTakenLabel" value={translator.chineseExamTaken} icon={ShieldCheck} />
               <DetailItem labelKey="speakingLevelLabel" value={translator.speakingLevel} icon={LanguagesIcon} languageLevelValue/>
@@ -359,7 +357,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
               <DetailItem labelKey="workedAsTranslatorLabel" value={translator.workedAsTranslator} icon={Briefcase} />
               <DetailItem labelKey="dailyRateLabel" value={translator.dailyRate} icon={Star} dailyRateValue />
               <DetailItem labelKey="translationFieldsLabel" value={translator.translationFields} icon={Users} translationFieldsValue />
-              <DetailItem labelKey="canWorkInOtherCitiesLabel" value={translator.canWorkInOtherCities} icon={MapPin} cityValue />
+              <DetailItem labelKey="canWorkInOtherCitiesLabel" value={translator.canWorkInOtherCities} icon={MapPin} cityValue citiesList={availableCities}/>
               {registeredAtDate && (
                 <DetailItem labelKey="registeredAt" value={format(registeredAtDate, 'yyyy-MM-dd')} icon={UserCheck} />
               )}

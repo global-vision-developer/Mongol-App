@@ -28,13 +28,13 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function MarketsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
+  const { selectedCity, loadingCities } = useCity(); 
 
   const [allMarketItems, setAllMarketItems] = useState<RecommendedItem[]>([]);
   const [displayableSubcategories, setDisplayableSubcategories] = useState<string[]>([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null); 
   
-  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
+  const [loadingData, setLoadingData] = useState(true); 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +55,7 @@ export default function MarketsPage() {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "markets")]; 
         
+        // Filter by data.khot (city ID) using selectedCity.value (city ID)
         if (selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
@@ -77,7 +78,7 @@ export default function MarketsPage() {
             name: nestedData.name || t('serviceUnnamed'),
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
-            location: nestedData.khot || undefined,
+            location: nestedData.khot || undefined, // City ID
             averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
             reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
             totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
@@ -197,5 +198,3 @@ export default function MarketsPage() {
     </div>
   );
 }
-
-```
