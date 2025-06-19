@@ -182,7 +182,7 @@ export function RegisterTranslatorForm() {
         uid: user.uid,
         id: user.uid, 
         name: user.displayName || "Unknown Name", 
-        photoUrl: user.photoURL || null, // Ensure photoUrl is null if not present
+        photoUrl: user.photoURL || null,
 
         nationality: data.nationality as Nationality,
         inChinaNow: data.inChinaNow,
@@ -205,15 +205,13 @@ export function RegisterTranslatorForm() {
         // wechatQrImageUrl: data.wechatQrImage ? "placeholder_url_qr" : undefined,
 
         registeredAt: serverTimestamp(),
-        isActive: false, // Default to inactive, pending admin approval
+        isActive: false, 
         isProfileComplete: true,
       };
       
-      await setDoc(doc(db, "translators", user.uid), translatorProfile);
+      await setDoc(doc(db, "orchluulagchid", user.uid), translatorProfile);
 
       setSubmissionSuccess(true);
-      // toast({ title: t('applicationSubmittedSuccessTitle'), description: t('applicationSubmittedSuccessDescription') });
-      // router.push("/profile"); 
 
     } catch (error) {
       console.error("Translator registration error:", error);
@@ -263,7 +261,7 @@ export function RegisterTranslatorForm() {
 
   const translationFieldOptions: { value: TranslationField; labelKey: string }[] = GlobalTranslationFields.map(field => ({
     value: field,
-    labelKey: `field${field.charAt(0).toUpperCase() + field.slice(1)}` as any // e.g. fieldTourism
+    labelKey: `field${field.charAt(0).toUpperCase() + field.slice(1)}` as any
   }));
   
 
@@ -614,3 +612,4 @@ export function RegisterTranslatorForm() {
     </Card>
   );
 }
+
