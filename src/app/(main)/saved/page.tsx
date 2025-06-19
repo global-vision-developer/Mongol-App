@@ -2,67 +2,25 @@
 "use client";
 import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart, MapPin } from 'lucide-react'; // Added MapPin
+import { Heart } from 'lucide-react'; 
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
-import { ServiceCard } from '@/components/ServiceCard';
+// ServiceCard-г ашиглахгүй тул устгаж, оронд нь SavedItemCard-г импортлоно
+// import { ServiceCard } from '@/components/ServiceCard'; 
+import { SavedItemCard } from '@/components/SavedTranslatorListItem'; // Өөрчилсөн компонентыг импортлох (файлын нэр хэвээрээ, экспорт нэр өөрчлөгдсөн байж болно)
 import type { SavedPageItem, ItemType, SavedItemCategoryFilter } from '@/types'; 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { SERVICE_GROUPS } from '@/lib/constants';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
-import Link from 'next/link';
-import { CITIES } from '@/lib/constants';
+// import { cn } from '@/lib/utils'; // cn ашиглаагүй бол устгаж болно
 
 const VALID_ITEM_TYPES: ItemType[] = ['service', 'translator', 'hotel', 'wechat', 'promo', 'market', 'factory', 'hospital', 'embassy'];
 
-const SavedTranslatorListItem: React.FC<{ item: SavedPageItem }> = ({ item }) => {
-  const { t, language } = useTranslation();
-  
-  const city = item.currentCityInChina || item.city || item.location;
-  const cityLabel = city ? (CITIES.find(c => c.value === city) || {label: city, label_cn: city}) : null;
-  const displayCity = cityLabel ? (language === 'cn' && cityLabel.label_cn ? cityLabel.label_cn : cityLabel.label) : null;
-
-  const genderDisplay = item.gender ? t(`gender${item.gender.charAt(0).toUpperCase() + item.gender.slice(1)}`) : '';
-
-  const imageShouldUnoptimize = item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com');
-
-  return (
-    <Link href={`/services/translators/${item.id}`} className="block hover:bg-muted/50 transition-colors rounded-lg">
-      <Card className="shadow-none border-0 rounded-lg p-4 flex items-center gap-4 bg-transparent">
-        <div className="relative h-16 w-16 shrink-0">
-           <Image
-            src={item.imageUrl || `https://placehold.co/100x100.png?text=${item.name?.charAt(0) || 'T'}`}
-            alt={item.name || t('serviceUnnamed')}
-            width={64}
-            height={64}
-            className="rounded-md object-cover"
-            data-ai-hint={item.dataAiHint || "translator person"}
-            unoptimized={imageShouldUnoptimize}
-          />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex justify-between items-start">
-            <h3 className="text-md font-semibold truncate">{item.name}</h3>
-            {item.gender && (
-              <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">/{genderDisplay}/</span>
-            )}
-          </div>
-          {displayCity && (
-            <div className="flex items-center text-xs text-muted-foreground mt-0.5">
-              <MapPin className="h-3 w-3 mr-1 shrink-0" />
-              <span className="truncate">{displayCity}</span>
-            </div>
-          )}
-        </div>
-      </Card>
-    </Link>
-  );
-};
+// SavedTranslatorListItem компонентыг дотооддоо SavedItemCard болгон өөрчилсөн тул энд дахин тодорхойлох шаардлагагүй.
+// const SavedTranslatorListItem: React.FC<{ item: SavedPageItem }> = ({ item }) => { ... };
 
 
 export default function SavedPage() {
@@ -74,7 +32,7 @@ export default function SavedPage() {
 
   const filterCategories = useMemo(() => {
     return SERVICE_GROUPS.filter(sg => sg.id !== 'flights').map(sg => ({
-      id: sg.id as ItemType, // Cast because flights are excluded
+      id: sg.id as ItemType, 
       titleKey: sg.titleKey,
     }));
   }, []);
@@ -105,7 +63,6 @@ export default function SavedPage() {
             return null;
           }
           
-          // Map Firestore 'sex' to 'gender'
           let gender: 'male' | 'female' | 'other' | null = null;
           if (data.sex === 'Эр' || data.gender === 'male') gender = 'male';
           else if (data.sex === 'Эм' || data.gender === 'female') gender = 'female';
@@ -119,7 +76,7 @@ export default function SavedPage() {
             'availabilityStatus', 'dataAiHint', 'itemType', 'nationality', 
             'inChinaNow', 'yearsInChina', 'currentCityInChina', 'chineseExamTaken', 
             'translationFields', 'dailyRate', 'chinaPhoneNumber', 'wechatId', 
-            'wechatQrImageUrl', 'rooms', 'showcaseItems', 'isMainSection', 'taniltsuulga', 'savedAt', 'subcategory'
+            'wechatQrImageUrl', 'rooms', 'showcaseItems', 'isMainSection', 'taniltsuulga', 'savedAt', 'subcategory', 'link'
           ];
           
           recommendedItemKeys.forEach(key => {
@@ -131,7 +88,7 @@ export default function SavedPage() {
           });
 
           return {
-            id: data.originalItemId || doc.id, // Use originalItemId if present (from old save structure), else doc.id
+            id: data.originalItemId || doc.id, 
             ...cleanedData,
             name: data.name || t('serviceUnnamed'),
             itemType: itemType,
@@ -163,15 +120,15 @@ export default function SavedPage() {
         <div className="space-y-6">
             <h1 className="text-2xl font-headline font-semibold text-center">{t('saved')}</h1>
             <Skeleton className="h-10 w-full rounded-md my-4 px-1" /> {/* Filter buttons skeleton */}
-            <div className="space-y-4 px-1">
-                {[...Array(3)].map((_, i) => ( // Skeletons for list items
-                   <Card key={`skeleton-saved-item-${i}`} className="p-4 flex items-center gap-4">
-                      <Skeleton className="h-16 w-16 rounded-md" />
+            <div className="space-y-1 px-1"> {/* space-y-1 for tighter list items */}
+                {[...Array(3)].map((_, i) => ( 
+                   <div key={`skeleton-saved-item-${i}`} className="p-3 flex items-center gap-4 border-b last:border-b-0"> {/* List item skeleton */}
+                      <Skeleton className="h-16 w-16 rounded-md shrink-0" />
                       <div className="flex-1 space-y-2">
                           <Skeleton className="h-4 w-3/4" />
                           <Skeleton className="h-3 w-1/2" />
                       </div>
-                    </Card>
+                    </div>
                 ))}
             </div>
         </div>
@@ -220,24 +177,16 @@ export default function SavedPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-1 px-1 md:px-0">
+        <div className="space-y-0 px-1 md:px-0"> {/* space-y-0 to let items define their own margin/border */}
           {activeFilter !== 'all' && (
-             <h2 className="text-lg font-semibold mb-2 px-3">{t(filterCategories.find(fc => fc.id === activeFilter)?.titleKey || '')}</h2>
+             <h2 className="text-lg font-semibold mt-4 mb-2 px-3">{t(filterCategories.find(fc => fc.id === activeFilter)?.titleKey || '')}</h2>
           )}
-          {filteredSavedItems.map(item => {
-            if (item.itemType === 'translator') {
-              return <SavedTranslatorListItem key={item.id} item={item} />;
-            }
-            // For other types, display in a single column using ServiceCard
-            return (
-              <div key={item.id} className="mb-3"> 
-                <ServiceCard item={item} className="w-full" />
-              </div>
-            );
-          })}
+          {/* Бүх төрлийн зүйлсэд SavedItemCard ашиглана */}
+          {filteredSavedItems.map(item => (
+            <SavedItemCard key={item.id + (item.itemType || '')} item={item} />
+          ))}
         </div>
       )}
     </div>
   );
 }
-
