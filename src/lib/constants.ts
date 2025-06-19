@@ -73,5 +73,3 @@ export const TranslationFields: TranslationField[] = [
   'tourism', 'medical', 'equipment', 'exhibition', 
   'official_documents', 'official_speech', 'machinery'
 ];
-
-```

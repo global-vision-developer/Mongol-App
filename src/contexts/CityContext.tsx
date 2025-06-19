@@ -36,9 +36,9 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
             value: data.name, // Using Mongolian name as the value for filtering entries by data.khot
             label: data.name,
             label_cn: data.nameCN,
-            isMajor: data.cityType === 'major',
+            isMajor: data.cityType === 'major', // isMajor is true if cityType is 'major'
             order: data.order,
-            cityType: data.cityType,
+            cityType: data.cityType as 'major' | 'other', // Explicitly type cityType
           } as City;
         });
 
@@ -47,7 +47,7 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
           value: 'all',
           label: t('allCities', undefined, 'Бүгд'), // Use translation for "All"
           label_cn: t('allCities', undefined, '全部'), // Use translation for "All" in Chinese
-          isMajor: true,
+          isMajor: true, // "All" can be considered major for UI grouping if needed
           order: -1, // Ensure "All" is first
           cityType: 'all',
         };
@@ -56,7 +56,7 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAvailableCities(citiesWithAll);
 
         // Set initial selected city
-        const savedCityValue = localStorage.getItem('selectedCity');
+        const savedCityValue = typeof window !== "undefined" ? localStorage.getItem('selectedCity') : null;
         if (savedCityValue) {
           const city = citiesWithAll.find(c => c.value === savedCityValue);
           setSelectedCityState(city || allOption);
@@ -88,7 +88,9 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const setSelectedCity = (city: City) => {
     setSelectedCityState(city);
-    localStorage.setItem('selectedCity', city.value);
+    if (typeof window !== "undefined") {
+      localStorage.setItem('selectedCity', city.value);
+    }
   };
 
   return (
@@ -105,5 +107,3 @@ export const useCity = (): CityContextType => {
   }
   return context;
 };
-
-```

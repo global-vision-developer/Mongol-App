@@ -156,5 +156,3 @@ export default function EmbassiesPage() {
     </div>
   );
 }
-
-```
