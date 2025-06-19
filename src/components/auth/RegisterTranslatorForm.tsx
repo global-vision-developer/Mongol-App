@@ -18,7 +18,7 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { Translator, Nationality, LanguageLevel, DailyRateRange, TranslationField } from "@/types";
+import type { Translator, Nationality, LanguageLevel, DailyRateRange, TranslationField, ItemType } from "@/types";
 import { CITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants"; 
 import { AlertCircle, CheckCircle2, FileImage, ArrowLeft } from "lucide-react";
 
@@ -29,21 +29,21 @@ const fileSchema = z.instanceof(File)
   .optional()
   .nullable()
   .refine(file => !file || file.size <= MAX_FILE_SIZE_BYTES, {
-    message: `fileSizeError` // Will be replaced with specific key by t()
+    message: `fileSizeError` 
   });
 
 const translatorStep1Schema = z.object({
   nationality: z.enum(['mongolian', 'chinese', 'inner_mongolian', ''], { required_error: "requiredError"}).refine(val => val !== '', { message: "requiredError" }),
-  inChinaNow: z.boolean().optional().nullable(),
+  inChinaNow: z.boolean({required_error: "requiredError"}).nullable(), // Made boolean explicitly required by Zod for step 1
   yearsInChina: z.preprocess(
     (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
     z.number({ invalid_type_error: "invalidNumberError" }).positive().nullable()
   ),
   currentCityInChina: z.string().nullable(),
-  chineseExamTaken: z.boolean().optional().nullable(),
+  chineseExamTaken: z.boolean({required_error: "requiredError"}).nullable(), // Made boolean explicitly required
   speakingLevel: z.enum(['good', 'intermediate', 'basic', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
   writingLevel: z.enum(['good', 'intermediate', 'basic', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
-  workedAsTranslator: z.boolean().optional().nullable(),
+  workedAsTranslator: z.boolean({required_error: "requiredError"}).nullable(), // Made boolean explicitly required
   translationFields: z.array(z.string()).min(1, "requiredError"),
   canWorkInOtherCities: z.array(z.string()).optional(),
   dailyRate: z.enum(['100-200', '200-300', '300-400', '400-500', '500+', ''], { required_error: "requiredError" }).refine(val => val !== '', { message: "requiredError" }),
@@ -53,14 +53,14 @@ const translatorStep1Schema = z.object({
   if (data.inChinaNow === false && (data.yearsInChina === null || data.yearsInChina === undefined)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "requiredError",
+      message: "requiredError", // Ensure this key exists in translations
       path: ["yearsInChina"],
     });
   }
-  if (data.inChinaNow === true && !data.currentCityInChina) {
+  if (data.inChinaNow === true && (data.currentCityInChina === null || data.currentCityInChina === undefined || data.currentCityInChina === '')) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "requiredError",
+      message: "requiredError", // Ensure this key exists in translations
       path: ["currentCityInChina"],
     });
   }
@@ -70,7 +70,7 @@ const translatorStep2Schema = z.object({
   idCardFrontImage: fileSchema.refine(file => !!file, { message: "requiredError" }),
   idCardBackImage: fileSchema.refine(file => !!file, { message: "requiredError" }),
   selfieImage: fileSchema.refine(file => !!file, { message: "requiredError" }),
-  wechatQrImage: fileSchema.optional().nullable(), // Optional for QR
+  wechatQrImage: fileSchema.optional().nullable(),
 });
 
 type TranslatorStep1Data = z.infer<typeof translatorStep1Schema>;
@@ -88,7 +88,6 @@ export function RegisterTranslatorForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
 
-  // Image preview states
   const [idCardFrontPreview, setIdCardFrontPreview] = useState<string | null>(null);
   const [idCardBackPreview, setIdCardBackPreview] = useState<string | null>(null);
   const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
@@ -98,7 +97,7 @@ export function RegisterTranslatorForm() {
 
   const { control, handleSubmit, register, setValue, getValues, trigger, watch, formState: { errors } } = useForm<CombinedFormData>({
     resolver: zodResolver(currentSchema),
-    mode: "onChange", // Validate on change for better UX
+    mode: "onChange", 
     defaultValues: {
       nationality: '',
       inChinaNow: null,
@@ -124,7 +123,7 @@ export function RegisterTranslatorForm() {
 
   useEffect(() => {
     if (user) {
-      // Pre-fill name and photo from user profile if needed, but form schema does not have them
+      // Pre-fill if needed, though not part of schema
     }
   }, [user, setValue]);
 
@@ -155,14 +154,13 @@ export function RegisterTranslatorForm() {
 
   const onSubmit = async (data: CombinedFormData) => {
     if (step === 1) {
-      const isValid = await trigger(); // Trigger validation for step 1 fields
+      const isValid = await trigger(); 
       if (isValid) {
         setStep(2);
       }
       return;
     }
 
-    // Step 2 submission
     if (!user) {
       toast({ title: t('mustBeLoggedInToRegister'), variant: "destructive" });
       return;
@@ -170,47 +168,54 @@ export function RegisterTranslatorForm() {
     setIsSubmitting(true);
 
     try {
-      // Actual image upload to Firebase Storage would happen here.
-      // For now, we'll just log the file names and proceed with text data.
       console.log("Simulating image uploads (actual upload not implemented in this step):");
       if (data.idCardFrontImage) console.log("ID Card Front:", data.idCardFrontImage.name);
       if (data.idCardBackImage) console.log("ID Card Back:", data.idCardBackImage.name);
       if (data.selfieImage) console.log("Selfie:", data.selfieImage.name);
       if (data.wechatQrImage) console.log("WeChat QR:", data.wechatQrImage.name);
 
-      const translatorProfile: Partial<Translator> & { uid: string; registeredAt: any; isProfileComplete: boolean } = {
-        uid: user.uid,
-        id: user.uid, 
-        name: user.displayName || "Unknown Name", 
-        photoUrl: user.photoURL || null,
-
-        nationality: data.nationality === undefined || data.nationality === '' ? null : data.nationality as Nationality,
+      // Prepare data for Firestore, ensuring no undefined values
+      const profileToSave: Omit<Translator, 'id' | 'uid' | 'name' | 'photoUrl' | 'averageRating' | 'reviewCount' | 'totalRatingSum' | 'registeredAt' | 'isActive' | 'isProfileComplete' | 'views' | 'itemType' | 'city' | 'description' | 'idCardFrontImageUrl' | 'idCardBackImageUrl' | 'selfieImageUrl' > = {
+        nationality: (data.nationality === '' || data.nationality === undefined) ? null : data.nationality as Nationality,
         inChinaNow: data.inChinaNow === undefined ? null : data.inChinaNow,
         yearsInChina: data.inChinaNow === false ? (data.yearsInChina === undefined ? null : data.yearsInChina) : null,
-        currentCityInChina: data.inChinaNow === true ? (data.currentCityInChina === undefined ? null : data.currentCityInChina) : null,
+        currentCityInChina: data.inChinaNow === true ? ((data.currentCityInChina === '' || data.currentCityInChina === undefined) ? null : data.currentCityInChina) : null,
         chineseExamTaken: data.chineseExamTaken === undefined ? null : data.chineseExamTaken,
-        speakingLevel: data.speakingLevel as LanguageLevel, // Should be validated by Zod
-        writingLevel: data.writingLevel as LanguageLevel,   // Should be validated by Zod
+        speakingLevel: (data.speakingLevel === '' || data.speakingLevel === undefined) ? null : data.speakingLevel as LanguageLevel,
+        writingLevel: (data.writingLevel === '' || data.writingLevel === undefined) ? null : data.writingLevel as LanguageLevel,
         workedAsTranslator: data.workedAsTranslator === undefined ? null : data.workedAsTranslator,
-        translationFields: data.translationFields as TranslationField[], // Should be validated by Zod
-        canWorkInOtherCities: data.canWorkInOtherCities === undefined ? [] : data.canWorkInOtherCities, // Default to []
-        dailyRate: data.dailyRate as DailyRateRange, // Should be validated by Zod
-        chinaPhoneNumber: data.chinaPhoneNumber === undefined || data.chinaPhoneNumber === '' ? null : data.chinaPhoneNumber,
-        wechatId: data.wechatId === undefined || data.wechatId === '' ? null : data.wechatId,
-        
-        // Placeholder for image URLs - to be replaced with actual URLs after storage upload
-        // idCardFrontImageUrl: "placeholder_url_front",
-        // idCardBackImageUrl: "placeholder_url_back",
-        // selfieImageUrl: "placeholder_url_selfie",
-        // wechatQrImageUrl: data.wechatQrImage ? "placeholder_url_qr" : undefined,
-
-        registeredAt: serverTimestamp(),
-        isActive: false, 
-        isProfileComplete: true,
+        translationFields: data.translationFields || [],
+        canWorkInOtherCities: data.canWorkInOtherCities || [],
+        dailyRate: (data.dailyRate === '' || data.dailyRate === undefined) ? null : data.dailyRate as DailyRateRange,
+        chinaPhoneNumber: (data.chinaPhoneNumber === '' || data.chinaPhoneNumber === undefined) ? null : data.chinaPhoneNumber,
+        wechatId: (data.wechatId === '' || data.wechatId === undefined) ? null : data.wechatId,
+        wechatQrImageUrl: data.wechatQrImage ? "placeholder_qr_url" : null, // Placeholder, replace with actual URL after upload
       };
       
-      await setDoc(doc(db, "orchluulagchid", user.uid), translatorProfile);
-
+      const fullTranslatorProfile: Translator = {
+        uid: user.uid,
+        id: user.uid, // Using uid also as document id
+        name: user.displayName || "Unknown Name",
+        photoUrl: user.photoURL || null, // User's general profile photo
+        ...profileToSave,
+        // Default/system-set values
+        averageRating: null,
+        reviewCount: 0,
+        totalRatingSum: 0,
+        city: profileToSave.currentCityInChina || undefined, // Or some other logic
+        description: '', // Or a default description, or make it part of the form
+        itemType: 'translator' as ItemType, // Important for type discrimination
+        views: 0,
+        // These would be actual URLs from Firebase Storage
+        idCardFrontImageUrl: data.idCardFrontImage ? "placeholder_front_url" : undefined,
+        idCardBackImageUrl: data.idCardBackImage ? "placeholder_back_url" : undefined,
+        selfieImageUrl: data.selfieImage ? "placeholder_selfie_url" : undefined,
+        registeredAt: serverTimestamp(),
+        isActive: false, // New translators are inactive by default
+        isProfileComplete: true, // Step 2 submission means profile data is gathered
+      };
+      
+      await setDoc(doc(db, "orchluulagchid", user.uid), fullTranslatorProfile);
       setSubmissionSuccess(true);
 
     } catch (error) {
@@ -239,19 +244,22 @@ export function RegisterTranslatorForm() {
     );
   }
 
-  const nationalityOptions: { value: Nationality; labelKey: string }[] = [
+  const nationalityOptions: { value: Nationality | ''; labelKey: string }[] = [
+    { value: '', labelKey: 'selectNationalityPlaceholder' },
     { value: 'mongolian', labelKey: 'mongolian' },
     { value: 'chinese', labelKey: 'chinese' },
     { value: 'inner_mongolian', labelKey: 'innerMongolian' },
   ];
 
-  const languageLevelOptions: { value: LanguageLevel; labelKey: string }[] = [
+  const languageLevelOptions: { value: LanguageLevel | ''; labelKey: string }[] = [
+    { value: '', labelKey: 'selectSpeakingLevelPlaceholder' }, // Placeholder can be generic or specific
     { value: 'good', labelKey: 'languageLevelGood' },
     { value: 'intermediate', labelKey: 'languageLevelIntermediate' },
     { value: 'basic', labelKey: 'languageLevelBasic' },
   ];
 
-  const dailyRateOptions: { value: DailyRateRange; labelKey: string }[] = [
+  const dailyRateOptions: { value: DailyRateRange | ''; labelKey: string }[] = [
+    { value: '', labelKey: 'selectDailyRatePlaceholder' },
     { value: '100-200', labelKey: 'rate100to200' },
     { value: '200-300', labelKey: 'rate200to300' },
     { value: '300-400', labelKey: 'rate300to400' },
@@ -276,7 +284,6 @@ export function RegisterTranslatorForm() {
         <CardContent className="space-y-4">
           {step === 1 && (
             <>
-              {/* Nationality */}
               <div className="space-y-1">
                 <Label htmlFor="nationality">{t('nationalityLabel')}</Label>
                 <Controller
@@ -288,7 +295,7 @@ export function RegisterTranslatorForm() {
                         <SelectValue placeholder={t('selectNationalityPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {nationalityOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</SelectItem>)}
+                        {nationalityOptions.filter(opt => opt.value !== '').map(opt => <SelectItem key={opt.value} value={opt.value as string}>{t(opt.labelKey)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}
@@ -296,7 +303,6 @@ export function RegisterTranslatorForm() {
                 {errors.nationality && <p className="text-xs text-destructive pt-1">{t(errors.nationality.message as string)}</p>}
               </div>
 
-              {/* In China Now */}
               <div className="space-y-2">
                  <Label>{t('inChinaNowLabel')}</Label>
                 <Controller
@@ -305,7 +311,7 @@ export function RegisterTranslatorForm() {
                   render={({ field }) => (
                      <RadioGroup
                         onValueChange={(value) => field.onChange(value === "true")}
-                        value={field.value === null ? "" : String(field.value)}
+                        value={field.value === null || field.value === undefined ? "" : String(field.value)}
                         className="flex gap-4"
                         disabled={isSubmitting}
                       >
@@ -323,8 +329,6 @@ export function RegisterTranslatorForm() {
                  {errors.inChinaNow && <p className="text-xs text-destructive pt-1">{t(errors.inChinaNow.message as string)}</p>}
               </div>
 
-
-              {/* Years In China (Conditional) */}
               {inChinaNow === false && (
                 <div className="space-y-1">
                   <Label htmlFor="yearsInChina">{t('yearsInChinaLabel')}</Label>
@@ -333,7 +337,6 @@ export function RegisterTranslatorForm() {
                 </div>
               )}
 
-              {/* Current City In China (Conditional) */}
               {inChinaNow === true && (
                  <div className="space-y-1">
                     <Label htmlFor="currentCityInChina">{t('currentCityInChinaLabel')}</Label>
@@ -359,7 +362,6 @@ export function RegisterTranslatorForm() {
                   </div>
               )}
 
-              {/* Chinese Exam Taken */}
                <div className="space-y-2">
                  <Label>{t('chineseExamTakenLabel')}</Label>
                  <Controller
@@ -368,7 +370,7 @@ export function RegisterTranslatorForm() {
                     render={({ field }) => (
                       <RadioGroup
                         onValueChange={(value) => field.onChange(value === "true")}
-                        value={field.value === null ? "" : String(field.value)}
+                        value={field.value === null || field.value === undefined ? "" : String(field.value)}
                         className="flex gap-4"
                         disabled={isSubmitting}
                       >
@@ -386,7 +388,6 @@ export function RegisterTranslatorForm() {
                   {errors.chineseExamTaken && <p className="text-xs text-destructive pt-1">{t(errors.chineseExamTaken.message as string)}</p>}
               </div>
               
-              {/* Speaking Level */}
               <div className="space-y-1">
                 <Label htmlFor="speakingLevel">{t('speakingLevelLabel')}</Label>
                 <Controller
@@ -398,7 +399,7 @@ export function RegisterTranslatorForm() {
                         <SelectValue placeholder={t('selectSpeakingLevelPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {languageLevelOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</SelectItem>)}
+                        {languageLevelOptions.filter(opt => opt.value !== '').map(opt => <SelectItem key={opt.value} value={opt.value as string}>{t(opt.labelKey)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}
@@ -406,7 +407,6 @@ export function RegisterTranslatorForm() {
                 {errors.speakingLevel && <p className="text-xs text-destructive pt-1">{t(errors.speakingLevel.message as string)}</p>}
               </div>
 
-              {/* Writing Level */}
               <div className="space-y-1">
                 <Label htmlFor="writingLevel">{t('writingLevelLabel')}</Label>
                  <Controller
@@ -418,7 +418,7 @@ export function RegisterTranslatorForm() {
                         <SelectValue placeholder={t('selectWritingLevelPlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {languageLevelOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</SelectItem>)}
+                        {languageLevelOptions.filter(opt => opt.value !== '').map(opt => <SelectItem key={opt.value} value={opt.value as string}>{t(opt.labelKey)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}
@@ -426,7 +426,6 @@ export function RegisterTranslatorForm() {
                 {errors.writingLevel && <p className="text-xs text-destructive pt-1">{t(errors.writingLevel.message as string)}</p>}
               </div>
 
-              {/* Worked as Translator */}
               <div className="space-y-2">
                 <Label>{t('workedAsTranslatorLabel')}</Label>
                  <Controller
@@ -435,7 +434,7 @@ export function RegisterTranslatorForm() {
                     render={({ field }) => (
                        <RadioGroup
                         onValueChange={(value) => field.onChange(value === "true")}
-                        value={field.value === null ? "" : String(field.value)}
+                        value={field.value === null || field.value === undefined ? "" : String(field.value)}
                         className="flex gap-4"
                         disabled={isSubmitting}
                       >
@@ -453,7 +452,6 @@ export function RegisterTranslatorForm() {
                   {errors.workedAsTranslator && <p className="text-xs text-destructive pt-1">{t(errors.workedAsTranslator.message as string)}</p>}
               </div>
 
-              {/* Translation Fields */}
               <div className="space-y-2">
                 <Label>{t('translationFieldsLabel')}</Label>
                 <Controller
@@ -485,7 +483,6 @@ export function RegisterTranslatorForm() {
                 {errors.translationFields && <p className="text-xs text-destructive pt-1">{t(errors.translationFields.message as string)}</p>}
               </div>
               
-              {/* Can Work In Other Cities */}
               <div className="space-y-2">
                 <Label>{t('canWorkInOtherCitiesLabel')}</Label>
                  <Controller
@@ -519,7 +516,6 @@ export function RegisterTranslatorForm() {
                   {errors.canWorkInOtherCities && <p className="text-xs text-destructive pt-1">{t(errors.canWorkInOtherCities.message as string)}</p>}
               </div>
 
-              {/* Daily Rate */}
               <div className="space-y-1">
                 <Label htmlFor="dailyRate">{t('dailyRateLabel')}</Label>
                 <Controller
@@ -531,7 +527,7 @@ export function RegisterTranslatorForm() {
                         <SelectValue placeholder={t('selectDailyRatePlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
-                        {dailyRateOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{t(opt.labelKey)}</SelectItem>)}
+                        {dailyRateOptions.filter(opt => opt.value !== '').map(opt => <SelectItem key={opt.value} value={opt.value as string}>{t(opt.labelKey)}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   )}
@@ -539,14 +535,12 @@ export function RegisterTranslatorForm() {
                 {errors.dailyRate && <p className="text-xs text-destructive pt-1">{t(errors.dailyRate.message as string)}</p>}
               </div>
               
-              {/* China Phone Number */}
               <div className="space-y-1">
                 <Label htmlFor="chinaPhoneNumber">{t('chinaPhoneNumberLabel')}</Label>
                 <Input id="chinaPhoneNumber" {...register("chinaPhoneNumber")} placeholder={t('chinaPhoneNumberPlaceholder')} disabled={isSubmitting} />
                 {errors.chinaPhoneNumber && <p className="text-xs text-destructive pt-1">{t(errors.chinaPhoneNumber.message as string)}</p>}
               </div>
 
-              {/* WeChat ID */}
               <div className="space-y-1">
                 <Label htmlFor="wechatId">{t('wechatIdLabel')}</Label>
                 <Input id="wechatId" {...register("wechatId")} placeholder={t('wechatIdPlaceholder')} disabled={isSubmitting} />
@@ -557,7 +551,6 @@ export function RegisterTranslatorForm() {
 
           {step === 2 && (
             <>
-              {/* ID Card Front */}
               <div className="space-y-1">
                 <Label htmlFor="idCardFrontImage">{t('idCardFrontImageLabel')}</Label>
                 <Input id="idCardFrontImage" type="file" accept="image/*" onChange={(e) => handleFileChange(e, "idCardFrontImage", setIdCardFrontPreview)} disabled={isSubmitting} />
@@ -565,7 +558,6 @@ export function RegisterTranslatorForm() {
                 {renderFileError("idCardFrontImage")}
               </div>
 
-              {/* ID Card Back */}
               <div className="space-y-1">
                 <Label htmlFor="idCardBackImage">{t('idCardBackImageLabel')}</Label>
                 <Input id="idCardBackImage" type="file" accept="image/*" onChange={(e) => handleFileChange(e, "idCardBackImage", setIdCardBackPreview)} disabled={isSubmitting} />
@@ -573,7 +565,6 @@ export function RegisterTranslatorForm() {
                 {renderFileError("idCardBackImage")}
               </div>
 
-              {/* Selfie */}
               <div className="space-y-1">
                 <Label htmlFor="selfieImage">{t('selfieImageLabel')}</Label>
                 <Input id="selfieImage" type="file" accept="image/*" onChange={(e) => handleFileChange(e, "selfieImage", setSelfiePreview)} disabled={isSubmitting} />
@@ -581,7 +572,6 @@ export function RegisterTranslatorForm() {
                 {renderFileError("selfieImage")}
               </div>
 
-              {/* WeChat QR (Optional) */}
               <div className="space-y-1">
                 <Label htmlFor="wechatQrImage">{t('wechatQrImageLabel')} ({t('optional')})</Label>
                 <Input id="wechatQrImage" type="file" accept="image/*" onChange={(e) => handleFileChange(e, "wechatQrImage", setWechatQrPreview)} disabled={isSubmitting} />
@@ -612,4 +602,3 @@ export function RegisterTranslatorForm() {
     </Card>
   );
 }
-
