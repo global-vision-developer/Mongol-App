@@ -105,23 +105,76 @@ export const requestForToken = async (): Promise<string | null> => {
   }
 };
 
-// ✅ Foreground Notification хүлээн авах
-export const onMessageListener = (): Promise<any> =>
-  new Promise((resolve, reject) => {
-    if (!messagingInstance) {
-      console.warn('Firebase Messaging instance is not available. Cannot listen for messages.');
-      return resolve(null); 
-    }
-    try {
-      onMessage(messagingInstance, (payload) => {
-        console.log('📩 Foreground message received:', payload);
-        resolve(payload);
-      });
-    } catch (error) {
-       console.error("Error setting up onMessage listener:", error);
-       reject(error);
-    }
-  });
+// ✅ Foreground Notification хүлээн авах listener тохируулах
+export const setupOnMessageListener = (callback: (payload: any) => void): (() => void) | null => {
+  if (!messagingInstance) {
+    console.warn('Firebase Messaging instance is not available. Cannot set up listener.');
+    return null;
+  }
+  try {
+    // Returns the unsubscribe function
+    const unsubscribe = onMessage(messagingInstance, (payload) => {
+      console.log('📩 Foreground message received:', payload);
+      callback(payload);
+    });
+    return unsubscribe;
+  } catch (error) {
+     console.error("Error setting up onMessage listener:", error);
+     return null;
+  }
+};
 
 export { app, auth, db, analytics, messagingInstance as messaging };
 
+// public/firebase-messaging-sw.js Файлыг Үүсгэх
+// Энэ файл нь public директор дотор байрлана.
+// self.addEventListener('install', function(event) {
+//   console.log('Service Worker installing.');
+// });
+//
+// self.addEventListener('activate', function(event) {
+//   console.log('Service Worker activating.');
+// });
+//
+// self.addEventListener('push', function(event) {
+//   console.log('[Service Worker] Push Received.');
+//   console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
+//
+//   const notificationTitle = 'Mongol App'; // Default title
+//   const notificationOptions = {
+//     body: event.data.text(), // Use text from push data
+//     icon: '/icons/icon-192x192.png' // Change to your app icon
+//   };
+//
+//   event.waitUntil(self.registration.showNotification(notificationTitle,
+//     notificationOptions));
+// });
+//
+// // Optional: Import and initialize Firebase app for background message handling (if needed)
+// // importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js');
+// // importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js');
+// //
+// // const firebaseConfig = {
+// //   apiKey: "YOUR_API_KEY",
+// //   authDomain: "YOUR_AUTH_DOMAIN",
+// //   projectId: "YOUR_PROJECT_ID",
+// //   storageBucket: "YOUR_STORAGE_BUCKET",
+// //   messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+// //   appId: "YOUR_APP_ID",
+// //   measurementId: "YOUR_MEASUREMENT_ID"
+// // };
+// //
+// // firebase.initializeApp(firebaseConfig);
+// // const messaging = firebase.messaging();
+// //
+// // messaging.onBackgroundMessage((payload) => {
+// //   console.log('[firebase-messaging-sw.js] Received background message ', payload);
+// //   // Customize notification here
+// //   const notificationTitle = payload.notification.title;
+// //   const notificationOptions = {
+// //     body: payload.notification.body,
+// //     icon: payload.notification.icon || '/icons/icon-192x192.png',
+// //   };
+// //
+// //  return self.registration.showNotification(notificationTitle, notificationOptions);
+// // });

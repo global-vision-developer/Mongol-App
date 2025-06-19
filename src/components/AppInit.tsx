@@ -1,121 +1,152 @@
 
 'use client';
-import { useEffect } from 'react';
-import { requestForToken, onMessageListener } from '@/lib/firebase';
+import { useEffect, useRef } from 'react';
+import { requestForToken, setupOnMessageListener, auth, db, messaging } from '@/lib/firebase'; // Added messaging
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, updateDoc, arrayUnion, serverTimestamp, collection, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import type { NotificationItem, ItemType } from '@/types';
-import { useTranslation } from '@/hooks/useTranslation'; // For translating toast messages
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function AppInit() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { t } = useTranslation(); // Import useTranslation
+  const { t } = useTranslation();
+  const fcmSetupDoneForUserRef = useRef<string | null>(null);
+  const unsubscribeOnMessageRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    const setupNotifications = async () => {
-      if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator && user?.uid) {
+    const handleIncomingMessage = async (payload: any) => {
+      const currentUserId = auth.currentUser?.uid; // Get current user ID at the time of message handling
+
+      if (!currentUserId) {
+        console.warn("User not available, cannot save foreground notification to Firestore.");
+        if (payload?.notification) {
+           toast({
+              title: t(payload.notification.titleKey || payload.notification.title || 'unknownNotificationTitle'),
+              description: t(payload.notification.descriptionKey || payload.notification.body || 'unknownNotificationDescription'),
+            });
+        }
+        return;
+      }
+
+      if (payload && (payload.data || payload.notification)) {
+        console.log('Foreground message payload for saving:', payload);
+        
+        const titleKey = payload.data?.titleKey || payload.notification?.title || 'unknownNotificationTitle';
+        const descriptionKey = payload.data?.descriptionKey || payload.notification?.body || 'unknownNotificationDescription';
+        const descriptionPlaceholdersStr = payload.data?.descriptionPlaceholders;
+        let descriptionPlaceholders = {};
+        if (descriptionPlaceholdersStr && typeof descriptionPlaceholdersStr === 'string') {
+          try {
+            descriptionPlaceholders = JSON.parse(descriptionPlaceholdersStr);
+          } catch (e) {
+            console.error("Error parsing descriptionPlaceholders:", e);
+          }
+        } else if (descriptionPlaceholdersStr && typeof descriptionPlaceholdersStr === 'object') {
+          descriptionPlaceholders = descriptionPlaceholdersStr;
+        }
+        
+        const notificationToSave: Omit<NotificationItem, 'id'> = {
+          titleKey: titleKey,
+          descriptionKey: descriptionKey,
+          descriptionPlaceholders: descriptionPlaceholders,
+          date: serverTimestamp(),
+          read: false, 
+          imageUrl: payload.data?.imageUrl || payload.notification?.image || null,
+          dataAiHint: payload.data?.dataAiHint || null,
+          link: payload.data?.link || payload.data?.url || null,
+          itemType: (payload.data?.itemType as ItemType) || 'general', 
+          isGlobal: payload.data?.isGlobal === 'true' || payload.data?.isGlobal === true || false,
+        };
+
         try {
-          const permission = await Notification.requestPermission();
-          if (permission === 'granted') {
-            console.log('Notification permission granted.');
-            const fcmToken = await requestForToken();
-
-            if (fcmToken && user?.uid) {
-              try {
-                const userDocRef = doc(db, "users", user.uid);
-                await updateDoc(userDocRef, {
-                  fcmTokens: arrayUnion(fcmToken),
-                  lastTokenUpdate: serverTimestamp()
-                });
-                console.log('FCM token saved to Firestore for user:', user.uid);
-              } catch (error) {
-                console.error('Error saving FCM token to Firestore:', error);
-              }
-            }
-
-            onMessageListener()
-              .then(async (payload: any) => {
-                if (!user?.uid) {
-                  console.warn("User not available, cannot save foreground notification to Firestore.");
-                  if (payload?.notification) {
-                     toast({
-                        title: t(payload.notification.titleKey || payload.notification.title || 'unknownNotificationTitle'),
-                        description: t(payload.notification.descriptionKey || payload.notification.body || 'unknownNotificationDescription'),
-                      });
-                  }
-                  return;
-                }
-
-                if (payload && (payload.data || payload.notification)) {
-                  console.log('Foreground message payload:', payload);
-                  
-                  // Prepare data for Firestore, using payload.data first, then payload.notification
-                  const titleKey = payload.data?.titleKey || payload.notification?.title || 'unknownNotificationTitle';
-                  const descriptionKey = payload.data?.descriptionKey || payload.notification?.body || 'unknownNotificationDescription';
-                  const descriptionPlaceholdersStr = payload.data?.descriptionPlaceholders;
-                  let descriptionPlaceholders = {};
-                  if (descriptionPlaceholdersStr && typeof descriptionPlaceholdersStr === 'string') {
-                    try {
-                      descriptionPlaceholders = JSON.parse(descriptionPlaceholdersStr);
-                    } catch (e) {
-                      console.error("Error parsing descriptionPlaceholders:", e);
-                    }
-                  } else if (descriptionPlaceholdersStr && typeof descriptionPlaceholdersStr === 'object') {
-                    descriptionPlaceholders = descriptionPlaceholdersStr;
-                  }
-                  
-                  const notificationToSave: Omit<NotificationItem, 'id'> = {
-                    titleKey: titleKey,
-                    descriptionKey: descriptionKey,
-                    descriptionPlaceholders: descriptionPlaceholders,
-                    date: serverTimestamp(),
-                    read: false, 
-                    imageUrl: payload.data?.imageUrl || payload.notification?.image || null,
-                    dataAiHint: payload.data?.dataAiHint || null,
-                    link: payload.data?.link || payload.data?.url || null,
-                    itemType: (payload.data?.itemType as ItemType) || 'general', 
-                    isGlobal: payload.data?.isGlobal === 'true' || payload.data?.isGlobal === true || false,
-                  };
-
-                  console.log("Attempting to save notification to Firestore:", JSON.stringify(notificationToSave, null, 2));
-
-                  try {
-                    if (!notificationToSave.isGlobal) {
-                        await addDoc(collection(db, "users", user.uid, "notifications"), notificationToSave);
-                        console.log("Foreground user-specific notification saved to Firestore for user:", user.uid);
-                    } else {
-                        console.log("Global notification received in foreground, not saving to user's subcollection from client.");
-                    }
-                  } catch (error) {
-                    console.error("Error saving foreground notification to Firestore:", error);
-                  }
-
-                  // Display translated toast
-                  toast({
-                    title: t(titleKey, descriptionPlaceholders),
-                    description: t(descriptionKey, descriptionPlaceholders),
-                    // TODO: Add action if link exists, e.g., navigate to link
-                  });
-                }
-              })
-              .catch(err => console.error('Failed to listen for foreground messages:', err));
+          if (!notificationToSave.isGlobal) {
+              await addDoc(collection(db, "users", currentUserId, "notifications"), notificationToSave);
+              console.log("Foreground user-specific notification saved to Firestore for user:", currentUserId);
           } else {
-            console.log('Notification permission denied.');
+              console.log("Global notification received in foreground, not saving to user's subcollection from client.");
           }
         } catch (error) {
-          console.error('Error setting up notifications:', error);
+          console.error("Error saving foreground notification to Firestore:", error);
         }
+
+        toast({
+          title: t(titleKey, descriptionPlaceholders),
+          description: t(descriptionKey, descriptionPlaceholders),
+        });
       }
     };
 
-    if (user) { // Only setup if user is logged in
-        setupNotifications();
-    }
+    const setupFcmLogic = async () => {
+      if (!user || !user.uid) {
+        fcmSetupDoneForUserRef.current = null; // Reset if user logs out
+        if (unsubscribeOnMessageRef.current) {
+          console.log('Cleaning up foreground message listener due to user logout/change.');
+          unsubscribeOnMessageRef.current();
+          unsubscribeOnMessageRef.current = null;
+        }
+        return;
+      }
 
-  }, [user, toast, t]); // Added t to dependency array
+      // Part 1: Token registration and Firestore update (run only once per user login session)
+      if (fcmSetupDoneForUserRef.current !== user.uid) {
+        console.log('Performing FCM token setup for user:', user.uid);
+        if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator && messaging) {
+          try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+              console.log('Notification permission granted.');
+              const fcmToken = await requestForToken();
+
+              if (fcmToken && user.uid) {
+                try {
+                  const userDocRef = doc(db, "users", user.uid);
+                  await updateDoc(userDocRef, {
+                    fcmTokens: arrayUnion(fcmToken),
+                    lastTokenUpdate: serverTimestamp()
+                  });
+                  console.log('FCM token synced with Firestore for user:', user.uid);
+                  fcmSetupDoneForUserRef.current = user.uid; // Mark setup as done for this user
+                } catch (error) {
+                  console.error('Error saving FCM token to Firestore:', error);
+                }
+              }
+            } else {
+              console.log('Notification permission denied.');
+            }
+          } catch (error) {
+            console.error('Error during FCM token setup phase:', error);
+          }
+        } else {
+          console.log('Environment does not support notifications or messaging not initialized.');
+        }
+      } else {
+        console.log('FCM token setup already done for user:', user.uid);
+      }
+
+      // Part 2: Foreground Message Listener
+      // Ensure listener is set up only once for the current user session or properly cleaned up and re-set.
+      if (!unsubscribeOnMessageRef.current && messaging) { // Check if messaging instance is available
+         console.log('Setting up foreground message listener for user:', user.uid);
+         unsubscribeOnMessageRef.current = setupOnMessageListener(handleIncomingMessage);
+         if (!unsubscribeOnMessageRef.current) {
+           console.error("Failed to set up onMessage listener, setupOnMessageListener returned null.");
+         }
+      }
+    };
+
+    setupFcmLogic();
+
+    // Cleanup function for the useEffect hook
+    return () => {
+      if (unsubscribeOnMessageRef.current) {
+        console.log('Cleaning up foreground message listener on component unmount or user change.');
+        unsubscribeOnMessageRef.current();
+        unsubscribeOnMessageRef.current = null;
+      }
+    };
+  }, [user, t, toast]); // Dependencies
 
   return null;
 }
