@@ -7,10 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, MapPin, Star, LanguagesIcon } from "lucide-react";
 import type { Translator } from '@/types';
-import React, { useState, useEffect } from 'react'; // Ensured React is imported
+import React, { useState, useEffect } from 'react'; 
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
-import { CITIES } from '@/lib/constants';
+// CITIES import is removed as city data will be handled differently or passed directly
 
 interface TranslatorCardProps {
   item: Translator;
@@ -24,7 +24,7 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
 
   useEffect(() => {
     setIsMounted(true);
-    // Here you could check if the item is already a favorite, e.g., from user's saved items
+    // Favorite status check logic (if any) would go here
   }, []);
 
 
@@ -35,11 +35,11 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
     // TODO: Send to backend (add/remove from user's saved translators)
   };
 
-  const cityLabel = item.currentCityInChina
-    ? (CITIES.find(c => c.value === item.currentCityInChina) || {label: item.currentCityInChina, label_cn: item.currentCityInChina})
-    : (item.city ? (CITIES.find(c => c.value === item.city) || {label: item.city, label_cn: item.city}) : null);
-
-  const displayCity = cityLabel ? (language === 'cn' && cityLabel.label_cn ? cityLabel.label_cn : cityLabel.label) : t('n_a');
+  // Use the city name directly from the item, if available
+  const cityLabel = item.currentCityInChina || item.city;
+  // For Chinese label, you might need a mapping if item doesn't directly provide it
+  // or adjust how city labels are handled in CityContext / fetched data
+  const displayCity = cityLabel || t('n_a'); 
   
   const placeholderImage = `https://placehold.co/300x400.png?text=${encodeURIComponent(item.name || 'T')}`;
   const imageUrlToDisplay = item.photoUrl || placeholderImage;
@@ -80,10 +80,10 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
           <div>
             <h3 className="text-md font-semibold truncate group-hover:text-primary">{item.name || t('serviceUnnamed')}</h3>
 
-            {item.rating !== undefined && (
+            {item.averageRating !== undefined && item.averageRating !== null && (
               <div className="flex items-center gap-1 text-xs text-amber-500 mt-0.5">
                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
-                <span>{item.rating.toFixed(1)}</span>
+                <span>{item.averageRating.toFixed(1)}</span>
                 {item.reviewCount !== undefined && <span className="text-muted-foreground">({item.reviewCount})</span>}
               </div>
             )}
@@ -119,3 +119,5 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
 }
 
 export const TranslatorCard = React.memo(TranslatorCardComponent);
+
+```

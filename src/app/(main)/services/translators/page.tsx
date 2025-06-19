@@ -30,15 +30,24 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function TranslatorsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity } = useCity();
+  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
 
   const [translators, setTranslators] = useState<Translator[]>([]); 
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTranslatorEntries = async () => {
-      setLoading(true);
+      if (loadingCities || !selectedCity) {
+        setLoadingData(true);
+         if(!loadingCities && !selectedCity) {
+            setTranslators([]);
+            setLoadingData(false);
+        }
+        return;
+      }
+
+      setLoadingData(true);
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
@@ -46,13 +55,8 @@ export default function TranslatorsPage() {
           where("categoryName", "==", "translators"),
         ];
         
-        if (selectedCity && selectedCity.value !== "all") {
-          // For translators, city might be in `data.currentCityInChina` or `data.khot`
-          // Let's assume `data.currentCityInChina` is primary for active translators, 
-          // and `data.khot` can be a fallback or general location.
-          // The TranslatorCard specific logic already handles city display.
-          // Here, we'll query based on a primary city field if available.
-          // This might need adjustment based on exact data structure for translators.
+        if (selectedCity.value !== "all") {
+          // Filter by the Mongolian name of the city stored in selectedCity.value
           queryConstraints.push(where("data.currentCityInChina", "==", selectedCity.value)); 
         }
         
@@ -63,12 +67,12 @@ export default function TranslatorsPage() {
           .map((doc) => {
             const entryData = doc.data();
             const nestedData = entryData.data || {};
-            if (nestedData.isActive === false) { // Assuming isActive is a field in `data` for translators
+            if (nestedData.isActive === false) { 
                 return null;
             }
 
             let finalImageUrl: string | undefined = undefined;
-            const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl; // Check both, photoUrl might be specific for translator profile pic
+            const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl; 
              if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
                 finalImageUrl = rawImageUrl.trim();
             }
@@ -107,17 +111,14 @@ export default function TranslatorsPage() {
         console.error("Error fetching translator entries:", err);
         setError(t('fetchErrorGeneric') || "Алдаа гарлаа. Түр хүлээнэ үү.");
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     };
+    
+    fetchTranslatorEntries();
+  }, [selectedCity, loadingCities, t]);
 
-    if(selectedCity){ 
-        fetchTranslatorEntries();
-    } else {
-        setLoading(false); 
-        setTranslators([]);
-    }
-  }, [selectedCity, t]);
+  const isLoading = loadingCities || loadingData;
 
   return (
     <div className="space-y-6">
@@ -146,7 +147,7 @@ export default function TranslatorsPage() {
       <div className="px-1">
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('translatorsSectionTitle')}</h2>
 
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => (
               <div key={`skeleton-${i}`} className="flex flex-col space-y-2">
@@ -172,3 +173,5 @@ export default function TranslatorsPage() {
     </div>
   );
 }
+
+```

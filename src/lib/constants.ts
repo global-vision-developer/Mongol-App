@@ -1,33 +1,8 @@
 
-import type { City, ServiceGroup, HospitalCategory, EmbassyCategoryItem, WeChatCategoryItem, RecommendedItem, Airport, TranslationField } from '@/types';
+import type { ServiceGroup, HospitalCategory, EmbassyCategoryItem, WeChatCategoryItem, RecommendedItem, Airport, TranslationField } from '@/types';
 import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Grid3x3, BusFront, CarTaxiFront, Copy } from 'lucide-react';
 
-export const CITIES: City[] = [
-  { value: 'all', label: 'Бүгд', label_cn: '全部', isMajor: true },
-  { value: 'ulaanbaatar', label: 'Улаанбаатар', label_cn: '乌兰巴托', isMajor: true },
-  { value: 'beijing', label: 'Бээжин', label_cn: '北京', isMajor: true },
-  { value: 'shanghai', label: 'Шанхай', label_cn: '上海', isMajor: true },
-  { value: 'guangzhou', label: 'Гуанжоу', label_cn: '广州', isMajor: true },
-  { value: 'shenzhen', label: 'Шэньжэнь', label_cn: '深圳', isMajor: true },
-  { value: 'hohhot', label: 'Хөххот', label_cn: '呼和浩特', isMajor: true },
-  { value: 'yiwu', label: 'Ивү', label_cn: '义乌', isMajor: true },
-  { value: 'sanya', label: 'Саняа', label_cn: '三亚', isMajor: true },
-  { value: 'ereen', label: 'Эрээн', label_cn: '二连浩特', isMajor: true },
-  { value: 'hongkong', label: 'Хонконг', label_cn: '香港', isMajor: true },
-  { value: 'manjuur', label: 'Манжуур', label_cn: '满洲里', isMajor: true },
-  { value: 'macao', label: 'Макао', label_cn: '澳门', isMajor: true },
-  // Non-major cities from existing list + image OCR
-  { value: 'chengdu', label: 'Чэнду', label_cn: '成都', isMajor: false },
-  { value: 'hangzhou', label: 'Ханжоу', label_cn: '杭州', isMajor: false },
-  { value: 'xianyang', label: 'Xianyang', label_cn: '咸阳', isMajor: false }, // Simplified label
-  { value: 'wenzhou', label: 'Wenzhou', label_cn: '温州', isMajor: false },   // Corrected from Wengzhou
-  { value: 'chaozhou', label: 'Chaozhou', label_cn: '潮州', isMajor: false },
-  { value: 'pinghu', label: 'Pinghu', label_cn: '平湖', isMajor: false },
-  { value: 'lijiang', label: 'Lijiang', label_cn: '丽江', isMajor: false },
-  { value: 'dalian', label: 'Dalian', label_cn: '大连', isMajor: false },
-  { value: 'yichang', label: 'Yichang', label_cn: '宜昌', isMajor: false },
-];
-
+// CITIES array is removed as it will be fetched from Firestore by CityContext
 
 export const AIRPORTS: Airport[] = [
   { value: "UBN", label: "Ulaanbaatar / Улаанбаатар (UBN)", city: "Улаанбаатар", iata: "UBN", searchTerms: "Ulaanbaatar Улаанбаатар UBN ULN CIN" },
@@ -98,3 +73,5 @@ export const TranslationFields: TranslationField[] = [
   'tourism', 'medical', 'equipment', 'exhibition', 
   'official_documents', 'official_speech', 'machinery'
 ];
+
+```

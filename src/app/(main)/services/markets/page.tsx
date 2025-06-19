@@ -28,24 +28,34 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function MarketsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity } = useCity();
+  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
 
   const [allMarketItems, setAllMarketItems] = useState<RecommendedItem[]>([]);
   const [displayableSubcategories, setDisplayableSubcategories] = useState<string[]>([]);
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null); // null means "All"
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null); 
   
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMarketEntries = async () => {
-      setLoading(true);
+      if (loadingCities || !selectedCity) {
+        setLoadingData(true);
+        if(!loadingCities && !selectedCity) {
+            setAllMarketItems([]);
+            setDisplayableSubcategories([]);
+            setLoadingData(false);
+        }
+        return;
+      }
+      
+      setLoadingData(true);
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "markets")]; 
         
-        if (selectedCity && selectedCity.value !== "all") {
+        if (selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
 
@@ -74,39 +84,34 @@ export default function MarketsPage() {
             price: nestedData.price === undefined ? null : nestedData.price,
             itemType: mapCategoryToSingularItemType(entryData.categoryName),
             dataAiHint: nestedData.dataAiHint || "market item",
-            subcategory: nestedData.subcategory || null, // Store subcategory
+            subcategory: nestedData.subcategory || null, 
           } as RecommendedItem;
         });
         setAllMarketItems(items);
 
-        // Extract unique subcategories
         const subcategories = new Set(items.map(item => item.subcategory).filter(Boolean) as string[]);
         setDisplayableSubcategories(Array.from(subcategories));
-        setSelectedSubcategory(null); // Reset to "All"
+        setSelectedSubcategory(null); 
 
       } catch (err: any) {
         console.error("Error fetching market entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа");
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     };
     
-    if(selectedCity){
-        fetchMarketEntries();
-    } else {
-        setLoading(false);
-        setAllMarketItems([]);
-        setDisplayableSubcategories([]);
-    }
-  }, [selectedCity, t]);
+    fetchMarketEntries();
+  }, [selectedCity, loadingCities, t]);
 
   const filteredItems = useMemo(() => {
     if (!selectedSubcategory) {
-      return allMarketItems; // Show all if "All" is selected
+      return allMarketItems; 
     }
     return allMarketItems.filter(item => item.subcategory === selectedSubcategory);
   }, [allMarketItems, selectedSubcategory]);
+
+  const isLoading = loadingCities || loadingData;
 
   return (
     <div className="space-y-6">
@@ -161,7 +166,7 @@ export default function MarketsPage() {
       <div className="px-1">
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('allMarketsSectionTitle')}</h2>
         
-        {loading && (
+        {isLoading && (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {[...Array(4)].map((_, i) => (
                 <div key={`skeleton-market-${i}`} className="flex flex-col space-y-3">
@@ -175,13 +180,13 @@ export default function MarketsPage() {
             </div>
         )}
 
-        {!loading && error && <p className="col-span-full text-destructive">{error}</p>}
+        {!isLoading && error && <p className="col-span-full text-destructive">{error}</p>}
         
-        {!loading && !error && filteredItems.length === 0 && (
+        {!isLoading && !error && filteredItems.length === 0 && (
             <p className="col-span-full text-muted-foreground">{t('noRecommendations')}</p>
         )}
 
-        {!loading && !error && filteredItems.length > 0 && (
+        {!isLoading && !error && filteredItems.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredItems.map((item) => (
               <ServiceCard key={item.id} item={item} />
@@ -192,3 +197,5 @@ export default function MarketsPage() {
     </div>
   );
 }
+
+```

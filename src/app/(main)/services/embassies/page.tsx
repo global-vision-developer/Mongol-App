@@ -29,21 +29,30 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function EmbassiesPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity } = useCity();
+  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
 
   const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEmbassyEntries = async () => {
-      setLoading(true);
+      if (loadingCities || !selectedCity) {
+        setLoadingData(true);
+         if(!loadingCities && !selectedCity) {
+            setRecommendations([]);
+            setLoadingData(false);
+        }
+        return;
+      }
+      
+      setLoadingData(true);
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "embassies")]; 
         
-        if (selectedCity && selectedCity.value !== "all") {
+        if (selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
         
@@ -72,7 +81,7 @@ export default function EmbassiesPage() {
             price: nestedData.price === undefined ? null : nestedData.price,
             itemType: mapCategoryToSingularItemType(entryData.categoryName), 
             dataAiHint: nestedData.dataAiHint || "embassy item",
-            rooms: nestedData.uruunuud || [], // Ensure rooms is always an array
+            rooms: nestedData.uruunuud || [], 
           } as RecommendedItem;
         });
         setRecommendations(items);
@@ -80,17 +89,14 @@ export default function EmbassiesPage() {
         console.error("Error fetching embassy entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа");
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     };
 
-    if(selectedCity){
-        fetchEmbassyEntries();
-    } else {
-        setLoading(false);
-        setRecommendations([]);
-    }
-  }, [selectedCity, t]);
+    fetchEmbassyEntries();
+  }, [selectedCity, loadingCities, t]);
+
+  const isLoading = loadingCities || loadingData;
 
   return (
     <div className="space-y-6">
@@ -119,7 +125,7 @@ export default function EmbassiesPage() {
       <div className="px-1">
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('embassiesListingTitle')}</h2>
         
-        {loading && (
+        {isLoading && (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {[...Array(4)].map((_, i) => (
                 <div key={`skeleton-embassy-${i}`} className="flex flex-col space-y-3">
@@ -133,13 +139,13 @@ export default function EmbassiesPage() {
             </div>
         )}
 
-        {!loading && error && <p className="col-span-full text-destructive">{error}</p>}
+        {!isLoading && error && <p className="col-span-full text-destructive">{error}</p>}
         
-        {!loading && !error && recommendations.length === 0 && (
+        {!isLoading && !error && recommendations.length === 0 && (
             <p className="col-span-full text-muted-foreground">{t('noRecommendations')}</p>
         )}
 
-        {!loading && !error && recommendations.length > 0 && (
+        {!isLoading && !error && recommendations.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {recommendations.map((item) => (
               <ServiceCard key={item.id} item={item} />
@@ -150,3 +156,5 @@ export default function EmbassiesPage() {
     </div>
   );
 }
+
+```

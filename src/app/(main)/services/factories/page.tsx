@@ -27,18 +27,28 @@ const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
 export default function FactoriesPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity } = useCity();
+  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
 
   const [allFactoryItems, setAllFactoryItems] = useState<RecommendedItem[]>([]);
   const [displayableSubcategories, setDisplayableSubcategories] = useState<string[]>([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFactoryEntries = async () => {
-      setLoading(true);
+      if (loadingCities || !selectedCity) {
+        setLoadingData(true);
+         if(!loadingCities && !selectedCity) {
+            setAllFactoryItems([]);
+            setDisplayableSubcategories([]);
+            setLoadingData(false);
+        }
+        return;
+      }
+      
+      setLoadingData(true);
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
@@ -47,7 +57,7 @@ export default function FactoriesPage() {
             limit(20) 
         ];
 
-        if (selectedCity && selectedCity.value !== "all") {
+        if (selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
         
@@ -90,18 +100,12 @@ export default function FactoriesPage() {
         console.error("Error fetching factory entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа");
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     };
 
-    if(selectedCity){
-        fetchFactoryEntries();
-    } else {
-        setLoading(false);
-        setAllFactoryItems([]);
-        setDisplayableSubcategories([]);
-    }
-  }, [selectedCity, t]);
+    fetchFactoryEntries();
+  }, [selectedCity, loadingCities, t]);
 
   const filteredItems = useMemo(() => {
     if (!selectedSubcategory) {
@@ -109,6 +113,8 @@ export default function FactoriesPage() {
     }
     return allFactoryItems.filter(item => item.subcategory === selectedSubcategory);
   }, [allFactoryItems, selectedSubcategory]);
+
+  const isLoading = loadingCities || loadingData;
 
   return (
     <div className="space-y-6">
@@ -163,7 +169,7 @@ export default function FactoriesPage() {
       <div className="px-1">
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('allFactoriesSectionTitle')}</h2>
         
-        {loading && (
+        {isLoading && (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {[...Array(4)].map((_, i) => (
                 <div key={`skeleton-factory-${i}`} className="flex flex-col space-y-3">
@@ -177,13 +183,13 @@ export default function FactoriesPage() {
             </div>
         )}
 
-        {!loading && error && <p className="col-span-full text-destructive">{error}</p>}
+        {!isLoading && error && <p className="col-span-full text-destructive">{error}</p>}
         
-        {!loading && !error && filteredItems.length === 0 && (
+        {!isLoading && !error && filteredItems.length === 0 && (
             <p className="col-span-full text-muted-foreground">{t('noRecommendations')}</p>
         )}
 
-        {!loading && !error && filteredItems.length > 0 && (
+        {!isLoading && !error && filteredItems.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredItems.map((item) => (
               <ServiceCard key={item.id} item={item} />
@@ -194,3 +200,5 @@ export default function FactoriesPage() {
     </div>
   );
 }
+
+```

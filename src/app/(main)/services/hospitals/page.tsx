@@ -28,24 +28,34 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function HospitalsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity } = useCity();
+  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
 
   const [allHospitalItems, setAllHospitalItems] = useState<RecommendedItem[]>([]);
   const [displayableSubcategories, setDisplayableSubcategories] = useState<string[]>([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHospitalEntries = async () => {
-      setLoading(true);
+      if (loadingCities || !selectedCity) {
+        setLoadingData(true);
+         if(!loadingCities && !selectedCity) {
+            setAllHospitalItems([]);
+            setDisplayableSubcategories([]);
+            setLoadingData(false);
+        }
+        return;
+      }
+      
+      setLoadingData(true);
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "hospitals")]; 
         
-        if (selectedCity && selectedCity.value !== "all") {
+        if (selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
 
@@ -87,18 +97,12 @@ export default function HospitalsPage() {
         console.error("Error fetching hospital entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа");
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     };
 
-    if(selectedCity){
-        fetchHospitalEntries();
-    } else {
-        setLoading(false);
-        setAllHospitalItems([]);
-        setDisplayableSubcategories([]);
-    }
-  }, [selectedCity, t]);
+    fetchHospitalEntries();
+  }, [selectedCity, loadingCities, t]);
 
   const filteredItems = useMemo(() => {
     if (!selectedSubcategory) {
@@ -106,6 +110,8 @@ export default function HospitalsPage() {
     }
     return allHospitalItems.filter(item => item.subcategory === selectedSubcategory);
   }, [allHospitalItems, selectedSubcategory]);
+
+  const isLoading = loadingCities || loadingData;
 
   return (
     <div className="space-y-6">
@@ -162,7 +168,7 @@ export default function HospitalsPage() {
       <div className="px-1">
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('allHospitalsSectionTitle')}</h2>
         
-        {loading && (
+        {isLoading && (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {[...Array(4)].map((_, i) => (
                 <div key={`skeleton-hospital-${i}`} className="flex flex-col space-y-3">
@@ -176,13 +182,13 @@ export default function HospitalsPage() {
             </div>
         )}
 
-        {!loading && error && <p className="col-span-full text-destructive">{error}</p>}
+        {!isLoading && error && <p className="col-span-full text-destructive">{error}</p>}
         
-        {!loading && !error && filteredItems.length === 0 && (
+        {!isLoading && !error && filteredItems.length === 0 && (
             <p className="col-span-full text-muted-foreground">{t('noRecommendations')}</p>
         )}
 
-        {!loading && !error && filteredItems.length > 0 && (
+        {!isLoading && !error && filteredItems.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredItems.map((item) => (
               <ServiceCard key={item.id} item={item} />
@@ -193,3 +199,5 @@ export default function HospitalsPage() {
     </div>
   );
 }
+
+```

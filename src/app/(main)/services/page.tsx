@@ -34,7 +34,7 @@ export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
-  const { selectedCity } = useCity();
+  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
   const { searchTerm } = useSearch(); // Get searchTerm from context
 
   const [allTranslators, setAllTranslators] = useState<RecommendedItem[]>([]);
@@ -56,10 +56,12 @@ export default function HomePage() {
     const fetchEntriesByCategory = async (
       categoryNameFilter: string,
       count: number,
-      cityValue?: string
+      cityValue?: string // This is the Mongolian name of the city or 'all'
     ): Promise<RecommendedItem[]> => {
       const entriesRef = collection(db, "entries");
       const queryConstraints = [where("categoryName", "==", categoryNameFilter)];
+      
+      // Only filter by city if cityValue is provided and not 'all'
       if (cityValue && cityValue !== "all") {
         queryConstraints.push(where("data.khot", "==", cityValue));
       }
@@ -80,11 +82,11 @@ export default function HomePage() {
 
         return { 
           id: doc.id, 
-          name: nestedData.name || nestedData.title || t('serviceUnnamed'), // Added nestedData.title as fallback
+          name: nestedData.name || nestedData.title || t('serviceUnnamed'), 
           imageUrl: finalImageUrl,
           description: nestedData.taniltsuulga || nestedData.setgegdel || '',
-          location: nestedData.khot || undefined, // Ensure location is present for filtering
-          city: nestedData.khot || undefined, // Alias for location if needed
+          location: nestedData.khot || undefined, 
+          city: nestedData.khot || undefined, 
           rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
           price: nestedData.price === undefined ? null : nestedData.price, 
           itemType: mapCategoryToSingularItemType(categoryNameFromDoc),
@@ -103,16 +105,19 @@ export default function HomePage() {
     };
 
     const loadDataForPage = async () => {
-      if (!user) { 
-        setDataLoading(false);
-        setAllTranslators([]); setAllHotels([]); setAllWeChatItems([]); setAllMarkets([]);
-        setAllFactories([]); setAllHospitals([]); setAllEmbassies([]);
+      if (loadingCities || !user) { // Wait for cities and user to be ready
+        setDataLoading(true);
+        if (!loadingCities && !user) { // If cities loaded but no user, clear data
+            setAllTranslators([]); setAllHotels([]); setAllWeChatItems([]); setAllMarkets([]);
+            setAllFactories([]); setAllHospitals([]); setAllEmbassies([]);
+            setDataLoading(false);
+        }
         return;
       }
-      if (!selectedCity) { 
-        setDataLoading(false); 
-        return;
-      }
+      // selectedCity will be defined here if loadingCities is false
+      // and "All" option is added by CityContext
+      const currentCityValue = selectedCity?.value;
+
 
       setDataLoading(true);
       try {
@@ -120,13 +125,13 @@ export default function HomePage() {
           translatorsData, hotelsData, marketsData, factoriesData,
           hospitalsData, embassiesData, wechatData,
         ] = await Promise.all([
-          fetchEntriesByCategory("translators", 20, selectedCity.value), // Fetch more for better search results
-          fetchEntriesByCategory("hotels", 20, selectedCity.value),
-          fetchEntriesByCategory("markets", 20, selectedCity.value),
-          fetchEntriesByCategory("factories", 20, selectedCity.value),
-          fetchEntriesByCategory("hospitals", 20, selectedCity.value),
-          fetchEntriesByCategory("embassies", 20, selectedCity.value),
-          fetchEntriesByCategory("wechat", 20, selectedCity.value),
+          fetchEntriesByCategory("translators", 20, currentCityValue), 
+          fetchEntriesByCategory("hotels", 20, currentCityValue),
+          fetchEntriesByCategory("markets", 20, currentCityValue),
+          fetchEntriesByCategory("factories", 20, currentCityValue),
+          fetchEntriesByCategory("hospitals", 20, currentCityValue),
+          fetchEntriesByCategory("embassies", 20, currentCityValue),
+          fetchEntriesByCategory("wechat", 20, currentCityValue),
         ]);
         
         setAllTranslators(translatorsData); setAllHotels(hotelsData); setAllMarkets(marketsData);
@@ -143,19 +148,19 @@ export default function HomePage() {
     };
 
     loadDataForPage();
-  }, [user, selectedCity, t]);
+  }, [user, selectedCity, loadingCities, t]);
 
   const filterItems = (items: RecommendedItem[], term: string): RecommendedItem[] => {
     if (!term.trim()) {
-      return items.slice(0, 8); // Return original first 8 if no search term
+      return items.slice(0, 8); 
     }
     const lowerSearchTerm = term.toLowerCase();
     return items.filter(item => {
       const nameMatch = item.name?.toLowerCase().includes(lowerSearchTerm);
       const locationMatch = item.location?.toLowerCase().includes(lowerSearchTerm);
-      const cityMatch = item.city?.toLowerCase().includes(lowerSearchTerm); // Added for flexibility if 'city' field is used
+      const cityMatch = item.city?.toLowerCase().includes(lowerSearchTerm); 
       return nameMatch || locationMatch || cityMatch;
-    }).slice(0, 8); // Limit to 8 after filtering for display in carousel
+    }).slice(0, 8); 
   };
 
   const filteredTranslators = useMemo(() => filterItems(allTranslators, searchTerm), [allTranslators, searchTerm]);
@@ -169,7 +174,7 @@ export default function HomePage() {
   const renderServiceItem = (item: RecommendedItem) => <ServiceCard item={item} />;
   const narrowerCarouselItemWidthClass = "w-[calc(46%-0.375rem)] sm:w-[calc(46%-0.5rem)]";
 
-  const showFullPageLoader = authLoading || 
+  const showFullPageLoader = authLoading || loadingCities ||
                              (user && dataLoading && 
                                !allTranslators.length && !allHotels.length && !allMarkets.length && 
                                !allFactories.length && !allHospitals.length && !allEmbassies.length && !allWeChatItems.length);
@@ -206,7 +211,7 @@ export default function HomePage() {
         renderItem={renderServiceItem}
         maxTotalItems={8}
         carouselItemWidthClass={narrowerCarouselItemWidthClass}
-        isLoading={dataLoading && filteredTranslators.length === 0 && !!user && !searchTerm} // Only show skeleton if initial load and no search
+        isLoading={dataLoading && filteredTranslators.length === 0 && !!user && !searchTerm} 
       />
       <RecommendedCarouselSection
         titleKey="recommended_hotels"

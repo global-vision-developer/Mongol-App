@@ -28,24 +28,34 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function WeChatPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity } = useCity();
+  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
 
   const [allWeChatItems, setAllWeChatItems] = useState<RecommendedItem[]>([]);
   const [displayableSubcategories, setDisplayableSubcategories] = useState<string[]>([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWeChatEntries = async () => {
-      setLoading(true);
+      if (loadingCities || !selectedCity) {
+        setLoadingData(true);
+         if(!loadingCities && !selectedCity) {
+            setAllWeChatItems([]);
+            setDisplayableSubcategories([]);
+            setLoadingData(false);
+        }
+        return;
+      }
+      
+      setLoadingData(true);
       setError(null);
       try {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "wechat")]; 
 
-        if (selectedCity && selectedCity.value !== "all") {
+        if (selectedCity.value !== "all") {
           queryConstraints.push(where("data.khot", "==", selectedCity.value)); 
         }
 
@@ -91,19 +101,12 @@ export default function WeChatPage() {
         console.error("Error fetching WeChat entries:", err);
         setError(t('fetchErrorGeneric') || "Өгөгдөл татахад алдаа гарлаа.");
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     };
     
-    if(selectedCity){ 
-        fetchWeChatEntries();
-    } else {
-        setLoading(false);
-        setAllWeChatItems([]);
-        setDisplayableSubcategories([]);
-    }
-
-  }, [selectedCity, t]);
+    fetchWeChatEntries();
+  }, [selectedCity, loadingCities, t]);
 
   const filteredItems = useMemo(() => {
     if (!selectedSubcategory) {
@@ -111,6 +114,8 @@ export default function WeChatPage() {
     }
     return allWeChatItems.filter(item => item.subcategory === selectedSubcategory);
   }, [allWeChatItems, selectedSubcategory]);
+
+  const isLoading = loadingCities || loadingData;
 
   return (
     <div className="space-y-6">
@@ -170,7 +175,7 @@ export default function WeChatPage() {
          {/* This title can be adjusted or removed if subcategory filter implies the listing */}
         <h2 className="text-2xl font-headline font-semibold mb-4">{selectedSubcategory || t('allSectionTitle')}</h2>
         
-        {loading && (
+        {isLoading && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex flex-col space-y-2">
@@ -183,15 +188,15 @@ export default function WeChatPage() {
           </div>
         )}
 
-        {!loading && error && (
+        {!isLoading && error && (
           <p className="col-span-full text-destructive">{error}</p>
         )}
 
-        {!loading && !error && filteredItems.length === 0 && (
+        {!isLoading && !error && filteredItems.length === 0 && (
           <p className="col-span-full text-muted-foreground">{t('noRecommendations')}</p>
         )}
 
-        {!loading && !error && filteredItems.length > 0 && (
+        {!isLoading && !error && filteredItems.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {filteredItems.map((item) => (
               <ServiceCard key={item.id} item={item} />
@@ -204,3 +209,5 @@ export default function WeChatPage() {
 }
 
     
+
+```

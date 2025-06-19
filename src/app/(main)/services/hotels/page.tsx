@@ -30,28 +30,32 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function HotelsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity } = useCity();
+  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
 
   const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHotelEntries = async () => {
-      setLoading(true);
+      if (loadingCities || !selectedCity) { // Wait for cities to load and selectedCity to be available
+        setLoadingData(true); // Keep loading state true if cities are not ready
+        if(!loadingCities && !selectedCity) { // If cities loaded but no city selected somehow, clear
+            setRecommendations([]);
+            setLoadingData(false);
+        }
+        return;
+      }
+      
+      setLoadingData(true);
       setError(null);
 
       try {
-        if (!selectedCity) { 
-          setRecommendations([]);
-          setLoading(false);
-          return;
-        }
-
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "hotels")]; 
         
         if (selectedCity.value !== "all") {
+          // Assuming selectedCity.value (which is city's Mongolian name) is stored in data.khot
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
 
@@ -93,12 +97,14 @@ export default function HotelsPage() {
             : err?.message || t('fetchHotelsError') || "Өгөгдөл татахад алдаа гарлаа"
         );
       } finally {
-        setLoading(false);
+        setLoadingData(false);
       }
     };
 
     fetchHotelEntries();
-  }, [selectedCity, t]);
+  }, [selectedCity, loadingCities, t]);
+
+  const isLoading = loadingCities || loadingData; // Combined loading state
 
   return (
     <div className="space-y-6">
@@ -123,9 +129,9 @@ export default function HotelsPage() {
       <div className="px-1">
         <h2 className="text-2xl font-headline font-semibold mb-4">{t('allSectionTitle')}</h2>
 
-        {loading && (
+        {isLoading && (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {[...Array(4)].map((_, idx) => ( // Changed to 4 skeletons for 2x2 mobile
+            {[...Array(4)].map((_, idx) => ( 
                <div key={`skeleton-hotel-${idx}`} className="flex flex-col space-y-3">
                 <Skeleton className="h-[180px] w-full rounded-xl aspect-[3/4]" />
                 <div className="space-y-2 p-2">
@@ -137,15 +143,15 @@ export default function HotelsPage() {
           </div>
         )}
 
-        {error && (
+        {!isLoading && error && (
           <p className="text-red-600 font-semibold">{error}</p>
         )}
 
-        {!loading && !error && recommendations.length === 0 && (
+        {!isLoading && !error && recommendations.length === 0 && (
           <p>{t('noHotelsFound') || "Мэдээлэл олдсонгүй"}</p>
         )}
 
-        {!loading && !error && recommendations.length > 0 && (
+        {!isLoading && !error && recommendations.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {recommendations.map((item) => (
               <ServiceCard key={item.id} item={item} />
@@ -156,3 +162,5 @@ export default function HotelsPage() {
     </div>
   );
 }
+
+```

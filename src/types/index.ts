@@ -5,10 +5,14 @@ import type { Timestamp } from 'firebase/firestore';
 export type Language = 'mn' | 'cn';
 
 export interface City {
-  value: string;
-  label: string;
-  label_cn?: string;
-  isMajor?: boolean; 
+  value: string; // Firestore document's 'name' field (Mongolian name) or 'all' for the "All" option
+  label: string; // Mongolian name (from Firestore 'name' field)
+  label_cn?: string; // Chinese name (from Firestore 'nameCN' field)
+  isMajor?: boolean; // Derived from Firestore 'cityType' field
+  order?: number; // From Firestore 'order' field
+  cityType?: 'major' | 'other' | 'all'; // Firestore 'cityType' field, or 'all' for the static "All" option
+  // Added id for potential Firestore document ID mapping if needed, though 'value' currently serves as primary identifier
+  id?: string; 
 }
 
 export interface Airport {
@@ -247,3 +251,5 @@ export interface FAQItem {
   updatedAt?: Timestamp; // Optional: For tracking updates
   order?: number; // Optional: For specific ordering within a topic
 }
+
+```
