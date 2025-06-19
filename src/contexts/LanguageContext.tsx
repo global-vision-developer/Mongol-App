@@ -323,7 +323,7 @@ const translations: Record<Language, Record<string, string>> = {
     requiredError: "Энэ талбарыг заавал бөглөнө үү.",
     invalidNumberError: "Хүчинтэй тоо оруулна уу.",
     // Help & Support Page
-    helpSupportPageTitle: "Тусламж ба Дэмжлэг",
+    helpSupportPageTitle: "Тусламж", // Was "Тусламж ба Дэмжлэг"
     helpSupportPageSubtitle: "Танд тулгарч буй асуудлаар бидэнтэй холбогдоорой эсвэл түгээмэл асуултуудтай танилцана уу.",
     faqTitle: "Түгээмэл Асуултууд",
     faqSubtitle: "Олон хэрэглэгчдийн сонирхдог асуулт, хариултууд.",
@@ -788,7 +788,7 @@ const translations: Record<Language, Record<string, string>> = {
     requiredError: "此字段为必填项。",
     invalidNumberError: "请输入有效的数字。",
     // Help & Support Page
-    helpSupportPageTitle: "帮助与支持",
+    helpSupportPageTitle: "帮助与支持", // Was "帮助与支持"
     helpSupportPageSubtitle: "如果您遇到任何问题，请联系我们或查看常见问题。",
     faqTitle: "常见问题解答",
     faqSubtitle: "许多用户感兴趣的问题和答案。",

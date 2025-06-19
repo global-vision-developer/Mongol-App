@@ -40,7 +40,7 @@ export interface CarouselBannerItem {
   description?: string; 
 }
 
-export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight' | 'message' | 'order' | 'update';
+export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight' | 'message' | 'order' | 'update' | 'general';
 
 export interface ShowcaseItem {
   description: string;
@@ -240,10 +240,10 @@ export interface FAQItem {
   id: string;
   question: string;
   answer: string;
-  topic: string;
+  topic: string; // This will be used for grouping
   createdAt: Timestamp;
-  createdBy?: string;
-  isPredefined?: boolean;
-  updatedAt?: Timestamp;
-  order?: number; 
+  createdBy?: string; // Optional: UID of the user who created/last updated
+  isPredefined?: boolean; // Optional: If it's a system-defined FAQ
+  updatedAt?: Timestamp; // Optional: For tracking updates
+  order?: number; // Optional: For specific ordering within a topic
 }
