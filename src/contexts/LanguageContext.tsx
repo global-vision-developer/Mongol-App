@@ -456,6 +456,13 @@ const translations: Record<Language, Record<string, string>> = {
     genderFemale: "Эм",
     genderOther: "Бусад",
     noSearchResultsPlaceholder: "Хайлтын үр дүн олдсонгүй.",
+    // Profile Picture Update
+    changeProfilePictureAria: "Профайл зураг солих",
+    profilePictureUpdateSuccess: "Профайл зураг амжилттай шинэчлэгдлээ.",
+    profilePictureUpdateError: "Профайл зураг шинэчлэхэд алдаа гарлаа.",
+    invalidFileTypeProfile: "Зөвхөн JPG, PNG, GIF төрлийн зураг оруулна уу.",
+    fileTooLargeProfile: "Зургийн хэмжээ {{maxSize}}-с ихгүй байх ёстой.",
+    uploadFailedError: "Зураг байршуулахад алдаа гарлаа.",
 
   },
   cn: {
@@ -899,6 +906,14 @@ const translations: Record<Language, Record<string, string>> = {
     genderFemale: "女",
     genderOther: "其他",
     noSearchResultsPlaceholder: "未找到搜索结果。",
+    // Profile Picture Update
+    changeProfilePictureAria: "更改个人资料图片",
+    profilePictureUpdateSuccess: "个人资料图片更新成功。",
+    profilePictureUpdateError: "更新个人资料图片时出错。",
+    invalidFileTypeProfile: "请仅上传 JPG、PNG 或 GIF 类型的图片。",
+    fileTooLargeProfile: "图片大小不得超过 {{maxSize}}。",
+    uploadFailedError: "图片上传失败。",
+
   },
 };
 
@@ -942,4 +957,3 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
-

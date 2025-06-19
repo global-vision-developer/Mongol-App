@@ -26,6 +26,7 @@ interface AuthContextType {
   updatePhoneNumber: (phoneNumber: string) => Promise<void>;
   updateUserPassword: (currentPass: string, newPass: string) => Promise<void>;
   updatePersonalInformation: (data: Partial<Pick<UserProfile, 'firstName' | 'lastName' | 'dateOfBirth' | 'gender' | 'homeAddress'>>) => Promise<void>;
+  updateProfilePicture: (photoURL: string) => Promise<void>; // Added
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -90,14 +91,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will handle setting the user and setLoading(false) eventually
     } catch (error) {
-      setLoading(false); // Ensure loading is false on API error
+      setLoading(false); 
       throw error;
     }
-    // No finally block needed if onAuthStateChanged handles success setLoading,
-    // and catch handles error setLoading. If login is successful, onAuthStateChanged will set user
-    // and its own setLoading(false) will be called.
   };
 
   const register = async (email: string, pass: string, name: string) => {
@@ -105,10 +102,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(result.user, { displayName: name });
-      // Firestore document will be created by onAuthStateChanged listener
-      // onAuthStateChanged will handle setting the user and setLoading(false) eventually
     } catch (error) {
-      setLoading(false); // Ensure loading is false on API error
+      setLoading(false);
       throw error;
     }
   };
@@ -117,11 +112,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       await signOut(auth);
-      setUser(null); // Explicitly set user to null on logout
+      setUser(null); 
     } catch (error) {
       throw error;
     } finally {
-      setLoading(false); // Always set loading to false after logout attempt
+      setLoading(false); 
     }
   };
 
@@ -130,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
-      await updateDoc(userDocRef, { phoneNumber });
+      await updateDoc(userDocRef, { phoneNumber, updatedAt: serverTimestamp() });
       setUser((prevUser) => ({ ...prevUser!, phoneNumber }));
     } catch (error) {
       console.error("Error updating phone number:", error);
@@ -163,7 +158,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
-      // Filter out undefined values to prevent them from overwriting existing fields with null in Firestore
       const updateData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
       
       await updateDoc(userDocRef, {
@@ -179,9 +173,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfilePicture = async (photoURL: string) => {
+    if (!auth.currentUser) throw new Error("User not logged in.");
+    setLoading(true);
+    try {
+      const firebaseUser = auth.currentUser;
+      await updateProfile(firebaseUser, { photoURL });
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      await updateDoc(userDocRef, { photoURL, updatedAt: serverTimestamp() });
+      setUser((prevUser) => ({ ...prevUser!, photoURL }));
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updatePhoneNumber, updateUserPassword, updatePersonalInformation }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updatePhoneNumber, updateUserPassword, updatePersonalInformation, updateProfilePicture }}>
       {children}
     </AuthContext.Provider>
   );
@@ -194,4 +205,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

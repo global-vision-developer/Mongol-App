@@ -11,6 +11,7 @@ import {
   isSupported as isMessagingSupported,
   type Messaging
 } from 'firebase/messaging';
+import { getStorage, type Storage } from 'firebase/storage'; // Added Storage import
 
 const firebaseConfig = {
   apiKey: "AIzaSyASai6a1N3BVpG8n6CMzssFQbxdzzRhdPc",
@@ -29,7 +30,8 @@ console.log("Firebase App initialized");
 // Initialize services
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
-console.log("Auth and Firestore initialized");
+const storage: Storage = getStorage(app); // Initialize Storage
+console.log("Auth, Firestore, and Storage initialized");
 
 // Optional: Analytics
 let analytics: Analytics | undefined;
@@ -124,57 +126,4 @@ export const setupOnMessageListener = (callback: (payload: any) => void): (() =>
   }
 };
 
-export { app, auth, db, analytics, messagingInstance as messaging };
-
-// public/firebase-messaging-sw.js Файлыг Үүсгэх
-// Энэ файл нь public директор дотор байрлана.
-// self.addEventListener('install', function(event) {
-//   console.log('Service Worker installing.');
-// });
-//
-// self.addEventListener('activate', function(event) {
-//   console.log('Service Worker activating.');
-// });
-//
-// self.addEventListener('push', function(event) {
-//   console.log('[Service Worker] Push Received.');
-//   console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
-//
-//   const notificationTitle = 'Mongol App'; // Default title
-//   const notificationOptions = {
-//     body: event.data.text(), // Use text from push data
-//     icon: '/icons/icon-192x192.png' // Change to your app icon
-//   };
-//
-//   event.waitUntil(self.registration.showNotification(notificationTitle,
-//     notificationOptions));
-// });
-//
-// // Optional: Import and initialize Firebase app for background message handling (if needed)
-// // importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js');
-// // importScripts('https://www.gstatic.com/firebasejs/9.6.1/firebase-messaging-compat.js');
-// //
-// // const firebaseConfig = {
-// //   apiKey: "YOUR_API_KEY",
-// //   authDomain: "YOUR_AUTH_DOMAIN",
-// //   projectId: "YOUR_PROJECT_ID",
-// //   storageBucket: "YOUR_STORAGE_BUCKET",
-// //   messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-// //   appId: "YOUR_APP_ID",
-// //   measurementId: "YOUR_MEASUREMENT_ID"
-// // };
-// //
-// // firebase.initializeApp(firebaseConfig);
-// // const messaging = firebase.messaging();
-// //
-// // messaging.onBackgroundMessage((payload) => {
-// //   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-// //   // Customize notification here
-// //   const notificationTitle = payload.notification.title;
-// //   const notificationOptions = {
-// //     body: payload.notification.body,
-// //     icon: payload.notification.icon || '/icons/icon-192x192.png',
-// //   };
-// //
-// //  return self.registration.showNotification(notificationTitle, notificationOptions);
-// // });
+export { app, auth, db, analytics, messagingInstance as messaging, storage }; // Added storage to exports

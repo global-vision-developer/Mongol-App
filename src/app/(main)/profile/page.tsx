@@ -7,20 +7,30 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
-import { UserCircle, Mail, LogOut, KeyRound, History, UserPlus, HelpCircle, Gift, ChevronRight, Phone, Edit3, Save, X, BadgeInfo } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef } from 'react'; // Added useRef
+import { UserCircle, Mail, LogOut, KeyRound, History, UserPlus, HelpCircle, Gift, ChevronRight, Phone, Edit3, Save, X, BadgeInfo, Camera, Loader2 } from 'lucide-react'; // Added Camera, Loader2
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile } from '@/types';
+import { uploadProfileImage, FileUploadError } from '@/lib/storageService'; // Import upload service
+import { cn } from '@/lib/utils';
+
+const MAX_PROFILE_IMAGE_SIZE_MB = 2;
+const MAX_PROFILE_IMAGE_SIZE_BYTES = MAX_PROFILE_IMAGE_SIZE_MB * 1024 * 1024;
+const ALLOWED_PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+
 
 export default function ProfilePage() {
-  const { user, loading, logout, updatePhoneNumber } = useAuth();
+  const { user, loading, logout, updatePhoneNumber, updateProfilePicture } = useAuth();
   const { t } = useTranslation();
   const router = useRouter();
   const { toast } = useToast();
 
   const [isEditingPhoneNumber, setIsEditingPhoneNumber] = useState(false);
   const [newPhoneNumber, setNewPhoneNumber] = useState(user?.phoneNumber || "");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -38,7 +48,7 @@ export default function ProfilePage() {
 
   const handlePhoneNumberEditToggle = () => {
     if (isEditingPhoneNumber) {
-      setNewPhoneNumber(user?.phoneNumber || ""); // Reset on cancel
+      setNewPhoneNumber(user?.phoneNumber || ""); 
     }
     setIsEditingPhoneNumber(!isEditingPhoneNumber);
   };
@@ -53,6 +63,48 @@ export default function ProfilePage() {
       toast({ title: t('phoneNumberUpdateError'), description: (error as Error).message, variant: "destructive" });
     }
   };
+
+  const handleAvatarClick = () => {
+    if (!isUploadingImage) {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(file.type)) {
+      toast({ title: t('error'), description: t('invalidFileTypeProfile'), variant: "destructive" });
+      return;
+    }
+    if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) {
+      toast({ title: t('error'), description: t('fileTooLargeProfile', { maxSize: `${MAX_PROFILE_IMAGE_SIZE_MB}MB` }), variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const downloadURL = await uploadProfileImage(user.uid, file);
+      await updateProfilePicture(downloadURL);
+      toast({ title: t('profilePictureUpdateSuccess') });
+    } catch (error) {
+      let errorDesc = t('profilePictureUpdateError');
+      if (error instanceof FileUploadError) {
+        if (error.message === 'invalidFileType') errorDesc = t('invalidFileTypeProfile');
+        else if (error.message === 'fileTooLarge') errorDesc = t('fileTooLargeProfile', { maxSize: `${MAX_PROFILE_IMAGE_SIZE_MB}MB` });
+        else if (error.message === 'uploadFailed') errorDesc = t('uploadFailedError');
+      }
+      toast({ title: t('error'), description: errorDesc, variant: "destructive" });
+    } finally {
+      setIsUploadingImage(false);
+      if(fileInputRef.current) { // Reset file input
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
 
   const profileCompletionPercentage = useMemo(() => {
     if (!user) return 0;
@@ -149,13 +201,45 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-6 pt-4 md:pt-6"> {/* Added padding-top here */}
+    <div className="space-y-6 pt-4 md:pt-6">
       
       <div className="flex flex-col items-center space-y-2 py-4">
-        <Avatar className="w-24 h-24 text-3xl border-2 border-primary">
-          <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "User"} />
-          <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-        </Avatar>
+        <div className="relative group">
+          <Avatar 
+            className={cn(
+              "w-24 h-24 text-3xl border-2 border-primary cursor-pointer transition-opacity duration-300",
+              isUploadingImage && "opacity-50"
+            )}
+            onClick={handleAvatarClick}
+          >
+            <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "User"} />
+            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+          </Avatar>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept="image/jpeg,image/png,image/gif" 
+            style={{ display: 'none' }} 
+            disabled={isUploadingImage}
+          />
+          {isUploadingImage ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
+              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            </div>
+          ) : (
+            <div 
+              className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+              onClick={handleAvatarClick}
+              role="button"
+              aria-label={t('changeProfilePictureAria')}
+              tabIndex={0}
+              onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') handleAvatarClick();}}
+            >
+              <Camera className="h-8 w-8 text-white" />
+            </div>
+          )}
+        </div>
         <p className="text-lg font-medium text-foreground">{user.email}</p>
         <p className="text-sm text-muted-foreground">
           {t('personalInfoProgress', { percent: `${profileCompletionPercentage}%` })}
@@ -192,7 +276,7 @@ export default function ProfilePage() {
                   {typeof item.value === 'string' || typeof item.value === 'undefined' ? (
                     <span className="text-sm text-muted-foreground">{item.value}</span>
                   ) : (
-                     item.value // Render JSX directly if it's not a string (e.g., for editing phone)
+                     item.value 
                   )}
                   {item.actionIcon && !isEditingPhoneNumber && (
                     <Button variant="ghost" size="icon" onClick={item.onActionClick} className="h-8 w-8">
@@ -222,11 +306,9 @@ export default function ProfilePage() {
   );
 }
 
-// Helper component to conditionally wrap with Link
 const ConditionalLinkWrapper: React.FC<{href?: string; condition: boolean; className?: string; children: React.ReactNode}> = ({ href, condition, className, children }) => {
   if (condition && href) {
     return <Link href={href} className={className}>{children}</Link>;
   }
   return <div className={className}>{children}</div>;
 };
-
