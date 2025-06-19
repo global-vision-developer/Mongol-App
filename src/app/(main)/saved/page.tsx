@@ -7,21 +7,32 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
-// ServiceCard-г ашиглахгүй тул устгаж, оронд нь SavedItemCard-г импортлоно
-// import { ServiceCard } from '@/components/ServiceCard'; 
-import { SavedItemCard } from '@/components/SavedTranslatorListItem'; // Өөрчилсөн компонентыг импортлох (файлын нэр хэвээрээ, экспорт нэр өөрчлөгдсөн байж болно)
-import type { SavedPageItem, ItemType, SavedItemCategoryFilter } from '@/types'; 
+import { SavedItemCard } from '@/components/SavedTranslatorListItem'; 
+import type { SavedPageItem, ItemType, SavedItemCategoryFilter, ServiceGroupId } from '@/types'; 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { SERVICE_GROUPS } from '@/lib/constants';
-// import { cn } from '@/lib/utils'; // cn ашиглаагүй бол устгаж болно
 
 const VALID_ITEM_TYPES: ItemType[] = ['service', 'translator', 'hotel', 'wechat', 'promo', 'market', 'factory', 'hospital', 'embassy'];
 
-// SavedTranslatorListItem компонентыг дотооддоо SavedItemCard болгон өөрчилсөн тул энд дахин тодорхойлох шаардлагагүй.
-// const SavedTranslatorListItem: React.FC<{ item: SavedPageItem }> = ({ item }) => { ... };
-
+// Helper function to map plural service group ID to singular ItemType
+const mapServiceGroupIdToItemType = (serviceGroupId: ServiceGroupId): ItemType => {
+  switch (serviceGroupId) {
+    case 'flights': return 'flight'; // Though flights might not be typically saved items
+    case 'hotels': return 'hotel';
+    case 'translators': return 'translator';
+    case 'wechat': return 'wechat';
+    case 'markets': return 'market';
+    case 'factories': return 'factory';
+    case 'hospitals': return 'hospital';
+    case 'embassies': return 'embassy';
+    default: 
+      // This case should ideally not be reached if ServiceGroupId is exhaustive
+      // and all cases are handled. We'll assert ItemType for safety.
+      return serviceGroupId as ItemType; 
+  }
+};
 
 export default function SavedPage() {
   const { t } = useTranslation();
@@ -31,11 +42,13 @@ export default function SavedPage() {
   const [activeFilter, setActiveFilter] = useState<SavedItemCategoryFilter>('all');
 
   const filterCategories = useMemo(() => {
-    return SERVICE_GROUPS.filter(sg => sg.id !== 'flights').map(sg => ({
-      id: sg.id as ItemType, 
-      titleKey: sg.titleKey,
-    }));
-  }, []);
+    return SERVICE_GROUPS
+      .filter(sg => sg.id !== 'flights') // Exclude flights from saved item categories if not applicable
+      .map(sg => ({
+        id: mapServiceGroupIdToItemType(sg.id), 
+        titleKey: sg.titleKey,
+      }));
+  }, []); // Removed t from dependencies as titleKey is used later for translation
 
   useEffect(() => {
     if (authLoading) {
@@ -91,7 +104,7 @@ export default function SavedPage() {
             id: data.originalItemId || doc.id, 
             ...cleanedData,
             name: data.name || t('serviceUnnamed'),
-            itemType: itemType,
+            itemType: itemType, // This itemType is crucial for filtering
           } as SavedPageItem;
         })
         .filter((item): item is SavedPageItem => item !== null); 
@@ -173,15 +186,14 @@ export default function SavedPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">{t('noSavedItemsPlaceholder')}</p>
+            <p className="text-muted-foreground">{activeFilter === 'all' ? t('noSavedItemsPlaceholder') : t('noSavedItemsPlaceholder') + " " + t(filterCategories.find(fc => fc.id === activeFilter)?.titleKey || '').toLowerCase()}</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-0 px-1 md:px-0"> {/* space-y-0 to let items define their own margin/border */}
-          {activeFilter !== 'all' && (
+        <div className="space-y-0 px-1 md:px-0"> 
+          {/* {activeFilter !== 'all' && ( // This title might be redundant if filter buttons are clear
              <h2 className="text-lg font-semibold mt-4 mb-2 px-3">{t(filterCategories.find(fc => fc.id === activeFilter)?.titleKey || '')}</h2>
-          )}
-          {/* Бүх төрлийн зүйлсэд SavedItemCard ашиглана */}
+          )} */}
           {filteredSavedItems.map(item => (
             <SavedItemCard key={item.id + (item.itemType || '')} item={item} />
           ))}
@@ -190,3 +202,4 @@ export default function SavedPage() {
     </div>
   );
 }
+
