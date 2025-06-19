@@ -36,7 +36,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className={`container flex h-16 items-center ${isSearchOpen ? '' : 'justify-between'}`}>
+      <div className="container flex h-16 items-center">
         {isSearchOpen ? (
           <>
             <Button variant="ghost" size="icon" onClick={handleCloseSearch} aria-label={t('back')}>
@@ -59,22 +59,21 @@ export function Header() {
             </div>
           </>
         ) : (
-          // Layout for non-search state to ensure title centering
-          <div className="flex w-full items-center">
-            {/* Left Slot (for CitySelector trigger) */}
-            <div className="flex-none w-auto min-w-[80px] flex justify-start">
+          <div className="relative flex w-full items-center justify-between h-full">
+            {/* Left items */}
+            <div className="flex items-center">
               <CitySelector />
             </div>
 
-            {/* Centered Title (takes remaining space and centers content) */}
-            <div className="flex-grow text-center">
+            {/* Absolute centered title */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <Link href="/services" className="inline-flex items-center" aria-label="Home page">
                 <span className="font-headline text-xl font-semibold text-primary">Mongol</span>
               </Link>
             </div>
 
-            {/* Right Slot (Search, Language, UserMenu) */}
-            <div className="flex-none w-auto min-w-[calc(theme(spacing.8)_*_2_+_theme(spacing.1)_*_1_+_theme(spacing.8))] flex justify-end items-center gap-1"> {/* Adjusted min-width based on 2 icon buttons + user menu */}
+            {/* Right items */}
+            <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={handleSearchClick} aria-label={t('search')}>
                 <Search className="h-5 w-5" />
               </Button>
