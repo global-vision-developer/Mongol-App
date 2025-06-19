@@ -5,6 +5,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import type React from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { cn } from "@/lib/utils"; // Import cn for class utility
 
 interface RecommendedCarouselSectionProps<T> {
   titleKey: string;
@@ -56,7 +57,8 @@ export function RecommendedCarouselSection<T>({
       
       {itemsToDisplay.length > 0 && (
         <ScrollArea className="w-full whitespace-nowrap rounded-md">
-          <div className="flex space-x-3 sm:space-x-4 px-1 pb-3">
+          {/* Ensure this flex container takes full width to stabilize percentage-based children widths */}
+          <div className={cn("flex space-x-3 sm:space-x-4 px-1 pb-3 w-full")}>
             {itemsToDisplay.map((item, index) => (
               <div key={`carousel-item-${index}`} className={`${carouselItemWidthClass} flex-shrink-0`}>
                 {renderItem(item, index)}
