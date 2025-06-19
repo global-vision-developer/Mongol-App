@@ -13,7 +13,7 @@ import { collection, getDocs, limit, query, where, type Query as FirestoreQueryT
 import { db } from "@/lib/firebase";
 import type { RecommendedItem, ItemType } from "@/types";
 import { useCity } from "@/contexts/CityContext";
-import { useSearch } from "@/contexts/SearchContext"; // Import useSearch
+import { useSearch } from "@/contexts/SearchContext"; 
 import { Skeleton } from "@/components/ui/skeleton";
 
 const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
@@ -34,8 +34,8 @@ export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { t } = useTranslation();
-  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
-  const { searchTerm } = useSearch(); // Get searchTerm from context
+  const { selectedCity, loadingCities } = useCity(); 
+  const { searchTerm } = useSearch(); 
 
   const [allTranslators, setAllTranslators] = useState<RecommendedItem[]>([]);
   const [allHotels, setAllHotels] = useState<RecommendedItem[]>([]);
@@ -56,12 +56,12 @@ export default function HomePage() {
     const fetchEntriesByCategory = async (
       categoryNameFilter: string,
       count: number,
-      cityValue?: string // This is the Mongolian name of the city or 'all'
+      cityValue?: string // This is the Mongolian name of the city (from cities.name) or 'all'
     ): Promise<RecommendedItem[]> => {
       const entriesRef = collection(db, "entries");
       const queryConstraints = [where("categoryName", "==", categoryNameFilter)];
       
-      // Only filter by city if cityValue is provided and not 'all'
+      // Filter by data.khot using cityValue if it's provided and not 'all'
       if (cityValue && cityValue !== "all") {
         queryConstraints.push(where("data.khot", "==", cityValue));
       }
@@ -85,7 +85,7 @@ export default function HomePage() {
           name: nestedData.name || nestedData.title || t('serviceUnnamed'), 
           imageUrl: finalImageUrl,
           description: nestedData.taniltsuulga || nestedData.setgegdel || '',
-          location: nestedData.khot || undefined, 
+          location: nestedData.khot || undefined, // Mongolian city name from entries.data.khot
           city: nestedData.khot || undefined, 
           rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
           price: nestedData.price === undefined ? null : nestedData.price, 
@@ -105,18 +105,17 @@ export default function HomePage() {
     };
 
     const loadDataForPage = async () => {
-      if (loadingCities || !user) { // Wait for cities and user to be ready
+      if (loadingCities || !user) { 
         setDataLoading(true);
-        if (!loadingCities && !user) { // If cities loaded but no user, clear data
+        if (!loadingCities && !user) { 
             setAllTranslators([]); setAllHotels([]); setAllWeChatItems([]); setAllMarkets([]);
             setAllFactories([]); setAllHospitals([]); setAllEmbassies([]);
             setDataLoading(false);
         }
         return;
       }
-      // selectedCity will be defined here if loadingCities is false
-      // and "All" option is added by CityContext
-      const currentCityValue = selectedCity?.value;
+      
+      const currentCityValue = selectedCity?.value; // This is the Mongolian city name from cities.name or 'all'
 
 
       setDataLoading(true);
@@ -157,7 +156,7 @@ export default function HomePage() {
     const lowerSearchTerm = term.toLowerCase();
     return items.filter(item => {
       const nameMatch = item.name?.toLowerCase().includes(lowerSearchTerm);
-      const locationMatch = item.location?.toLowerCase().includes(lowerSearchTerm);
+      const locationMatch = item.location?.toLowerCase().includes(lowerSearchTerm); // item.location is Mongolian name
       const cityMatch = item.city?.toLowerCase().includes(lowerSearchTerm); 
       return nameMatch || locationMatch || cityMatch;
     }).slice(0, 8); 

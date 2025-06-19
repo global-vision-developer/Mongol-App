@@ -30,17 +30,17 @@ const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
 export default function HotelsPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { selectedCity, loadingCities } = useCity(); // Added loadingCities
+  const { selectedCity, loadingCities } = useCity(); 
 
   const [recommendations, setRecommendations] = useState<RecommendedItem[]>([]);
-  const [loadingData, setLoadingData] = useState(true); // Renamed from loading to loadingData
+  const [loadingData, setLoadingData] = useState(true); 
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHotelEntries = async () => {
-      if (loadingCities || !selectedCity) { // Wait for cities to load and selectedCity to be available
-        setLoadingData(true); // Keep loading state true if cities are not ready
-        if(!loadingCities && !selectedCity) { // If cities loaded but no city selected somehow, clear
+      if (loadingCities || !selectedCity) { 
+        setLoadingData(true); 
+        if(!loadingCities && !selectedCity) { 
             setRecommendations([]);
             setLoadingData(false);
         }
@@ -54,8 +54,8 @@ export default function HotelsPage() {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "hotels")]; 
         
+        // Filter by data.khot using selectedCity.value (which is the Mongolian name from cities.name)
         if (selectedCity.value !== "all") {
-          // Assuming selectedCity.value (which is city's Mongolian name) is stored in data.khot
           queryConstraints.push(where("data.khot", "==", selectedCity.value));
         }
 
@@ -77,14 +77,14 @@ export default function HotelsPage() {
             name: nestedData.name || t('serviceUnnamed'),
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
-            location: nestedData.khot || undefined,
+            location: nestedData.khot || undefined, // This is the Mongolian city name from entries.data.khot
             averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
             reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
             totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
             price: nestedData.price === undefined ? null : nestedData.price,
             itemType: mapCategoryToSingularItemType(entryData.categoryName),
             dataAiHint: nestedData.dataAiHint || "hotel item",
-            rooms: nestedData.uruunuud || [], // Ensure rooms is always an array
+            rooms: nestedData.uruunuud || [], 
           } as RecommendedItem;
         });
 
@@ -104,7 +104,7 @@ export default function HotelsPage() {
     fetchHotelEntries();
   }, [selectedCity, loadingCities, t]);
 
-  const isLoading = loadingCities || loadingData; // Combined loading state
+  const isLoading = loadingCities || loadingData; 
 
   return (
     <div className="space-y-6">
@@ -162,5 +162,3 @@ export default function HotelsPage() {
     </div>
   );
 }
-
-```

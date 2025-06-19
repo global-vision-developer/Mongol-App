@@ -3,7 +3,7 @@
 import type { City } from '@/types';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy, DocumentData } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, type DocumentData } from 'firebase/firestore';
 import { useLanguage } from './LanguageContext'; // For "All" translation
 
 interface CityContextType {
@@ -33,29 +33,28 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = doc.data() as DocumentData;
           return {
             id: doc.id,
-            value: data.name, // Using Mongolian name as the value for filtering entries by data.khot
-            label: data.name,
-            label_cn: data.nameCN,
-            isMajor: data.cityType === 'major', // isMajor is true if cityType is 'major'
+            value: data.name, // Using Mongolian name (from cities.name) as the value for filtering
+            label: data.name, // Mongolian name (from cities.name)
+            label_cn: data.nameCN, // Chinese name (from cities.nameCN)
+            isMajor: data.cityType === 'major',
             order: data.order,
-            cityType: data.cityType as 'major' | 'other', // Explicitly type cityType
+            cityType: data.cityType as 'major' | 'other',
           } as City;
         });
 
         const allOption: City = {
           id: 'all',
-          value: 'all',
-          label: t('allCities', undefined, 'Бүгд'), // Use translation for "All"
-          label_cn: t('allCities', undefined, '全部'), // Use translation for "All" in Chinese
-          isMajor: true, // "All" can be considered major for UI grouping if needed
-          order: -1, // Ensure "All" is first
+          value: 'all', // Special value for "All"
+          label: t('allCities', undefined, 'Бүгд'),
+          label_cn: t('allCities', undefined, '全部'),
+          isMajor: true, 
+          order: -1, 
           cityType: 'all',
         };
 
         const citiesWithAll = [allOption, ...fetchedCities];
         setAvailableCities(citiesWithAll);
 
-        // Set initial selected city
         const savedCityValue = typeof window !== "undefined" ? localStorage.getItem('selectedCity') : null;
         if (savedCityValue) {
           const city = citiesWithAll.find(c => c.value === savedCityValue);
@@ -66,7 +65,6 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       } catch (error) {
         console.error("Error fetching cities from Firestore:", error);
-        // Fallback to a minimal list with "All" if fetch fails
         const allOptionFallback: City = {
           id: 'all',
           value: 'all',
@@ -83,8 +81,23 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    fetchCities();
-  }, [t]); // Add t to dependency array
+    if (typeof window !== 'undefined') { // Ensure localStorage is accessed only on client
+      fetchCities();
+    } else { // For SSR or during build, provide a default empty state or minimal list
+      const allOptionFallback: City = {
+          id: 'all',
+          value: 'all',
+          label: t('allCities', undefined, 'Бүгд'),
+          label_cn: t('allCities', undefined, '全部'),
+          isMajor: true,
+          order: -1,
+          cityType: 'all',
+        };
+      setAvailableCities([allOptionFallback]);
+      setSelectedCityState(allOptionFallback);
+      setLoadingCities(false);
+    }
+  }, [t]);
 
   const setSelectedCity = (city: City) => {
     setSelectedCityState(city);
