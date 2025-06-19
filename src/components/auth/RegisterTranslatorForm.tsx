@@ -184,19 +184,19 @@ export function RegisterTranslatorForm() {
         name: user.displayName || "Unknown Name", 
         photoUrl: user.photoURL || null,
 
-        nationality: data.nationality as Nationality,
-        inChinaNow: data.inChinaNow,
-        yearsInChina: data.inChinaNow === false ? (data.yearsInChina || null) : null,
-        currentCityInChina: data.inChinaNow === true ? (data.currentCityInChina || null) : null,
-        chineseExamTaken: data.chineseExamTaken,
-        speakingLevel: data.speakingLevel as LanguageLevel,
-        writingLevel: data.writingLevel as LanguageLevel,
-        workedAsTranslator: data.workedAsTranslator,
-        translationFields: data.translationFields as TranslationField[],
-        canWorkInOtherCities: data.canWorkInOtherCities || [],
-        dailyRate: data.dailyRate as DailyRateRange,
-        chinaPhoneNumber: data.chinaPhoneNumber || null,
-        wechatId: data.wechatId || null,
+        nationality: data.nationality === undefined || data.nationality === '' ? null : data.nationality as Nationality,
+        inChinaNow: data.inChinaNow === undefined ? null : data.inChinaNow,
+        yearsInChina: data.inChinaNow === false ? (data.yearsInChina === undefined ? null : data.yearsInChina) : null,
+        currentCityInChina: data.inChinaNow === true ? (data.currentCityInChina === undefined ? null : data.currentCityInChina) : null,
+        chineseExamTaken: data.chineseExamTaken === undefined ? null : data.chineseExamTaken,
+        speakingLevel: data.speakingLevel as LanguageLevel, // Should be validated by Zod
+        writingLevel: data.writingLevel as LanguageLevel,   // Should be validated by Zod
+        workedAsTranslator: data.workedAsTranslator === undefined ? null : data.workedAsTranslator,
+        translationFields: data.translationFields as TranslationField[], // Should be validated by Zod
+        canWorkInOtherCities: data.canWorkInOtherCities === undefined ? [] : data.canWorkInOtherCities, // Default to []
+        dailyRate: data.dailyRate as DailyRateRange, // Should be validated by Zod
+        chinaPhoneNumber: data.chinaPhoneNumber === undefined || data.chinaPhoneNumber === '' ? null : data.chinaPhoneNumber,
+        wechatId: data.wechatId === undefined || data.wechatId === '' ? null : data.wechatId,
         
         // Placeholder for image URLs - to be replaced with actual URLs after storage upload
         // idCardFrontImageUrl: "placeholder_url_front",
