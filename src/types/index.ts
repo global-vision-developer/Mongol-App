@@ -8,6 +8,7 @@ export interface City {
   value: string;
   label: string;
   label_cn?: string;
+  isMajor?: boolean; // Added for categorizing cities
 }
 
 export interface Airport {
@@ -234,4 +235,3 @@ export interface Review {
 }
 
 export type SavedItemCategoryFilter = ItemType | 'all';
-

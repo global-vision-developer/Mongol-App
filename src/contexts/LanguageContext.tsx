@@ -7,7 +7,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string, replacements?: Record<string, string | number | null | undefined>) => string;
+  t: (key: string, replacements?: Record<string, string | number | null | undefined>, fallback?: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -470,6 +470,9 @@ const translations: Record<Language, Record<string, string>> = {
     invalidFileTypeProfile: "Зөвхөн JPG, PNG, GIF төрлийн зураг оруулна уу.",
     fileTooLargeProfile: "Зургийн хэмжээ {{maxSize}}-с ихгүй байх ёстой.",
     uploadFailedError: "Зураг байршуулахад алдаа гарлаа.",
+    // City Selection Sheet
+    majorCitiesTitle: "Том хотууд",
+    otherCitiesTitle: "Бусад хотууд",
 
   },
   cn: {
@@ -927,6 +930,9 @@ const translations: Record<Language, Record<string, string>> = {
     invalidFileTypeProfile: "请仅上传 JPG、PNG 或 GIF 类型的图片。",
     fileTooLargeProfile: "图片大小不得超过 {{maxSize}}。",
     uploadFailedError: "图片上传失败。",
+    // City Selection Sheet
+    majorCitiesTitle: "主要城市",
+    otherCitiesTitle: "其他城市",
 
   },
 };
@@ -946,8 +952,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('appLanguage', lang);
   };
 
-  const t = (key: string, replacements?: Record<string, string | number | null | undefined>): string => {
-    let translation = translations[language]?.[key] || translations['mn']?.[key] || key;
+  const t = (key: string, replacements?: Record<string, string | number | null | undefined>, fallback?: string): string => {
+    let translation = translations[language]?.[key] || translations['mn']?.[key] || fallback || key;
     if (replacements) {
       Object.entries(replacements).forEach(([placeholder, value]) => {
         const valueStr = (value === null || value === undefined) ? '' : (typeof value === 'number' ? value.toString() : value);

@@ -1,17 +1,33 @@
 
-import type { City, ServiceGroup, /* CarouselBannerItem, */ HospitalCategory, EmbassyCategoryItem, WeChatCategoryItem, RecommendedItem, Airport, TranslationField } from '@/types'; // Removed CarouselBannerItem
+import type { City, ServiceGroup, HospitalCategory, EmbassyCategoryItem, WeChatCategoryItem, RecommendedItem, Airport, TranslationField } from '@/types';
 import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Grid3x3, BusFront, CarTaxiFront, Copy } from 'lucide-react';
 
 export const CITIES: City[] = [
-  { value: 'all', label: 'Бүгд', label_cn: '全部' }, // Added "All" option
-  { value: 'ulaanbaatar', label: 'Улаанбаатар', label_cn: '乌兰巴托' },
-  { value: 'beijing', label: 'Бээжин', label_cn: '北京' },
-  { value: 'shanghai', label: 'Шанхай', label_cn: '上海' },
-  { value: 'guangzhou', label: 'Гуанжоу', label_cn: '广州' },
-  { value: 'shenzhen', label: 'Шэньжэнь', label_cn: '深圳' },
-  { value: 'chengdu', label: 'Чэнду', label_cn: '成都' },
-  { value: 'hangzhou', label: 'Ханжоу', label_cn: '杭州' },
+  { value: 'all', label: 'Бүгд', label_cn: '全部', isMajor: true },
+  { value: 'ulaanbaatar', label: 'Улаанбаатар', label_cn: '乌兰巴托', isMajor: true },
+  { value: 'beijing', label: 'Бээжин', label_cn: '北京', isMajor: true },
+  { value: 'shanghai', label: 'Шанхай', label_cn: '上海', isMajor: true },
+  { value: 'guangzhou', label: 'Гуанжоу', label_cn: '广州', isMajor: true },
+  { value: 'shenzhen', label: 'Шэньжэнь', label_cn: '深圳', isMajor: true },
+  { value: 'hohhot', label: 'Хөххот', label_cn: '呼和浩特', isMajor: true },
+  { value: 'yiwu', label: 'Ивү', label_cn: '义乌', isMajor: true },
+  { value: 'sanya', label: 'Саняа', label_cn: '三亚', isMajor: true },
+  { value: 'ereen', label: 'Эрээн', label_cn: '二连浩特', isMajor: true },
+  { value: 'hongkong', label: 'Хонконг', label_cn: '香港', isMajor: true },
+  { value: 'manjuur', label: 'Манжуур', label_cn: '满洲里', isMajor: true },
+  { value: 'macao', label: 'Макао', label_cn: '澳门', isMajor: true },
+  // Non-major cities from existing list + image OCR
+  { value: 'chengdu', label: 'Чэнду', label_cn: '成都', isMajor: false },
+  { value: 'hangzhou', label: 'Ханжоу', label_cn: '杭州', isMajor: false },
+  { value: 'xianyang', label: 'Xianyang', label_cn: '咸阳', isMajor: false }, // Simplified label
+  { value: 'wenzhou', label: 'Wenzhou', label_cn: '温州', isMajor: false },   // Corrected from Wengzhou
+  { value: 'chaozhou', label: 'Chaozhou', label_cn: '潮州', isMajor: false },
+  { value: 'pinghu', label: 'Pinghu', label_cn: '平湖', isMajor: false },
+  { value: 'lijiang', label: 'Lijiang', label_cn: '丽江', isMajor: false },
+  { value: 'dalian', label: 'Dalian', label_cn: '大连', isMajor: false },
+  { value: 'yichang', label: 'Yichang', label_cn: '宜昌', isMajor: false },
 ];
+
 
 export const AIRPORTS: Airport[] = [
   { value: "UBN", label: "Ulaanbaatar / Улаанбаатар (UBN)", city: "Улаанбаатар", iata: "UBN", searchTerms: "Ulaanbaatar Улаанбаатар UBN ULN CIN" },
@@ -38,10 +54,6 @@ export const SERVICE_GROUPS: ServiceGroup[] = [
   { id: 'hospitals', titleKey: 'hospitals', icon: HospitalIcon, href: '/services/hospitals' },
   { id: 'embassies', titleKey: 'embassies', icon: Landmark, href: '/services/embassies' },
 ];
-
-
-// CAROUSEL_BANNER_ITEMS is now removed as data will be fetched from Firestore.
-// export const CAROUSEL_BANNER_ITEMS: CarouselBannerItem[] = [ ... ];
 
 
 export const HOSPITAL_CATEGORIES: HospitalCategory[] = [
@@ -75,15 +87,14 @@ export const WECHAT_PLACEHOLDER_ITEMS: RecommendedItem[] = [
 ];
 
 export const NAV_ITEMS = [
-  { href: "/", labelKey: "home", icon: Landmark }, // Using Landmark as placeholder, replace with HomeIcon if available or appropriate
+  { href: "/", labelKey: "home", icon: Landmark }, 
   { href: "/orders", labelKey: "orders", icon: ShoppingCart },
-  { href: "/saved", labelKey: "saved", icon: Users }, // Using Users as placeholder, replace with HeartIcon
-  { href: "/notifications", labelKey: "notifications", icon: Plane }, // Using Plane as placeholder, replace with BellIcon
-  { href: "/profile", labelKey: "user", icon: Users } // Using Users as placeholder, replace with UserIcon
+  { href: "/saved", labelKey: "saved", icon: Users }, 
+  { href: "/notifications", labelKey: "notifications", icon: Plane }, 
+  { href: "/profile", labelKey: "user", icon: Users } 
 ];
 
 export const TranslationFields: TranslationField[] = [
   'tourism', 'medical', 'equipment', 'exhibition', 
   'official_documents', 'official_speech', 'machinery'
 ];
-
