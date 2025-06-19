@@ -19,7 +19,7 @@ export function WeChatCategoryCard({ category }: WeChatCategoryCardProps) {
 
   return (
     <Link href={category.href} className="group flex flex-col items-center">
-      <Card className="shadow-md hover:shadow-lg transition-all duration-300 ease-in-out transform hover:-translate-y-1 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-0 overflow-hidden mb-2">
+      <Card className="shadow-md hover:shadow-lg transition-all duration-300 ease-out transform hover:-translate-y-1.5 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center p-0 overflow-hidden mb-2">
         <CardContent className="p-0 flex items-center justify-center w-full h-full">
           {category.iconType === 'image' && (
             <Image
@@ -27,11 +27,11 @@ export function WeChatCategoryCard({ category }: WeChatCategoryCardProps) {
               alt={t(category.titleKey)}
               width={80}
               height={80}
-              className="object-cover w-full h-full group-hover:scale-105 transition-transform"
+              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300 ease-out"
             />
           )}
           {IconComponent && (
-            <IconComponent className="w-8 h-8 sm:w-10 sm:h-10 text-primary group-hover:text-accent transition-colors" />
+            <IconComponent className="w-8 h-8 sm:w-10 sm:h-10 text-primary group-hover:text-accent transition-colors duration-300 ease-out" />
           )}
         </CardContent>
       </Card>

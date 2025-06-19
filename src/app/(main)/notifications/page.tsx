@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from '@/lib/utils';
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
@@ -221,7 +222,10 @@ export default function NotificationsPage() {
           {combinedNotifications.map((item) => (
             <Card 
               key={item.id + (item.isGlobal ? '-global' : '-user')} 
-              className={`shadow-md hover:shadow-lg transition-shadow duration-300 ${!item.isGlobal && item.read ? 'bg-card' : (!item.isGlobal && !item.read ? 'bg-primary/5 border-primary/20' : 'bg-card')}`}
+              className={cn(
+                "shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-1",
+                !item.isGlobal && item.read ? 'bg-card' : (!item.isGlobal && !item.read ? 'bg-primary/5 border-primary/20' : 'bg-card')
+              )}
             >
               <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
                 {item.imageUrl && (

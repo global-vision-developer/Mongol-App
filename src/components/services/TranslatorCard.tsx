@@ -51,8 +51,8 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
   }
 
   return (
-    <Link href={`/services/translators/${item.id}`} className="block group">
-      <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg h-full", className)}>
+    <Link href={`/services/translators/${item.id}`} className="block group h-full">
+      <Card className={cn("flex flex-col overflow-hidden shadow-lg rounded-lg h-full group-hover:-translate-y-1.5 group-hover:shadow-2xl transition-all duration-300 ease-out", className)}>
         <div className="relative aspect-[3/4] w-full">
           <Image
             src={imageUrlToDisplay}
@@ -119,4 +119,3 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
 }
 
 export const TranslatorCard = React.memo(TranslatorCardComponent);
-

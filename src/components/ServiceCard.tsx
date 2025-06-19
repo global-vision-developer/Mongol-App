@@ -151,7 +151,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 
 
   const cardContent = (
-    <Card className={cn("flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg h-full group", className)}>
+    <Card className={cn("flex flex-col overflow-hidden shadow-lg rounded-lg h-full group-hover:-translate-y-1.5 group-hover:shadow-2xl transition-all duration-300 ease-out", className)}>
       <CardHeader className="p-0 relative">
         <div className="relative aspect-[3/4] w-full">
             <Image
@@ -217,7 +217,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 
   if (cardItselfIsLink) {
     return (
-      <Link href={detailPageLink!} className="block h-full focus:outline-none" aria-label={item.name || t('serviceUnnamed')}>
+      <Link href={detailPageLink!} className="group block h-full focus:outline-none" aria-label={item.name || t('serviceUnnamed')}>
         {cardContent}
       </Link>
     );

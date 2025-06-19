@@ -14,6 +14,7 @@ import type { Order as AppOrder, ItemType } from '@/types';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
   const { t } = useTranslation();
@@ -34,7 +35,7 @@ const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
   const qrImageShouldUnoptimize = order.wechatQrImageUrl?.startsWith('data:') || order.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
 
   return (
-    <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
+    <Card className={cn("shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-1")}>
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 p-4">
         {order.imageUrl && (
           <Image
