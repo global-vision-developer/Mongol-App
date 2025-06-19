@@ -8,15 +8,15 @@ export interface City {
   value: string;
   label: string;
   label_cn?: string;
-  isMajor?: boolean; // Added for categorizing cities
+  isMajor?: boolean; 
 }
 
 export interface Airport {
-  value: string; // IATA code
-  label: string; // Display label, e.g., City / City_MN (IATA)
+  value: string; 
+  label: string; 
   city: string;
   iata: string;
-  searchTerms: string; // Concatenated string of name, mongolian name, city, iata for searching
+  searchTerms: string; 
 }
 
 
@@ -24,20 +24,20 @@ export type ServiceGroupId = 'flights' | 'hotels' | 'translators' | 'wechat' | '
 
 export interface ServiceGroup {
   id: ServiceGroupId;
-  titleKey: string; // translation key
+  titleKey: string; 
   icon: LucideIcon;
   href: string;
 }
 
 export interface CarouselBannerItem {
-  id: string; // Firestore document ID
+  id: string; 
   imageUrl: string;
   link?: string;
-  altText?: string; // Use Firestore description or a generic alt text
-  dataAiHint?: string; // Generic hint if not in Firestore data
+  altText?: string; 
+  dataAiHint?: string; 
   isActive?: boolean;
-  createdAt?: Timestamp | any; // For ordering
-  description?: string; // Original description from Firestore, can be used for altText
+  createdAt?: Timestamp | any; 
+  description?: string; 
 }
 
 export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight' | 'message' | 'order' | 'update';
@@ -45,8 +45,8 @@ export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' |
 export interface ShowcaseItem {
   description: string;
   imageUrl: string;
-  name?: string; // Optional name for the showcase item
-  [key: string]: any; // Allow other potential item-specific fields
+  name?: string; 
+  [key: string]: any; 
 }
 
 export interface RecommendedItem {
@@ -54,8 +54,8 @@ export interface RecommendedItem {
   name: string;
   imageUrl?: string;
   description?: string;
-  gender?: 'male' | 'female' | 'other' | null; // Ensure gender is part of RecommendedItem
-  city?: string; // General city/location if applicable
+  gender?: 'male' | 'female' | 'other' | null; 
+  city?: string; 
   testLevel?: string;
   speakingLevel?: string;
   writingLevel?: string;
@@ -66,7 +66,7 @@ export interface RecommendedItem {
   averageRating?: number | null;
   reviewCount?: number;
   totalRatingSum?: number;
-  location?: string; // More specific location if different from city
+  location?: string; 
   primaryLanguage?: string;
   availabilityStatus?: string;
   dataAiHint?: string;
@@ -74,7 +74,7 @@ export interface RecommendedItem {
   nationality?: Nationality;
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
-  currentCityInChina?: string | null; // Specifically for translators if needed
+  currentCityInChina?: string | null; 
   chineseExamTaken?: boolean | null;
   translationFields?: TranslationField[];
   dailyRate?: DailyRateRange | null;
@@ -101,7 +101,7 @@ export interface UserProfile {
   phoneNumber?: string | null;
   lastName?: string | null;
   firstName?: string | null;
-  dateOfBirth?: string | null; // Store as ISO string (YYYY-MM-DD)
+  dateOfBirth?: string | null; 
   gender?: 'male' | 'female' | 'other' | null;
   homeAddress?: string | null;
   fcmTokens?: string[];
@@ -128,7 +128,7 @@ export interface Order {
 }
 
 
-export interface SavedDocData extends RecommendedItem { // SavedDocData inherits RecommendedItem, so gender will be there
+export interface SavedDocData extends RecommendedItem { 
   savedAt: Timestamp | any;
 }
 
@@ -209,16 +209,16 @@ export interface Translator {
   idCardBackImageUrl?: string;
   selfieImageUrl?: string;
   wechatQrImageUrl?: string;
-  registeredAt?: Timestamp | Date | string; // Allow Date or string for flexibility
+  registeredAt?: Timestamp | Date | string; 
   isActive?: boolean;
   isProfileComplete?: boolean;
   views?: number;
 }
 
 
-export interface SavedPageItem extends RecommendedItem { // SavedPageItem inherits RecommendedItem
+export interface SavedPageItem extends RecommendedItem { 
   savedAt: Timestamp | any;
-  // Ensure fields like gender, currentCityInChina are available from RecommendedItem
+  
 }
 
 export interface Review {
@@ -235,3 +235,15 @@ export interface Review {
 }
 
 export type SavedItemCategoryFilter = ItemType | 'all';
+
+export interface FAQItem {
+  id: string;
+  question: string;
+  answer: string;
+  topic: string;
+  createdAt: Timestamp;
+  createdBy?: string;
+  isPredefined?: boolean;
+  updatedAt?: Timestamp;
+  order?: number; 
+}

@@ -340,6 +340,11 @@ const translations: Record<Language, Record<string, string>> = {
     helpFaq2Answer: "Профайл хуудасны 'Орчуулагчаар бүртгүүлэх' цэсрүү орж, шаардлагатай мэдээллээ бөглөнө.",
     helpFaq3Question: "Хадгалсан зүйлсээ хаанаас харах вэ?",
     helpFaq3Answer: "Доод цэсний 'Хадгалсан' дүрс дээр дарж хадгалсан бүх үйлчилгээ, бараагаа харах боломжтой.",
+    faqTopicAppUsage: "Аппликэйшн ашиглах заавар",
+    faqTopicCheapTravel: "Хэрхэн хямд аялах вэ?",
+    termsOfService: "Үйлчилгээний нөхцөл",
+    privacyPolicy: "Нууцлалын баталгаа",
+    otherInformationTitle: "Бусад мэдээлэл",
     // Personal Information Form
     personalInfoFormTitle: "Хувийн мэдээлэл",
     personalInfoFormDescription: "Хувийн мэдээллээ оруулна уу.",
@@ -800,6 +805,11 @@ const translations: Record<Language, Record<string, string>> = {
     helpFaq2Answer: "进入个人资料页面的“注册成为翻译员”部分，并填写必要信息。",
     helpFaq3Question: "在哪里可以查看我保存的项目？",
     helpFaq3Answer: "点击底部导航栏中的“已保存”图标，即可查看所有已保存的服务和项目。",
+    faqTopicAppUsage: "应用使用指南",
+    faqTopicCheapTravel: "如何经济出行?",
+    termsOfService: "服务条款",
+    privacyPolicy: "隐私政策",
+    otherInformationTitle: "其他信息",
     // Personal Information Form
     personalInfoFormTitle: "个人信息",
     personalInfoFormDescription: "请输入您的个人信息。",
