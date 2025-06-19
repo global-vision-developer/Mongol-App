@@ -8,8 +8,7 @@ import Link from 'next/link';
 import { MapPin } from "lucide-react";
 import type { SavedPageItem } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
-import { CITIES } from '@/lib/constants'; // For city label translation
-// import { cn } from '@/lib/utils'; // cn ашиглаагүй бол устгаж болно.
+import { useCity } from '@/contexts/CityContext'; // Import useCity
 
 // Helper function to get detail page link
 const getDetailPageLink = (item: SavedPageItem): string => {
@@ -44,9 +43,10 @@ interface SavedItemCardProps { // Нэрийг SavedItemCardProps болгов
 // Экспортолж буй компонентын нэрийг SavedItemCard болгов
 export const SavedItemCard: React.FC<SavedItemCardProps> = ({ item }) => {
   const { t, language } = useTranslation();
+  const { availableCities } = useCity(); // Get available cities from context
 
   const cityValue = item.currentCityInChina || item.city || item.location;
-  const cityObject = cityValue ? (CITIES.find(c => c.value === cityValue) || {label: cityValue, label_cn: cityValue}) : null;
+  const cityObject = cityValue ? (availableCities.find(c => c.value === cityValue) || {label: cityValue, label_cn: cityValue}) : null;
   const displayCity = cityObject ? (language === 'cn' && cityObject.label_cn ? cityObject.label_cn : cityObject.label) : null;
 
   let genderDisplay = '';
@@ -98,3 +98,4 @@ export const SavedItemCard: React.FC<SavedItemCardProps> = ({ item }) => {
     </Link>
   );
 };
+
