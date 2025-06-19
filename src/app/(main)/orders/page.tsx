@@ -1,24 +1,42 @@
 
 "use client";
-import React, { useState } from 'react'; // Added useState
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { Plane, BedDouble, Users, Smartphone, ShoppingBag, Phone, MessageCircle } from 'lucide-react'; 
+import { Plane, BedDouble, Users, Smartphone, ShoppingBag, Phone, MessageCircle, Trash2 } from 'lucide-react'; 
 import { useAuth } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, onSnapshot, Timestamp, DocumentData } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, Timestamp, DocumentData, doc, deleteDoc } from 'firebase/firestore';
 import type { Order as AppOrder, ItemType } from '@/types';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
-const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
+
+interface OrderCardProps {
+  order: AppOrder;
+  onDeleteRequest: (orderId: string) => void;
+}
+
+const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
   const { t } = useTranslation();
-  const [showContactInfo, setShowContactInfo] = useState(false); // New state
+  const [showContactInfo, setShowContactInfo] = useState(false);
+  const { toast } = useToast(); // Toast might be used for specific card actions later
 
   const getStatusTextKey = (status: AppOrder['status']) => {
     switch (status) {
@@ -61,7 +79,7 @@ const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
           <p>{t('status')}: <span className="font-medium text-foreground">{t(getStatusTextKey(order.status))}</span></p>
           {order.amount && <p>{t('orderAmount')}: <span className="font-medium text-foreground">{order.amount}</span></p>}
         </div>
-        {order.serviceType === 'translator' && order.contactInfoRevealed && (
+        {order.contactInfoRevealed && (
           <div className="mt-3 pt-3 border-t">
             {!showContactInfo ? (
               <Button onClick={() => setShowContactInfo(true)} size="sm" className="w-full mt-2">
@@ -101,6 +119,17 @@ const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
           </div>
         )}
       </CardContent>
+      <CardFooter className="p-4 pt-0 border-t flex justify-end">
+         <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive/80 h-8 w-8"
+            onClick={() => onDeleteRequest(order.id)}
+            aria-label={t('deleteNotification')} // Re-use translation or add a new one
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+      </CardFooter>
     </Card>
   );
 };
@@ -109,9 +138,14 @@ const OrderCard: React.FC<{ order: AppOrder }> = ({ order }) => {
 export default function OrdersPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [activeTab, setActiveTab] = useState<ItemType | 'flights'>("flights");
+
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [selectedOrderIdForDeletion, setSelectedOrderIdForDeletion] = useState<string | null>(null);
+
 
   const tabCategories: { value: ItemType | 'flights'; labelKey: string, icon: React.ElementType }[] = [
     { value: "flights", labelKey: "flights", icon: Plane },
@@ -146,6 +180,7 @@ export default function OrdersPage() {
           chinaPhoneNumber: data.chinaPhoneNumber || null,
           wechatId: data.wechatId || null,
           wechatQrImageUrl: data.wechatQrImageUrl || null,
+          contactInfoRevealed: data.contactInfoRevealed || false,
         } as AppOrder;
       });
       setOrders(fetchedOrders);
@@ -157,6 +192,41 @@ export default function OrdersPage() {
 
     return () => unsubscribe();
   }, [user, authLoading]);
+
+  const handleDeleteRequest = (orderId: string) => {
+    setSelectedOrderIdForDeletion(orderId);
+    setIsAlertOpen(true);
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!user || !selectedOrderIdForDeletion) {
+      toast({
+        title: t('error'),
+        description: t('orderDeletionErrorGeneric'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const orderDocRef = doc(db, "orders", selectedOrderIdForDeletion);
+      await deleteDoc(orderDocRef);
+      toast({
+        title: t('orderDeletedSuccessTitle'),
+        description: t('orderDeletedSuccessDesc'),
+      });
+    } catch (error) {
+      console.error("Error deleting order: ", error);
+      toast({
+        title: t('error'),
+        description: t('orderDeletionErrorFirebase'),
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedOrderIdForDeletion(null);
+      setIsAlertOpen(false);
+    }
+  };
 
 
   const filteredOrders = orders.filter(order => {
@@ -241,13 +311,30 @@ export default function OrdersPage() {
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
                 {filteredOrders.map(order => (
-                  <OrderCard key={order.id} order={order} />
+                  <OrderCard key={order.id} order={order} onDeleteRequest={handleDeleteRequest} />
                 ))}
               </div>
             )}
           </TabsContent>
         ))}
       </Tabs>
+
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteOrderTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteOrderConfirmation')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsAlertOpen(false)}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteOrder}>
+              {t('deleteButtonLabel')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
