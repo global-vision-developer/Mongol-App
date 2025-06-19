@@ -74,7 +74,7 @@ export default function SavedPage() {
 
   const filterCategories = useMemo(() => {
     return SERVICE_GROUPS.filter(sg => sg.id !== 'flights').map(sg => ({
-      id: sg.id as ItemType,
+      id: sg.id as ItemType, // Cast because flights are excluded
       titleKey: sg.titleKey,
     }));
   }, []);
@@ -240,3 +240,4 @@ export default function SavedPage() {
     </div>
   );
 }
+

@@ -455,6 +455,7 @@ const translations: Record<Language, Record<string, string>> = {
     genderMale: "Эр",
     genderFemale: "Эм",
     genderOther: "Бусад",
+    noSearchResultsPlaceholder: "Хайлтын үр дүн олдсонгүй.",
 
   },
   cn: {
@@ -897,6 +898,7 @@ const translations: Record<Language, Record<string, string>> = {
     genderMale: "男",
     genderFemale: "女",
     genderOther: "其他",
+    noSearchResultsPlaceholder: "未找到搜索结果。",
   },
 };
 
@@ -940,3 +942,4 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
+
