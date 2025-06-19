@@ -15,23 +15,27 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
       const entryData = docSnap.data();
       if (entryData.categoryName === "factories") {
         const nestedData = entryData.data || {};
-
-        let finalImageUrl: string | undefined = undefined;
         const rawImageUrl = nestedData['nuur-zurag-url'];
-        if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
-          finalImageUrl = rawImageUrl.trim();
+        let processedImageUrl: string | undefined = undefined;
+
+        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+          const trimmedUrl = rawImageUrl.trim();
+          if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+            processedImageUrl = trimmedUrl;
+          }
         }
+        const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(nestedData.name || nestedData.title || 'Factory')}`;
 
         const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
           description: detail.description || '',
-          imageUrl: detail.imageUrl || '',
-          name: detail.name || undefined, 
+          imageUrl: detail.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(detail.name || 'Product')}`,
+          name: detail.name || undefined,
         }));
 
         return {
           id: docSnap.id,
           name: nestedData.name || nestedData.title || 'Unnamed Factory',
-          imageUrl: finalImageUrl,
+          imageUrl: processedImageUrl || placeholder,
           description: nestedData.taniltsuulga || nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,

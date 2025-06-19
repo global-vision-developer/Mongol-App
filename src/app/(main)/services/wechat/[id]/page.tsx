@@ -16,21 +16,29 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
       if (entryData.categoryName === "wechat") {
         const nestedData = entryData.data || {};
         const rawImageUrl = nestedData['nuur-zurag-url'];
-        let finalImageUrl: string | undefined = undefined;
-        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
-          finalImageUrl = rawImageUrl.trim();
+        let processedImageUrl: string | undefined = undefined;
+        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+          const trimmedUrl = rawImageUrl.trim();
+          if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+            processedImageUrl = trimmedUrl;
+          }
         }
+        const imagePlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(nestedData.name || 'WeChat')}`;
         
         const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
-        let finalWeChatQrUrl: string | undefined = undefined;
+        let processedWeChatQrUrl: string | undefined = undefined;
         if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
-            finalWeChatQrUrl = rawWeChatQrUrl.trim();
+           const trimmedQrUrl = rawWeChatQrUrl.trim();
+           if (trimmedQrUrl.startsWith('http://') || trimmedQrUrl.startsWith('https://')) {
+            processedWeChatQrUrl = trimmedQrUrl;
+          }
         }
+        // QR code can be optional.
 
         return {
           id: docSnap.id,
           name: nestedData.name || 'Unnamed WeChat Service',
-          imageUrl: finalImageUrl,
+          imageUrl: processedImageUrl || imagePlaceholder,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
@@ -40,7 +48,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           itemType: 'wechat' as ItemType,
           dataAiHint: nestedData.dataAiHint || "wechat item",
           wechatId: nestedData.wechatId,
-          wechatQrImageUrl: finalWeChatQrUrl,
+          wechatQrImageUrl: processedWeChatQrUrl, // Can be undefined
         } as RecommendedItem;
       }
     }

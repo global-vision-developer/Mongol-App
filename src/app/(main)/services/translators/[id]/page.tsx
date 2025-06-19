@@ -20,23 +20,31 @@ async function getItemData(id: string): Promise<Translator | null> {
                                   ? registeredAtRaw.toDate()
                                   : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
         
-        const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
-        let finalImageUrl: string | undefined = undefined;
-        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
-            finalImageUrl = rawImageUrl.trim();
+        const rawPhotoUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
+        let processedPhotoUrl: string | undefined = undefined;
+        if (typeof rawPhotoUrl === 'string' && rawPhotoUrl.trim() !== '') {
+          const trimmedUrl = rawPhotoUrl.trim();
+          if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+            processedPhotoUrl = trimmedUrl;
+          }
         }
+        const photoPlaceholder = `https://placehold.co/300x400.png?text=${encodeURIComponent(nestedData.name || 'T')}`;
         
         const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
-        let finalWeChatQrUrl: string | undefined = undefined;
+        let processedWeChatQrUrl: string | undefined = undefined;
         if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
-            finalWeChatQrUrl = rawWeChatQrUrl.trim();
+           const trimmedQrUrl = rawWeChatQrUrl.trim();
+           if (trimmedQrUrl.startsWith('http://') || trimmedQrUrl.startsWith('https://')) {
+            processedWeChatQrUrl = trimmedQrUrl;
+          }
         }
+        // QR code can be optional, so if not a valid URL, it remains undefined. Client component handles missing QR.
 
         return {
           id: docSnap.id,
           uid: nestedData.uid || docSnap.id,
           name: nestedData.name || 'Unnamed Translator',
-          photoUrl: finalImageUrl,
+          photoUrl: processedPhotoUrl || photoPlaceholder,
           nationality: nestedData.nationality as Nationality,
           inChinaNow: nestedData.inChinaNow,
           yearsInChina: nestedData.yearsInChina,
@@ -50,7 +58,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           dailyRate: nestedData.dailyRate as DailyRateRange,
           chinaPhoneNumber: nestedData.chinaPhoneNumber,
           wechatId: nestedData.wechatId,
-          wechatQrImageUrl: finalWeChatQrUrl,
+          wechatQrImageUrl: processedWeChatQrUrl, // Can be undefined
           city: nestedData.khot || nestedData.currentCityInChina,
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
