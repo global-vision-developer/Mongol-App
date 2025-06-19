@@ -77,10 +77,12 @@ export default function ProfilePage() {
 
     if (!ALLOWED_PROFILE_IMAGE_TYPES.includes(file.type)) {
       toast({ title: t('error'), description: t('invalidFileTypeProfile'), variant: "destructive" });
+      if(fileInputRef.current) fileInputRef.current.value = ""; // Reset input
       return;
     }
     if (file.size > MAX_PROFILE_IMAGE_SIZE_BYTES) {
       toast({ title: t('error'), description: t('fileTooLargeProfile', { maxSize: `${MAX_PROFILE_IMAGE_SIZE_MB}MB` }), variant: "destructive" });
+      if(fileInputRef.current) fileInputRef.current.value = ""; // Reset input
       return;
     }
 
@@ -99,7 +101,7 @@ export default function ProfilePage() {
       toast({ title: t('error'), description: errorDesc, variant: "destructive" });
     } finally {
       setIsUploadingImage(false);
-      if(fileInputRef.current) { // Reset file input
+      if(fileInputRef.current) { 
         fileInputRef.current.value = "";
       }
     }
@@ -219,7 +221,7 @@ export default function ProfilePage() {
             type="file" 
             ref={fileInputRef} 
             onChange={handleFileChange} 
-            accept="image/jpeg,image/png,image/gif" 
+            accept={ALLOWED_PROFILE_IMAGE_TYPES.join(',')}
             style={{ display: 'none' }} 
             disabled={isUploadingImage}
           />
@@ -312,3 +314,4 @@ const ConditionalLinkWrapper: React.FC<{href?: string; condition: boolean; class
   }
   return <div className={className}>{children}</div>;
 };
+
