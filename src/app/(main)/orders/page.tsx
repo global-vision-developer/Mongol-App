@@ -180,21 +180,23 @@ export default function OrdersPage() {
         const data = doc.data() as DocumentData; // data here is the Order document itself
 
         let finalMongolianPhoneNumber: string | null = null;
+        // Prioritize 'phone-number' for Mongolian phone
         if (data['phone-number'] !== undefined && data['phone-number'] !== null) {
           finalMongolianPhoneNumber = String(data['phone-number']);
-        } else if (data.mongolianPhoneNumber !== undefined && data.mongolianPhoneNumber !== null) {
+        } else if (data.mongolianPhoneNumber !== undefined && data.mongolianPhoneNumber !== null) { // Fallback to already mapped camelCase
           finalMongolianPhoneNumber = String(data.mongolianPhoneNumber);
         }
         
         let finalChinaPhoneNumber: string | null = null;
+        // Prioritize 'china-number' for China phone
         if (data['china-number'] !== undefined && data['china-number'] !== null) {
           finalChinaPhoneNumber = String(data['china-number']);
         } else if (data.chinaPhoneNumber !== undefined && data.chinaPhoneNumber !== null) { // Fallback to already mapped camelCase
           finalChinaPhoneNumber = String(data.chinaPhoneNumber);
         }
 
-
         let finalWechatId: string | null = null;
+        // Prioritize 'we-chat-id' for WeChat ID
         if (data['we-chat-id'] !== undefined && data['we-chat-id'] !== null) {
           finalWechatId = String(data['we-chat-id']);
         } else if (data.wechatId !== undefined && data.wechatId !== null) { // Fallback to already mapped camelCase
@@ -202,19 +204,20 @@ export default function OrdersPage() {
         }
 
         let finalWechatQrImageUrl: string | null = null;
-        if (data.wechatQrImageUrl) { 
-          finalWechatQrImageUrl = data.wechatQrImageUrl;
-        } else if (data['we-chat-img']) { 
-          if (typeof data['we-chat-img'] === 'string' && data['we-chat-img'].trim() !== '') {
-            finalWechatQrImageUrl = data['we-chat-img'];
-          } else if (Array.isArray(data['we-chat-img']) && data['we-chat-img'].length > 0) {
-            const firstElement = data['we-chat-img'][0];
+        const rawWeChatImg = data['we-chat-img']; // Prioritize 'we-chat-img'
+        if (rawWeChatImg) { 
+          if (typeof rawWeChatImg === 'string' && rawWeChatImg.trim() !== '') {
+            finalWechatQrImageUrl = rawWeChatImg;
+          } else if (Array.isArray(rawWeChatImg) && rawWeChatImg.length > 0) {
+            const firstElement = rawWeChatImg[0];
             if (typeof firstElement === 'string' && firstElement.trim() !== '') {
               finalWechatQrImageUrl = firstElement;
             } else if (typeof firstElement === 'object' && firstElement !== null && typeof firstElement.imageUrl === 'string' && firstElement.imageUrl.trim() !== '') {
               finalWechatQrImageUrl = firstElement.imageUrl;
             }
           }
+        } else if (data.wechatQrImageUrl) { // Fallback to camelCase if 'we-chat-img' is not found or invalid
+          finalWechatQrImageUrl = data.wechatQrImageUrl;
         }
         
         return {
