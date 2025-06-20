@@ -5,7 +5,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { Plane, BedDouble, Users, Smartphone, ShoppingBag, Phone, MessageCircle, Trash2 } from 'lucide-react'; 
+import { Plane, BedDouble, Users, Smartphone, ShoppingBag, Phone, MessageCircle, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, Timestamp, DocumentData, doc, deleteDoc } from 'firebase/firestore';
@@ -49,7 +49,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
       default: return status;
     }
   };
-  
+
   const qrImageShouldUnoptimize = order.wechatQrImageUrl?.startsWith('data:') || order.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
 
   return (
@@ -171,16 +171,55 @@ export default function OrdersPage() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
-        const data = doc.data() as DocumentData;
+        const data = doc.data() as DocumentData; // data here is the Order document itself
+
+        let finalChinaPhoneNumber: string | null = null;
+        if (data['china-number'] !== undefined && data['china-number'] !== null) {
+          finalChinaPhoneNumber = String(data['china-number']);
+        } else if (data['phone-number'] !== undefined && data['phone-number'] !== null) {
+          finalChinaPhoneNumber = String(data['phone-number']);
+        } else if (data.chinaPhoneNumber !== undefined && data.chinaPhoneNumber !== null) { // Fallback to already mapped camelCase
+          finalChinaPhoneNumber = String(data.chinaPhoneNumber);
+        }
+
+        let finalWechatId: string | null = null;
+        if (data['we-chat-id'] !== undefined && data['we-chat-id'] !== null) {
+          finalWechatId = String(data['we-chat-id']);
+        } else if (data.wechatId !== undefined && data.wechatId !== null) { // Fallback to already mapped camelCase
+          finalWechatId = String(data.wechatId);
+        }
+
+        let finalWechatQrImageUrl: string | null = null;
+        if (data.wechatQrImageUrl) { // Ideal field name
+          finalWechatQrImageUrl = data.wechatQrImageUrl;
+        } else if (data['we-chat-img']) { // User mentioned this
+          if (typeof data['we-chat-img'] === 'string' && data['we-chat-img'].trim() !== '') {
+            finalWechatQrImageUrl = data['we-chat-img'];
+          } else if (Array.isArray(data['we-chat-img']) && data['we-chat-img'].length > 0) {
+            const firstElement = data['we-chat-img'][0];
+            if (typeof firstElement === 'string' && firstElement.trim() !== '') {
+              finalWechatQrImageUrl = firstElement;
+            } else if (typeof firstElement === 'object' && firstElement !== null && typeof firstElement.imageUrl === 'string' && firstElement.imageUrl.trim() !== '') {
+              finalWechatQrImageUrl = firstElement.imageUrl;
+            }
+          }
+        }
+        
         return {
           id: doc.id,
-          ...data,
+          userId: data.userId,
           serviceType: data.serviceType as ItemType,
-          orderDate: data.orderDate as Timestamp, 
-          chinaPhoneNumber: data.chinaPhoneNumber || null,
-          wechatId: data.wechatId || null,
-          wechatQrImageUrl: data.wechatQrImageUrl || null,
+          serviceId: data.serviceId,
+          serviceName: data.serviceName || t('serviceUnnamed'),
+          orderDate: data.orderDate as Timestamp,
+          status: data.status as AppOrder['status'],
+          amount: data.amount === undefined ? null : data.amount,
           contactInfoRevealed: data.contactInfoRevealed || false,
+          imageUrl: data.imageUrl || data['nuur-zurag-url'] || null,
+          dataAiHint: data.dataAiHint || null,
+          chinaPhoneNumber: finalChinaPhoneNumber,
+          wechatId: finalWechatId,
+          wechatQrImageUrl: finalWechatQrImageUrl,
         } as AppOrder;
       });
       setOrders(fetchedOrders);
@@ -191,7 +230,7 @@ export default function OrdersPage() {
     });
 
     return () => unsubscribe();
-  }, [user, authLoading]);
+  }, [user, authLoading, t]);
 
   const handleDeleteRequest = (orderId: string) => {
     setSelectedOrderIdForDeletion(orderId);
@@ -230,14 +269,14 @@ export default function OrdersPage() {
 
 
   const filteredOrders = orders.filter(order => {
-    if (activeTab === 'flights') return order.serviceType === 'flight'; 
+    if (activeTab === 'flights') return order.serviceType === 'flight';
     return order.serviceType === activeTab;
   });
 
   const renderEmptyState = (categoryLabelKey: string) => (
     <div className="flex flex-col items-center justify-center text-center py-12">
       <div className="bg-muted rounded-full p-6 mb-6">
-         {tabCategories.find(tc => tc.value === activeTab)?.icon ? 
+         {tabCategories.find(tc => tc.value === activeTab)?.icon ?
             React.createElement(tabCategories.find(tc => tc.value === activeTab)!.icon, {className: "h-16 w-16 text-muted-foreground"})
             : <ShoppingBag className="h-16 w-16 text-muted-foreground" />}
       </div>
@@ -271,14 +310,14 @@ export default function OrdersPage() {
       </div>
     );
   }
-  
+
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-headline font-semibold text-center">{t('orders')}</h1>
 
       <Tabs defaultValue={activeTab} onValueChange={(value) => setActiveTab(value as ItemType | 'flights')} className="w-full">
-        <TabsList className="grid w-full grid-cols-4"> 
+        <TabsList className="grid w-full grid-cols-4">
           {tabCategories.map(category => (
             <TabsTrigger key={category.value} value={category.value}>
               {t(category.labelKey)}
