@@ -16,29 +16,29 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
       if (entryData.categoryName === "wechat") {
         const nestedData = entryData.data || {};
         const rawImageUrl = nestedData['nuur-zurag-url'];
-        let processedImageUrl: string | undefined = undefined;
-        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
-          const trimmedUrl = rawImageUrl.trim();
-          if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-            processedImageUrl = trimmedUrl;
-          }
-        }
         const serviceName = nestedData.name || 'WeChat Service';
         const imagePlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+        let imageUrlToUse: string;
+
+        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+          imageUrlToUse = rawImageUrl.trim();
+        } else {
+          imageUrlToUse = imagePlaceholder;
+        }
         
         const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
         let processedWeChatQrUrl: string | undefined = undefined;
         if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
            const trimmedQrUrl = rawWeChatQrUrl.trim();
-           if (trimmedQrUrl.startsWith('http://') || trimmedQrUrl.startsWith('https://')) {
-            processedWeChatQrUrl = trimmedQrUrl;
-          }
+            // No http/https check for direct usage as per user request for nuur-zurag-url
+            // Assuming QR codes might also come from diverse sources, apply same logic
+           processedWeChatQrUrl = trimmedQrUrl;
         }
 
         return {
           id: docSnap.id,
           name: serviceName,
-          imageUrl: processedImageUrl || imagePlaceholder,
+          imageUrl: imageUrlToUse,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,

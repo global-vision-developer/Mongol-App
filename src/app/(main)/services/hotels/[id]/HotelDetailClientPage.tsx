@@ -85,16 +85,15 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
               const nestedData = entryData.data || {};
               const serviceName = nestedData.name || t('serviceUnnamed');
               const rawImageUrl = nestedData['nuur-zurag-url'];
-              let finalImageUrl: string | undefined = undefined;
-              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
-                const trimmedUrl = rawImageUrl.trim();
-                if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-                    finalImageUrl = trimmedUrl;
-                }
-              }
               const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
-              const imageUrlToUse = finalImageUrl || placeholder;
+              let imageUrlToUse: string;
 
+              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+                imageUrlToUse = rawImageUrl.trim();
+              } else {
+                imageUrlToUse = placeholder;
+              }
+              
               const fetchedItem = {
                 id: docSnap.id,
                 name: serviceName,

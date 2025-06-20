@@ -20,31 +20,29 @@ async function getItemData(id: string): Promise<Translator | null> {
                                   ? registeredAtRaw.toDate()
                                   : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
         
-        const rawPhotoUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
-        let processedPhotoUrl: string | undefined = undefined;
-        if (typeof rawPhotoUrl === 'string' && rawPhotoUrl.trim() !== '') {
-          const trimmedUrl = rawPhotoUrl.trim();
-          if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-            processedPhotoUrl = trimmedUrl;
-          }
-        }
+        const rawPhotoUrlInput = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
         const serviceName = nestedData.name || 'Translator';
         const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+        let photoUrlToUse: string;
+
+        if (typeof rawPhotoUrlInput === 'string' && rawPhotoUrlInput.trim() !== '') {
+          photoUrlToUse = rawPhotoUrlInput.trim();
+        } else {
+          photoUrlToUse = photoPlaceholder;
+        }
         
         const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
         let processedWeChatQrUrl: string | undefined = undefined;
         if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
            const trimmedQrUrl = rawWeChatQrUrl.trim();
-           if (trimmedQrUrl.startsWith('http://') || trimmedQrUrl.startsWith('https://')) {
-            processedWeChatQrUrl = trimmedQrUrl;
-          }
+           processedWeChatQrUrl = trimmedQrUrl;
         }
 
         return {
           id: docSnap.id,
           uid: nestedData.uid || docSnap.id,
           name: serviceName,
-          photoUrl: processedPhotoUrl || photoPlaceholder,
+          photoUrl: photoUrlToUse,
           nationality: nestedData.nationality as Nationality,
           inChinaNow: nestedData.inChinaNow,
           yearsInChina: nestedData.yearsInChina,
@@ -69,7 +67,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           isActive: nestedData.isActive,
           isProfileComplete: nestedData.isProfileComplete,
           views: nestedData.views,
-          dataAiHint: nestedData.dataAiHint || "translator portrait", // Added dataAiHint
+          dataAiHint: nestedData.dataAiHint || "translator portrait",
         } as Translator;
       }
     }

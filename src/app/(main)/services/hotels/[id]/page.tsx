@@ -16,21 +16,20 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
       if (entryData.categoryName === "hotels") {
         const nestedData = entryData.data || {};
         const rawImageUrl = nestedData['nuur-zurag-url'];
-        let processedImageUrl: string | undefined = undefined;
-
-        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
-          const trimmedUrl = rawImageUrl.trim();
-          if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-            processedImageUrl = trimmedUrl;
-          }
-        }
         const serviceName = nestedData.name || 'Hotel';
         const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+        let imageUrlToUse: string;
 
+        if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+          imageUrlToUse = rawImageUrl.trim();
+        } else {
+          imageUrlToUse = placeholder;
+        }
+        
         return {
           id: docSnap.id,
           name: serviceName,
-          imageUrl: processedImageUrl || placeholder,
+          imageUrl: imageUrlToUse,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,

@@ -114,16 +114,15 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                                         : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
               
               const serviceName = nestedData.name || t('serviceUnnamed');
-              const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
-              let finalImageUrl: string | undefined = undefined;
-              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
-                  const trimmedUrl = rawImageUrl.trim();
-                  if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
-                    finalImageUrl = trimmedUrl;
-                  }
+              const rawPhotoUrlInput = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
+              const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+              let photoUrlToUse: string;
+
+              if (typeof rawPhotoUrlInput === 'string' && rawPhotoUrlInput.trim() !== '') {
+                photoUrlToUse = rawPhotoUrlInput.trim();
+              } else {
+                photoUrlToUse = photoPlaceholder;
               }
-              const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
-              const imageUrlToUse = finalImageUrl || placeholder;
               
               const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
               let finalWeChatQrUrl: string | undefined = undefined;
@@ -135,7 +134,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 id: docSnap.id, 
                 uid: nestedData.uid || docSnap.id,
                 name: serviceName,
-                photoUrl: imageUrlToUse,
+                photoUrl: photoUrlToUse,
                 nationality: nestedData.nationality as Nationality,
                 inChinaNow: nestedData.inChinaNow,
                 yearsInChina: nestedData.yearsInChina,
@@ -315,7 +314,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={translator.photoUrl!} // It will always have a value (actual or placeholder)
+              src={translator.photoUrl!} 
               alt={translator.name || "Translator"}
               layout="fill"
               objectFit="cover"
