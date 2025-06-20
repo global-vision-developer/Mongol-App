@@ -81,7 +81,10 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
-                finalImageUrl = rawImageUrl.trim();
+                const trimmedUrl = rawImageUrl.trim();
+                if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+                    finalImageUrl = trimmedUrl;
+                }
               }
               const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
               let finalWeChatQrUrl: string | undefined = undefined;
@@ -91,7 +94,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
               const fetchedItem = {
                 id: docSnap.id,
                 name: nestedData.name || t('serviceUnnamed'),
-                imageUrl: finalImageUrl,
+                imageUrl: finalImageUrl, // Will be undefined if nuur-zurag-url is invalid
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,

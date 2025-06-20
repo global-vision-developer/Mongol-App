@@ -85,13 +85,16 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
               const nestedData = entryData.data || {};
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
-              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
-                finalImageUrl = rawImageUrl.trim();
+              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+                const trimmedUrl = rawImageUrl.trim();
+                if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+                    finalImageUrl = trimmedUrl;
+                }
               }
               const fetchedItem = {
                 id: docSnap.id,
                 name: nestedData.name || t('serviceUnnamed'),
-                imageUrl: finalImageUrl,
+                imageUrl: finalImageUrl, // Will be undefined if nuur-zurag-url is invalid
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,

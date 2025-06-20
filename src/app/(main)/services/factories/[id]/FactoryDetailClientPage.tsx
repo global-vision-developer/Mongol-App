@@ -78,7 +78,10 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
-                finalImageUrl = rawImageUrl.trim();
+                const trimmedUrl = rawImageUrl.trim();
+                if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+                    finalImageUrl = trimmedUrl;
+                }
               }
               const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
                 description: detail.description || '',
@@ -89,7 +92,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
               const fetchedItem = {
                 id: docSnap.id,
                 name: nestedData.name || nestedData.title || t('serviceUnnamed'),
-                imageUrl: finalImageUrl,
+                imageUrl: finalImageUrl, // Will be undefined if nuur-zurag-url is invalid
                 description: nestedData.taniltsuulga || nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
