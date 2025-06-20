@@ -179,14 +179,9 @@ export default function OrdersPage() {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData; 
 
-        const rawMongolianPhone = data['phone-number'];
-        const finalMongolianPhoneNumber = (rawMongolianPhone !== undefined && rawMongolianPhone !== null) ? rawMongolianPhone : null;
-        
-        const rawChinaPhone = data['china-number'];
-        const finalChinaPhoneNumber = (rawChinaPhone !== undefined && rawChinaPhone !== null) ? rawChinaPhone : null;
-
-        const rawWeChatId = data['we-chat-id'];
-        const finalWechatId = (rawWeChatId !== undefined && rawWeChatId !== null) ? rawWeChatId : null;
+        const finalMongolianPhoneNumber = data['phone-number'] ?? null;
+        const finalChinaPhoneNumber = data['china-number'] ?? null;
+        const finalWechatId = data['we-chat-id'] ?? null;
         
         let finalWechatQrImageUrl: string | null = null;
         const rawWeChatImgArray = data['we-chat-img'];
@@ -210,9 +205,9 @@ export default function OrdersPage() {
           serviceType: data.serviceType as ItemType,
           serviceId: data.serviceId,
           serviceName: data.serviceName || t('serviceUnnamed'),
-          orderDate: data.orderDate as Timestamp,
-          status: data.status as AppOrder['status'],
-          amount: (data.amount === undefined || data.amount === null) ? null : data.amount,
+          orderDate: data.orderDate as Timestamp, // Ensure type safety or handle conversion if needed
+          status: data.status as AppOrder['status'], // Ensure type safety
+          amount: data.amount ?? null,
           contactInfoRevealed: data.contactInfoRevealed || false,
           imageUrl: mainImageUrl,
           dataAiHint: data.dataAiHint || null,
