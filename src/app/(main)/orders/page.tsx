@@ -205,9 +205,9 @@ export default function OrdersPage() {
           serviceType: data.serviceType as ItemType,
           serviceId: data.serviceId,
           serviceName: data.serviceName || t('serviceUnnamed'),
-          orderDate: data.orderDate as Timestamp, // Ensure type safety or handle conversion if needed
-          status: data.status as AppOrder['status'], // Ensure type safety
-          amount: data.amount ?? null,
+          orderDate: data.orderDate as Timestamp, 
+          status: data.status as AppOrder['status'], 
+          amount: (data.amount === undefined || data.amount === null) ? null : data.amount,
           contactInfoRevealed: data.contactInfoRevealed || false,
           imageUrl: mainImageUrl,
           dataAiHint: data.dataAiHint || null,
