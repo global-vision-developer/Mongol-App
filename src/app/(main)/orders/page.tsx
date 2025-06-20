@@ -36,7 +36,6 @@ interface OrderCardProps {
 const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
   const { t } = useTranslation();
   const [showContactInfo, setShowContactInfo] = useState(false);
-  const { toast } = useToast(); // Toast might be used for specific card actions later
 
   const getStatusTextKey = (status: AppOrder['status']) => {
     switch (status) {
@@ -51,11 +50,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
   };
 
   const qrImageShouldUnoptimize = order.wechatQrImageUrl?.startsWith('data:') || order.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
+  const itemImageShouldUnoptimize = order.imageUrl?.startsWith('data:') || order.imageUrl?.includes('lh3.googleusercontent.com');
 
   return (
     <Card className={cn("shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-1")}>
       <CardHeader className="flex flex-row items-start gap-3 space-y-0 p-4">
-        {order.imageUrl && (
+        {order.imageUrl ? (
           <Image
             src={order.imageUrl}
             alt={order.serviceName || t('serviceUnnamed')}
@@ -63,10 +63,13 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
             height={64}
             className="h-16 w-16 rounded-md object-cover bg-muted"
             data-ai-hint={order.dataAiHint || "service item"}
-            unoptimized={order.imageUrl.startsWith('data:') || order.imageUrl.includes('lh3.googleusercontent.com')}
+            unoptimized={itemImageShouldUnoptimize}
           />
+        ) : (
+          <div className="h-16 w-16 rounded-md bg-muted flex items-center justify-center">
+            <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+          </div>
         )}
-        {!order.imageUrl && <div className="h-16 w-16 rounded-md bg-muted flex items-center justify-center"><ShoppingBag className="h-8 w-8 text-muted-foreground" /></div>}
         <div className="flex-1">
           <CardTitle className="text-md font-semibold mb-1">{order.serviceName || t('serviceUnnamed')}</CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
@@ -88,25 +91,40 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
             ) : (
               <>
                 <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
-                {order.mongolianPhoneNumber && (
+                {order.mongolianPhoneNumber != null ? (
                   <div className="flex items-center text-sm mb-1">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>{t('mongolianPhoneNumberLabel')}: {order.mongolianPhoneNumber}</span>
                   </div>
+                ) : (
+                  <div className="flex items-center text-sm mb-1 text-muted-foreground">
+                     <Phone className="h-4 w-4 mr-2" />
+                     <span>{t('mongolianPhoneNumberLabel')}: {t('n_a')}</span>
+                  </div>
                 )}
-                {order.chinaPhoneNumber && (
+                {order.chinaPhoneNumber != null ? (
                   <div className="flex items-center text-sm mb-1">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber}</span>
                   </div>
+                ) : (
+                   <div className="flex items-center text-sm mb-1 text-muted-foreground">
+                     <Phone className="h-4 w-4 mr-2" />
+                     <span>{t('translatorContactPhoneLabel')}: {t('n_a')}</span>
+                  </div>
                 )}
-                {order.wechatId && (
+                {order.wechatId != null ? (
                   <div className="flex items-center text-sm mb-1">
                     <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>{t('translatorContactWeChatLabel')}: {order.wechatId}</span>
                   </div>
+                ) : (
+                   <div className="flex items-center text-sm mb-1 text-muted-foreground">
+                     <MessageCircle className="h-4 w-4 mr-2" />
+                     <span>{t('translatorContactWeChatLabel')}: {t('n_a')}</span>
+                  </div>
                 )}
-                {order.wechatQrImageUrl && (
+                {order.wechatQrImageUrl ? (
                   <div className="mt-1">
                     <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
                     <Image
@@ -118,6 +136,10 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
                       data-ai-hint="qr code"
                       unoptimized={qrImageShouldUnoptimize}
                     />
+                  </div>
+                ) : (
+                  <div className="mt-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}: {t('n_a')}</p>
                   </div>
                 )}
               </>
@@ -131,7 +153,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
             size="icon"
             className="text-destructive hover:text-destructive/80 h-8 w-8"
             onClick={() => onDeleteRequest(order.id)}
-            aria-label={t('deleteNotification')} // Re-use translation or add a new one
+            aria-label={t('deleteNotification')}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -180,7 +202,7 @@ export default function OrdersPage() {
         const data = doc.data() as DocumentData; 
         
         let finalWechatQrImageUrl: string | null = null;
-        const rawWeChatImgArray = data['we-chat-img']; // Firestore field name
+        const rawWeChatImgArray = data['we-chat-img'];
         if (Array.isArray(rawWeChatImgArray) && rawWeChatImgArray.length > 0) {
           const firstElement = rawWeChatImgArray[0];
           if (typeof firstElement === 'object' && firstElement !== null && typeof firstElement.imageUrl === 'string' && firstElement.imageUrl.trim() !== '') {
@@ -203,13 +225,13 @@ export default function OrdersPage() {
           serviceName: data.serviceName || t('serviceUnnamed'),
           orderDate: data.orderDate as Timestamp, 
           status: data.status as AppOrder['status'], 
-          amount: data.amount === undefined ? null : data.amount, // Ensure null if undefined
+          amount: (data.amount === undefined || data.amount === null) ? null : data.amount,
           contactInfoRevealed: data.contactInfoRevealed || false,
           imageUrl: mainImageUrl,
           dataAiHint: data.dataAiHint || null,
-          mongolianPhoneNumber: data['phone-number'], // Direct assignment
-          chinaPhoneNumber: data['china-number'], // Direct assignment
-          wechatId: data['we-chat-id'], // Direct assignment
+          mongolianPhoneNumber: data['phone-number'] === undefined ? null : data['phone-number'],
+          chinaPhoneNumber: data['china-number'] === undefined ? null : data['china-number'],
+          wechatId: data['we-chat-id'] === undefined ? null : data['we-chat-id'],
           wechatQrImageUrl: finalWechatQrImageUrl,
         } as AppOrder;
       });
@@ -368,7 +390,3 @@ export default function OrdersPage() {
     </div>
   );
 }
-
-    
-
-    

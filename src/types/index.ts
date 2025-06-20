@@ -49,7 +49,7 @@ export interface ShowcaseItem {
   description: string;
   imageUrl: string;
   name?: string;
-  dataAiHint?: string; // Added dataAiHint for showcase items
+  dataAiHint?: string;
   [key: string]: any;
 }
 
@@ -89,7 +89,7 @@ export interface RecommendedItem {
     description: string;
     imageUrl: string;
     name?: string;
-    dataAiHint?: string; // Added dataAiHint for room items
+    dataAiHint?: string;
     [key: string]: any;
   }>;
   showcaseItems?: ShowcaseItem[];
@@ -127,9 +127,9 @@ export interface Order {
   contactInfoRevealed?: boolean;
   imageUrl?: string | null;
   dataAiHint?: string | null;
-  mongolianPhoneNumber?: string | null;
-  chinaPhoneNumber?: string | null;
-  wechatId?: string | null;
+  mongolianPhoneNumber?: string | number | null;
+  chinaPhoneNumber?: string | number | null;
+  wechatId?: string | number | null;
   wechatQrImageUrl?: string | null;
 }
 
