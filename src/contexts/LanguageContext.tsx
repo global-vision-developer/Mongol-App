@@ -125,10 +125,10 @@ const translations: Record<Language, Record<string, string>> = {
     translatorContactRevealedNotificationDescription: "Орчуулагч {{serviceName}}: Утас: {{translatorPhoneNumber}}, WeChat: {{translatorWeChatId}}.",
     // Flight Search Page
     flightsPageTitle: "Нислэг",
-    fromAirport: "Хаанаас",
-    toAirport: "Хаашаа",
-    departureAirportPlaceholder: "Нисэх буудал сонгох",
-    arrivalAirportPlaceholder: "Нисэх буудал сонгох",
+    fromAirport: "Хаанаас", // Will be replaced by fromCity
+    toAirport: "Хаашаа", // Will be replaced by toCity
+    departureAirportPlaceholder: "Нисэх буудал сонгох", // Will be replaced
+    arrivalAirportPlaceholder: "Нисэх буудал сонгох", // Will be replaced
     selectDepartureDate: "Нисэх өдрөө сонгоно уу",
     selectDatePlaceholder: "Огноо сонгох",
     passengers: "Зорчигч",
@@ -139,9 +139,18 @@ const translations: Record<Language, Record<string, string>> = {
     searchFlights: "Нислэг хайх",
     swapAirports: "Чиглэл солих",
     back: "Буцах",
-    selectAirportDialogTitle: "Таны явах чиглэл",
-    searchAirportsPlaceholder: "Хайх",
-    noAirportsFound: "Нисэх буудал олдсонгүй",
+    selectAirportDialogTitle: "Таны явах чиглэл", // Will be replaced
+    searchAirportsPlaceholder: "Хайх", // Will be replaced
+    noAirportsFound: "Нисэх буудал олдсонгүй", // Will be replaced
+    fromCity: "Хаанаас (Хот)",
+    toCity: "Хаашаа (Хот)",
+    departureCityPlaceholder: "Явах хот сонгох",
+    arrivalCityPlaceholder: "Очих хот сонгох",
+    departureCityRequired: "Явах хотыг сонгоно уу",
+    arrivalCityRequired: "Очих хотыг сонгоно уу",
+    selectCityDialogTitle: "Хот сонгох",
+    searchCitiesPlaceholder: "Хот хайх",
+    noCitiesFound: "Хот олдсонгүй",
     // Hotels Page
     hotelsPageTitle: "Зочид буудал",
     allSectionTitle: "Бүгд",
@@ -282,7 +291,7 @@ const translations: Record<Language, Record<string, string>> = {
     languageLevelIntermediate: "Дунд",
     languageLevelBasic: "Анхан",
     workedAsTranslatorLabel: "Орчуулга хийж байсан уу?",
-    translationFieldsLabel: "Орчуулга хийх боломжтой салбарууд (Олон сонголттой)",
+    translationFieldsLabel: "Орчуулга хийх боломжтой салбарууд",
     fieldTourism: "Аялал жуулчлал",
     fieldMedical: "Эмнэлэг, эмчилгээ",
     fieldEquipment: "Тоног төхөөрөмж",
@@ -290,7 +299,7 @@ const translations: Record<Language, Record<string, string>> = {
     fieldOfficialDocuments: "Албан бичгийн орчуулга",
     fieldOfficialSpeech: "Албан ярианы орчуулга",
     fieldMachinery: "Машин механизм",
-    canWorkInOtherCitiesLabel: "Өөрийн байгаа хотоос өөр хотуудад орчуулга хийх боломжтой бол сонгоно уу (Олон сонголттой)",
+    canWorkInOtherCitiesLabel: "Бусад хотод ажиллах боломжтой эсэх",
     dailyRateLabel: "Таны 1 өдрийн орчуулга хийх үнэ/тариф (юань)",
     selectDailyRatePlaceholder: "Үнийн дүнгээ сонгоно уу",
     rate100to200: "100-200 юань",
@@ -452,7 +461,7 @@ const translations: Record<Language, Record<string, string>> = {
     selectRatingPrompt: "Үнэлгээгээ сонгоно уу (1-10).",
     reviewFormCardTitle: "Үнэлгээ болон сэтгэгдэл",
     yourRating: "Таны үнэлгээ",
-    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} үнэлгээ)", 
+    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} үнэлгээ)",
     // Auth Error Messages
     authErrorTitle: "Алдаа",
     authErrorInvalidCredential: "И-мэйл эсвэл нууц үг буруу байна.",
@@ -544,7 +553,7 @@ const translations: Record<Language, Record<string, string>> = {
     myNotifications: "我的通知",
     noOrdersPlaceholder: "您目前没有订单。",
     ordersNoPurchasesMade: "您还没有购买任何商品",
-    ordersNeedsTab: "需求", 
+    ordersNeedsTab: "需求",
     wechatOrdersTab: "微信服务",
     ordersPaymentFilter: "付款",
     ordersTicketFilter: "票务",
@@ -592,10 +601,10 @@ const translations: Record<Language, Record<string, string>> = {
     translatorContactRevealedNotificationDescription: "翻译员 {{serviceName}}: 电话: {{translatorPhoneNumber}}, 微信: {{translatorWeChatId}}.",
     // Flight Search Page
     flightsPageTitle: "航班",
-    fromAirport: "从哪里",
-    toAirport: "到哪里",
-    departureAirportPlaceholder: "选择出发机场",
-    arrivalAirportPlaceholder: "选择到达机场",
+    fromAirport: "从哪里", // Will be replaced by fromCity
+    toAirport: "到哪里", // Will be replaced by toCity
+    departureAirportPlaceholder: "选择出发机场", // Will be replaced
+    arrivalAirportPlaceholder: "选择到达机场", // Will be replaced
     selectDepartureDate: "选择出发日期",
     selectDatePlaceholder: "选择日期",
     passengers: "乘客",
@@ -606,9 +615,18 @@ const translations: Record<Language, Record<string, string>> = {
     searchFlights: "搜索航班",
     swapAirports: "交换方向",
     back: "返回",
-    selectAirportDialogTitle: "您的航线",
-    searchAirportsPlaceholder: "搜索",
-    noAirportsFound: "未找到机场",
+    selectAirportDialogTitle: "您的航线", // Will be replaced
+    searchAirportsPlaceholder: "搜索", // Will be replaced
+    noAirportsFound: "未找到机场", // Will be replaced
+    fromCity: "从 (城市)",
+    toCity: "到 (城市)",
+    departureCityPlaceholder: "选择出发城市",
+    arrivalCityPlaceholder: "选择到达城市",
+    departureCityRequired: "出发城市为必填项",
+    arrivalCityRequired: "到达城市为必填项",
+    selectCityDialogTitle: "选择城市",
+    searchCitiesPlaceholder: "搜索城市",
+    noCitiesFound: "未找到城市",
     // Hotels Page
     hotelsPageTitle: "酒店",
     allSectionTitle: "全部",
@@ -749,7 +767,7 @@ const translations: Record<Language, Record<string, string>> = {
     languageLevelIntermediate: "中等",
     languageLevelBasic: "基础",
     workedAsTranslatorLabel: "您以前做过翻译工作吗？",
-    translationFieldsLabel: "可翻译领域 (可多选)",
+    translationFieldsLabel: "可翻译领域",
     fieldTourism: "旅游",
     fieldMedical: "医疗",
     fieldEquipment: "设备",
@@ -757,7 +775,7 @@ const translations: Record<Language, Record<string, string>> = {
     fieldOfficialDocuments: "公文翻译",
     fieldOfficialSpeech: "正式口译",
     fieldMachinery: "机械",
-    canWorkInOtherCitiesLabel: "您是否可以在其他城市提供翻译服务？ (可多选)",
+    canWorkInOtherCitiesLabel: "是否可在其他城市工作",
     dailyRateLabel: "您每日的翻译费率 (人民币)",
     selectDailyRatePlaceholder: "选择费率范围",
     rate100to200: "100-200元",
@@ -919,7 +937,7 @@ const translations: Record<Language, Record<string, string>> = {
     selectRatingPrompt: "请选择您的评分 (1-10)。",
     reviewFormCardTitle: "评分与评论",
     yourRating: "您的评分",
-    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} 条评价)", 
+    averageRatingDisplay: "{{averageRating}} ({{reviewCount}} 条评价)",
     // Auth Error Messages
     authErrorTitle: "错误",
     authErrorInvalidCredential: "电子邮件或密码错误。",
@@ -947,7 +965,6 @@ const translations: Record<Language, Record<string, string>> = {
     // City Selection Sheet
     majorCitiesTitle: "主要城市",
     otherCitiesTitle: "其他城市",
-
   },
 };
 
