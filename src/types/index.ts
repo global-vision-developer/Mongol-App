@@ -5,13 +5,12 @@ import type { Timestamp } from 'firebase/firestore';
 export type Language = 'mn' | 'cn';
 
 export interface City {
-  value: string; // Firestore document's 'name' field (Mongolian name) or 'all' for the "All" option
-  label: string; // Mongolian name (from Firestore 'name' field)
-  label_cn?: string; // Chinese name (from Firestore 'nameCN' field)
-  isMajor?: boolean; // Derived from Firestore 'cityType' field
-  order?: number; // From Firestore 'order' field
-  cityType?: 'major' | 'other' | 'all'; // Firestore 'cityType' field, or 'all' for the static "All" option
-  // Added id for potential Firestore document ID mapping if needed, though 'value' currently serves as primary identifier
+  value: string; 
+  label: string; 
+  label_cn?: string; 
+  isMajor?: boolean; 
+  order?: number; 
+  cityType?: 'major' | 'other' | 'all'; 
   id?: string; 
 }
 
@@ -61,8 +60,8 @@ export interface RecommendedItem {
   gender?: 'male' | 'female' | 'other' | null; 
   city?: string; 
   testLevel?: string;
-  speakingLevel?: string;
-  writingLevel?: string;
+  speakingLevel?: LanguageLevel | null; // Changed from string to LanguageLevel
+  writingLevel?: LanguageLevel | null; // Changed from string to LanguageLevel
   hasWorkedBefore?: boolean;
   possibleFields?: string[];
   availableCities?: string[] | string;
@@ -75,12 +74,12 @@ export interface RecommendedItem {
   availabilityStatus?: string;
   dataAiHint?: string;
   itemType: ItemType;
-  nationality?: Nationality;
+  nationality?: Nationality | null; // Added null
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
   currentCityInChina?: string | null; 
   chineseExamTaken?: boolean | null;
-  translationFields?: TranslationField[];
+  translationFields?: TranslationField[] | null; // Added null
   dailyRate?: DailyRateRange | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
@@ -192,31 +191,33 @@ export interface Translator {
   nationality?: Nationality | null;
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
-  currentCityInChina?: string | null;
-  chineseExamTaken?: boolean | null;
+  currentCityInChina?: string | null; // City ID
+  chineseExamTaken?: boolean | null; // Was string (HSK level), now boolean
+  chineseExamDetails?: string | null; // To store "HSK5" or similar
   speakingLevel?: LanguageLevel | null;
   writingLevel?: LanguageLevel | null;
-  workedAsTranslator?: boolean | null;
-  translationFields?: TranslationField[] | null;
-  canWorkInOtherCities?: string[] | null;
-  dailyRate?: DailyRateRange | null;
+  workedAsTranslator?: boolean | null; // Was string "Тийм/Үгүй"
+  translationFields?: TranslationField[] | null; // Was string like "Аялал жуулчлал"
+  canWorkInOtherCities?: string[] | null; // Array of City IDs
+  dailyRate?: DailyRateRange | null; // Was number, now string range
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
-  city?: string;
+  city?: string; // City ID (often same as currentCityInChina for translators)
   averageRating?: number | null;
   reviewCount?: number;
   totalRatingSum?: number;
   description?: string;
-  gender?: 'male' | 'female' | 'other' | null;
-  itemType: ItemType;
+  gender?: 'male' | 'female' | 'other' | null; // Was "Эр/Эм"
+  itemType: ItemType; // Should be 'translator'
   idCardFrontImageUrl?: string;
   idCardBackImageUrl?: string;
   selfieImageUrl?: string;
-  wechatQrImageUrl?: string;
+  wechatQrImageUrl?: string | null; // Added null
   registeredAt?: Timestamp | Date | string; 
   isActive?: boolean;
   isProfileComplete?: boolean;
   views?: number;
+  dataAiHint?: string; // For ServiceCard
 }
 
 
@@ -244,12 +245,10 @@ export interface FAQItem {
   id: string;
   question: string;
   answer: string;
-  topic: string; // This will be used for grouping
+  topic: string; 
   createdAt: Timestamp;
-  createdBy?: string; // Optional: UID of the user who created/last updated
-  isPredefined?: boolean; // Optional: If it's a system-defined FAQ
-  updatedAt?: Timestamp; // Optional: For tracking updates
-  order?: number; // Optional: For specific ordering within a topic
+  createdBy?: string; 
+  isPredefined?: boolean; 
+  updatedAt?: Timestamp; 
+  order?: number; 
 }
-
-```

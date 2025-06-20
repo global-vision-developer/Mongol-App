@@ -14,16 +14,47 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCity } from "@/contexts/CityContext";
 import { collection, getDocs, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore"; 
 import { db } from "@/lib/firebase";
-import type { Translator, ItemType } from "@/types"; 
+import type { Translator, ItemType, LanguageLevel, DailyRateRange, TranslationField, Nationality } from "@/types"; 
 
-// Helper function to map Firestore categoryName to singular ItemType for ServiceCard
-const mapCategoryToSingularItemType = (categoryName: string): ItemType => {
-  const lowerCategoryName = categoryName?.toLowerCase();
-  switch (lowerCategoryName) {
-    case 'translators': return 'translator';
-    // Add other mappings if necessary
-    default: return lowerCategoryName as ItemType; // Fallback
-  }
+// Helper function to map language level string to LanguageLevel type
+const mapLanguageLevel = (levelString?: string): LanguageLevel | null => {
+  if (!levelString) return null;
+  const lowerLevel = levelString.toLowerCase();
+  if (lowerLevel.includes('сайн') || lowerLevel.includes('good')) return 'good';
+  if (lowerLevel.includes('дунд') || lowerLevel.includes('intermediate')) return 'intermediate';
+  if (lowerLevel.includes('анхан') || lowerLevel.includes('basic')) return 'basic';
+  return null;
+};
+
+// Helper function to map price number to DailyRateRange type
+const mapPriceToDailyRate = (price?: number): DailyRateRange | null => {
+  if (price === undefined || price === null) return null;
+  if (price <= 200) return '100-200';
+  if (price <= 300) return '200-300';
+  if (price <= 400) return '300-400';
+  if (price <= 500) return '400-500';
+  return '500+';
+};
+
+// Helper function to map sector string to TranslationField array
+const mapSectorToTranslationFields = (sectorString?: string): TranslationField[] | null => {
+  if (!sectorString) return null;
+  const lowerSector = sectorString.toLowerCase();
+  if (lowerSector.includes('аялал жуулчлал') || lowerSector.includes('tourism')) return ['tourism'];
+  if (lowerSector.includes('эмнэлэг') || lowerSector.includes('medical')) return ['medical'];
+  if (lowerSector.includes('тоног төхөөрөмж') || lowerSector.includes('equipment')) return ['equipment'];
+  if (lowerSector.includes('үзэсгэлэн') || lowerSector.includes('exhibition')) return ['exhibition'];
+  if (lowerSector.includes('албан бичиг') || lowerSector.includes('official documents')) return ['official_documents'];
+  if (lowerSector.includes('албан яриа') || lowerSector.includes('official speech')) return ['official_speech'];
+  if (lowerSector.includes('машин механизм') || lowerSector.includes('machinery')) return ['machinery'];
+  return null;
+};
+
+const mapHuisToGender = (huis?: string): 'male' | 'female' | 'other' | null => {
+  if (!huis) return null;
+  if (huis.toLowerCase() === 'эм' || huis.toLowerCase() === 'female') return 'female';
+  if (huis.toLowerCase() === 'эр' || huis.toLowerCase() === 'male') return 'male';
+  return null;
 };
 
 
@@ -55,9 +86,8 @@ export default function TranslatorsPage() {
           where("categoryName", "==", "translators"),
         ];
         
-        // Filter by data.currentCityInChina (city ID) using selectedCity.value (city ID)
         if (selectedCity.value !== "all") {
-          queryConstraints.push(where("data.currentCityInChina", "==", selectedCity.value)); 
+          queryConstraints.push(where("data.khot", "==", selectedCity.value)); 
         }
         
         const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
@@ -67,6 +97,7 @@ export default function TranslatorsPage() {
           .map((doc) => {
             const entryData = doc.data();
             const nestedData = entryData.data || {};
+            // Assuming 'isActive' might not exist or is true by default for listing
             if (nestedData.isActive === false) { 
                 return null;
             }
@@ -81,28 +112,31 @@ export default function TranslatorsPage() {
             return {
               id: doc.id,
               uid: nestedData.uid || doc.id, 
-              name: nestedData.name || t('serviceUnnamed'),
+              name: nestedData.name || nestedData.title || t('serviceUnnamed'),
               photoUrl: finalImageUrl,
-              nationality: nestedData.nationality,
-              inChinaNow: nestedData.inChinaNow,
-              yearsInChina: nestedData.yearsInChina,
-              currentCityInChina: nestedData.currentCityInChina, // This is the city ID
-              chineseExamTaken: nestedData.chineseExamTaken,
-              speakingLevel: nestedData.speakingLevel,
-              writingLevel: nestedData.writingLevel,
-              workedAsTranslator: nestedData.workedAsTranslator,
-              translationFields: nestedData.translationFields,
-              canWorkInOtherCities: nestedData.canWorkInOtherCities,
-              dailyRate: nestedData.dailyRate,
-              chinaPhoneNumber: nestedData.chinaPhoneNumber,
-              wechatId: nestedData.wechatId,
-              city: nestedData.khot || nestedData.currentCityInChina, // City ID to be resolved by TranslatorCard
-              rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
-              description: nestedData.setgegdel || nestedData.description,
-              itemType: mapCategoryToSingularItemType(entryData.categoryName), 
-              isActive: nestedData.isActive,
-              reviewCount: nestedData.reviewCount,
-              averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null, // Add averageRating for card
+              nationality: (nestedData.nationality || nestedData.irgenshil) as Nationality || null,
+              inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null),
+              yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null),
+              currentCityInChina: nestedData.khot || null,
+              chineseExamTaken: !!nestedData.exam,
+              chineseExamDetails: nestedData.exam || null,
+              speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
+              writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
+              workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
+              translationFields: mapSectorToTranslationFields(nestedData.sector),
+              canWorkInOtherCities: null, // Based on wcities complexity
+              dailyRate: mapPriceToDailyRate(nestedData.price),
+              chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+              wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
+              city: nestedData.khot || null, 
+              averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
+              reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
+              totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
+              description: nestedData.setgegdel || nestedData.description || '',
+              gender: mapHuisToGender(nestedData.huis),
+              itemType: 'translator' as ItemType, 
+              isActive: typeof nestedData.isActive === 'boolean' ? nestedData.isActive : true,
+              dataAiHint: nestedData.dataAiHint || "translator person"
             } as Translator;
           })
           .filter((translator): translator is Translator => translator !== null); 

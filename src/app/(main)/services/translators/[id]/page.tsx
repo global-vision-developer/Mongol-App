@@ -6,6 +6,50 @@ import { db } from "@/lib/firebase";
 import type { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
 import type { Translator, ItemType, Nationality, LanguageLevel, DailyRateRange, TranslationField } from '@/types';
 
+// Helper function to map language level string to LanguageLevel type
+const mapLanguageLevel = (levelString?: string): LanguageLevel | null => {
+  if (!levelString) return null;
+  const lowerLevel = levelString.toLowerCase();
+  if (lowerLevel.includes('сайн') || lowerLevel.includes('good')) return 'good';
+  if (lowerLevel.includes('дунд') || lowerLevel.includes('intermediate')) return 'intermediate';
+  if (lowerLevel.includes('анхан') || lowerLevel.includes('basic')) return 'basic';
+  return null;
+};
+
+// Helper function to map price number to DailyRateRange type
+const mapPriceToDailyRate = (price?: number): DailyRateRange | null => {
+  if (price === undefined || price === null) return null;
+  if (price <= 200) return '100-200'; // Assuming 100-200 is the lowest bucket
+  if (price <= 300) return '200-300';
+  if (price <= 400) return '300-400';
+  if (price <= 500) return '400-500';
+  return '500+';
+};
+
+// Helper function to map sector string to TranslationField array
+const mapSectorToTranslationFields = (sectorString?: string): TranslationField[] | null => {
+  if (!sectorString) return null;
+  const lowerSector = sectorString.toLowerCase();
+  // This is a simple mapping, assuming sectorString is one of the known values.
+  // For multiple sectors or more complex logic, this needs expansion.
+  if (lowerSector.includes('аялал жуулчлал') || lowerSector.includes('tourism')) return ['tourism'];
+  if (lowerSector.includes('эмнэлэг') || lowerSector.includes('medical')) return ['medical'];
+  if (lowerSector.includes('тоног төхөөрөмж') || lowerSector.includes('equipment')) return ['equipment'];
+  if (lowerSector.includes('үзэсгэлэн') || lowerSector.includes('exhibition')) return ['exhibition'];
+  if (lowerSector.includes('албан бичиг') || lowerSector.includes('official documents')) return ['official_documents'];
+  if (lowerSector.includes('албан яриа') || lowerSector.includes('official speech')) return ['official_speech'];
+  if (lowerSector.includes('машин механизм') || lowerSector.includes('machinery')) return ['machinery'];
+  return null;
+};
+
+const mapHuisToGender = (huis?: string): 'male' | 'female' | 'other' | null => {
+  if (!huis) return null;
+  if (huis.toLowerCase() === 'эм' || huis.toLowerCase() === 'female') return 'female';
+  if (huis.toLowerCase() === 'эр' || huis.toLowerCase() === 'male') return 'male';
+  return 'other'; // Or null if 'other' is not applicable based on source data
+};
+
+
 async function getItemData(id: string): Promise<Translator | null> {
   try {
     const docRef = doc(db, "entries", id);
@@ -15,14 +59,15 @@ async function getItemData(id: string): Promise<Translator | null> {
       const entryData = docSnap.data();
       if (entryData.categoryName === "translators") {
         const nestedData = entryData.data || {};
-        const registeredAtRaw = nestedData.registeredAt;
+        
+        const registeredAtRaw = nestedData.registeredAt || nestedData.createdAt; // Fallback to createdAt if registeredAt is missing
         const registeredAtDate = registeredAtRaw instanceof Timestamp
                                   ? registeredAtRaw.toDate()
                                   : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
         
         const rawPhotoUrlInput = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
-        const serviceName = nestedData.name || 'Translator';
-        const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+        const serviceName = nestedData.name || nestedData.title || 'Translator'; // Fallback for name
+        const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName.charAt(0))}`;
         let photoUrlToUse: string;
 
         if (typeof rawPhotoUrlInput === 'string' && rawPhotoUrlInput.trim() !== '') {
@@ -34,39 +79,42 @@ async function getItemData(id: string): Promise<Translator | null> {
         const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
         let processedWeChatQrUrl: string | undefined = undefined;
         if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
-           const trimmedQrUrl = rawWeChatQrUrl.trim();
-           processedWeChatQrUrl = trimmedQrUrl;
+           processedWeChatQrUrl = rawWeChatQrUrl.trim();
         }
+        
+        const nationalityValue = nestedData.nationality || nestedData.irgenshil; // Added fallback
 
         return {
           id: docSnap.id,
           uid: nestedData.uid || docSnap.id,
           name: serviceName,
           photoUrl: photoUrlToUse,
-          nationality: nestedData.nationality as Nationality,
-          inChinaNow: nestedData.inChinaNow,
-          yearsInChina: nestedData.yearsInChina,
-          currentCityInChina: nestedData.currentCityInChina,
-          chineseExamTaken: nestedData.chineseExamTaken,
-          speakingLevel: nestedData.speakingLevel as LanguageLevel,
-          writingLevel: nestedData.writingLevel as LanguageLevel,
-          workedAsTranslator: nestedData.workedAsTranslator,
-          translationFields: nestedData.translationFields as TranslationField[],
-          canWorkInOtherCities: nestedData.canWorkInOtherCities,
-          dailyRate: nestedData.dailyRate as DailyRateRange,
-          chinaPhoneNumber: nestedData.chinaPhoneNumber,
-          wechatId: nestedData.wechatId,
+          nationality: nationalityValue as Nationality || null,
+          inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null), // Fallback for inChinaNow
+          yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null), // Fallback for yearsInChina
+          currentCityInChina: nestedData.khot || null, // City ID
+          chineseExamTaken: !!nestedData.exam,
+          chineseExamDetails: nestedData.exam || null,
+          speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
+          writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
+          workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
+          translationFields: mapSectorToTranslationFields(nestedData.sector),
+          canWorkInOtherCities: null, // Keeping this null as wcities parsing is complex
+          dailyRate: mapPriceToDailyRate(nestedData.price),
+          chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+          wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
           wechatQrImageUrl: processedWeChatQrUrl, 
-          city: nestedData.khot || nestedData.currentCityInChina,
+          city: nestedData.khot || null, // City ID
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
           totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
           description: nestedData.setgegdel || nestedData.description || '',
+          gender: mapHuisToGender(nestedData.huis),
           itemType: 'translator' as ItemType,
           registeredAt: registeredAtDate,
-          isActive: nestedData.isActive,
-          isProfileComplete: nestedData.isProfileComplete,
-          views: nestedData.views,
+          isActive: typeof nestedData.isActive === 'boolean' ? nestedData.isActive : true, // Default to true if not specified
+          isProfileComplete: typeof nestedData.isProfileComplete === 'boolean' ? nestedData.isProfileComplete : true, // Default to true
+          views: typeof nestedData.views === 'number' ? nestedData.views : 0,
           dataAiHint: nestedData.dataAiHint || "translator portrait",
         } as Translator;
       }
@@ -88,6 +136,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 export async function generateStaticParams(): Promise<Params[]> {
   try {
     const entriesRef = collection(db, "entries");
+    // Ensure we only try to generate params for active translators if such a field exists
+    // For now, generating for all translators in "translators" category
     const q = query(entriesRef, where("categoryName", "==", "translators"));
     const snapshot = await getDocs(q);
     const paths = snapshot.docs.map((doc) => ({

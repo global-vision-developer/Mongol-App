@@ -9,28 +9,70 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { Translator, City, Order as AppOrder, TranslationField, LanguageLevel, DailyRateRange, NotificationItem, ItemType, Nationality } from "@/types";
-import { CITIES as StaticCITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants"; // Renamed to StaticCITIES
+import { CITIES as StaticCITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants"; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info, ShoppingBag, VenetianMask } from "lucide-react"; // Added VenetianMask for gender
 import { format } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceReviewForm } from "@/components/ServiceReviewForm";
-import { useCity } from "@/contexts/CityContext"; // Import useCity
+import { useCity } from "@/contexts/CityContext"; 
 
-const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; translationFieldsValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean; isCityName?: boolean; citiesList?: City[] }> = ({ labelKey, value, icon: Icon, cityValue, translationFieldsValue, languageLevelValue, dailyRateValue, isCityName, citiesList }) => {
+// Helper function to map language level string to LanguageLevel type
+const mapLanguageLevel = (levelString?: string): LanguageLevel | null => {
+  if (!levelString) return null;
+  const lowerLevel = levelString.toLowerCase();
+  if (lowerLevel.includes('сайн') || lowerLevel.includes('good')) return 'good';
+  if (lowerLevel.includes('дунд') || lowerLevel.includes('intermediate')) return 'intermediate';
+  if (lowerLevel.includes('анхан') || lowerLevel.includes('basic')) return 'basic';
+  return null;
+};
+
+// Helper function to map price number to DailyRateRange type
+const mapPriceToDailyRate = (price?: number): DailyRateRange | null => {
+  if (price === undefined || price === null) return null;
+  if (price <= 200) return '100-200';
+  if (price <= 300) return '200-300';
+  if (price <= 400) return '300-400';
+  if (price <= 500) return '400-500';
+  return '500+';
+};
+
+// Helper function to map sector string to TranslationField array
+const mapSectorToTranslationFields = (sectorString?: string): TranslationField[] | null => {
+  if (!sectorString) return null;
+  const lowerSector = sectorString.toLowerCase();
+  if (lowerSector.includes('аялал жуулчлал') || lowerSector.includes('tourism')) return ['tourism'];
+  if (lowerSector.includes('эмнэлэг') || lowerSector.includes('medical')) return ['medical'];
+  if (lowerSector.includes('тоног төхөөрөмж') || lowerSector.includes('equipment')) return ['equipment'];
+  if (lowerSector.includes('үзэсгэлэн') || lowerSector.includes('exhibition')) return ['exhibition'];
+  if (lowerSector.includes('албан бичиг') || lowerSector.includes('official documents')) return ['official_documents'];
+  if (lowerSector.includes('албан яриа') || lowerSector.includes('official speech')) return ['official_speech'];
+  if (lowerSector.includes('машин механизм') || lowerSector.includes('machinery')) return ['machinery'];
+  return null;
+};
+
+const mapHuisToGender = (huis?: string): 'male' | 'female' | 'other' | null => {
+  if (!huis) return null;
+  if (huis.toLowerCase() === 'эм' || huis.toLowerCase() === 'female') return 'female';
+  if (huis.toLowerCase() === 'эр' || huis.toLowerCase() === 'male') return 'male';
+  return null; 
+};
+
+
+const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; translationFieldsValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean; isCityName?: boolean; citiesList?: City[]; genderValue?: boolean; }> = ({ labelKey, value, icon: Icon, cityValue, translationFieldsValue, languageLevelValue, dailyRateValue, isCityName, citiesList, genderValue }) => {
   const { t, language } = useTranslation();
   let displayValue: string | React.ReactNode = t('notProvided');
 
   if (value !== undefined && value !== null && value !== '') {
     if (Array.isArray(value)) {
-      if (cityValue && citiesList) { // City values are now IDs
+      if (cityValue && citiesList) { 
         displayValue = value.map(v => {
-          const city = citiesList.find(c => c.value === v); // Find city by ID
+          const city = citiesList.find(c => c.value === v); 
           return city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : v;
         }).join(', ');
       } else if (translationFieldsValue) {
@@ -46,7 +88,9 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     } else if (dailyRateValue && typeof value === 'string') {
         const rateKey = `rate${value.replace('-', 'to').replace('+', 'plus')}`;
         displayValue = t(rateKey);
-    } else if (isCityName && typeof value === 'string' && citiesList) { // Value is city ID
+    } else if (genderValue && typeof value === 'string') {
+        displayValue = t(`gender${value.charAt(0).toUpperCase() + value.slice(1)}`);
+    } else if (isCityName && typeof value === 'string' && citiesList) { 
       const city = citiesList.find(c => c.value === value);
       displayValue = city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : value.toString();
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') { 
@@ -84,10 +128,10 @@ interface TranslatorDetailClientPageProps {
 
 export default function TranslatorDetailClientPage({ params, itemType, itemData }: TranslatorDetailClientPageProps) {
   const router = useRouter();
-  const { t, language } = useTranslation(); // Added language
+  const { t, language } = useTranslation(); 
   const { user } = useAuth();
   const { toast } = useToast();
-  const { availableCities } = useCity(); // Get available cities
+  const { availableCities } = useCity(); 
 
   const [translator, setTranslator] = useState<Translator | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
@@ -108,14 +152,14 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
             const entryData = docSnap.data();
             if (entryData.categoryName === "translators") {
               const nestedData = entryData.data || {};
-              const registeredAtRaw = nestedData.registeredAt;
+              const registeredAtRaw = nestedData.registeredAt || nestedData.createdAt;
               const registeredAtDate = registeredAtRaw instanceof Timestamp 
                                         ? registeredAtRaw.toDate() 
                                         : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
               
-              const serviceName = nestedData.name || t('serviceUnnamed');
+              const serviceName = nestedData.name || nestedData.title || t('serviceUnnamed');
               const rawPhotoUrlInput = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
-              const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+              const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName.charAt(0))}`;
               let photoUrlToUse: string;
 
               if (typeof rawPhotoUrlInput === 'string' && rawPhotoUrlInput.trim() !== '') {
@@ -130,35 +174,39 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                   finalWeChatQrUrl = rawWeChatQrUrl.trim();
               }
 
+              const nationalityValue = nestedData.nationality || nestedData.irgenshil;
+
               setTranslator({ 
                 id: docSnap.id, 
                 uid: nestedData.uid || docSnap.id,
                 name: serviceName,
                 photoUrl: photoUrlToUse,
-                nationality: nestedData.nationality as Nationality,
-                inChinaNow: nestedData.inChinaNow,
-                yearsInChina: nestedData.yearsInChina,
-                currentCityInChina: nestedData.currentCityInChina, // This is City ID
-                chineseExamTaken: nestedData.chineseExamTaken,
-                speakingLevel: nestedData.speakingLevel as LanguageLevel,
-                writingLevel: nestedData.writingLevel as LanguageLevel,
-                workedAsTranslator: nestedData.workedAsTranslator,
-                translationFields: nestedData.translationFields as TranslationField[],
-                canWorkInOtherCities: nestedData.canWorkInOtherCities, // Array of city IDs
-                dailyRate: nestedData.dailyRate as DailyRateRange,
-                chinaPhoneNumber: nestedData.chinaPhoneNumber,
-                wechatId: nestedData.wechatId,
+                nationality: nationalityValue as Nationality || null,
+                inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null),
+                yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null),
+                currentCityInChina: nestedData.khot || null,
+                chineseExamTaken: !!nestedData.exam,
+                chineseExamDetails: nestedData.exam || null,
+                speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
+                writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
+                workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
+                translationFields: mapSectorToTranslationFields(nestedData.sector),
+                canWorkInOtherCities: null, // Keeping this null
+                dailyRate: mapPriceToDailyRate(nestedData.price),
+                chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+                wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
                 wechatQrImageUrl: finalWeChatQrUrl,
-                city: nestedData.khot || nestedData.currentCityInChina, // City ID
+                city: nestedData.khot || null, 
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
                 description: nestedData.setgegdel || nestedData.description || '',
+                gender: mapHuisToGender(nestedData.huis),
                 itemType: entryData.categoryName as ItemType, 
                 registeredAt: registeredAtDate,
-                isActive: nestedData.isActive,
-                isProfileComplete: nestedData.isProfileComplete,
-                views: nestedData.views,
+                isActive: typeof nestedData.isActive === 'boolean' ? nestedData.isActive : true,
+                isProfileComplete: typeof nestedData.isProfileComplete === 'boolean' ? nestedData.isProfileComplete : true,
+                views: typeof nestedData.views === 'number' ? nestedData.views : 0,
                 dataAiHint: nestedData.dataAiHint || "translator portrait",
               } as Translator);
             } else {
@@ -176,7 +224,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
       };
       fetchTranslator();
     }
-  }, [itemData, params.id, t]);
+  }, [itemData, params.id, t, availableCities]);
 
   const handleGetContactInfo = async () => {
     if (!user) {
@@ -271,7 +319,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-5/6 mb-6" />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+                {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
         </div>
         <CardFooter className="p-4 md:p-6 border-t">
@@ -294,7 +342,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
   const dailyRateDisplay = translator.dailyRate ? t(`rate${translator.dailyRate.replace('-', 'to').replace('+', 'plus')}`) : t('notProvided');
   const registeredAtDate = translator.registeredAt instanceof Date
     ? translator.registeredAt
-    : (translator.registeredAt instanceof Timestamp ? translator.registeredAt.toDate() : null);
+    : (translator.registeredAt instanceof Timestamp ? translator.registeredAt.toDate() : (typeof translator.registeredAt === 'string' ? new Date(translator.registeredAt) : null));
 
   return (
     <div className="pb-20">
@@ -331,7 +379,6 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                     </Avatar>
                     <div>
                         <CardTitle className="text-2xl md:text-3xl font-headline text-white mb-1">{translator.name}</CardTitle>
-                         
                         <div className="flex items-center gap-1 text-sm text-amber-500">
                             <Star className="h-4 w-4 fill-amber-400 text-amber-500" />
                             {translator.averageRating !== null && translator.averageRating !== undefined && translator.reviewCount !== undefined ? (
@@ -354,10 +401,12 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              <DetailItem labelKey="nationalityLabel" value={t(translator.nationality || 'notProvided')} icon={Globe} />
+              <DetailItem labelKey="nationalityLabel" value={translator.nationality ? t(translator.nationality) : t('notProvided')} icon={Globe} />
               <DetailItem labelKey="currentCityInChinaLabel" value={translator.currentCityInChina} icon={Landmark} isCityName citiesList={availableCities} />
-              <DetailItem labelKey="yearsInChinaLabel" value={translator.inChinaNow === false && translator.yearsInChina ? translator.yearsInChina.toString() : (translator.inChinaNow ? t('yes') : t('notProvided'))} icon={CalendarDays} />
+              {translator.gender && <DetailItem labelKey="gender" value={translator.gender} icon={VenetianMask} genderValue />}
+              <DetailItem labelKey="yearsInChinaLabel" value={translator.yearsInChina?.toString()} icon={CalendarDays} />
               <DetailItem labelKey="chineseExamTakenLabel" value={translator.chineseExamTaken} icon={ShieldCheck} />
+               {translator.chineseExamTaken && translator.chineseExamDetails && <DetailItem labelKey="chineseExamDetailsLabel" value={translator.chineseExamDetails} icon={Info} />}
               <DetailItem labelKey="speakingLevelLabel" value={translator.speakingLevel} icon={LanguagesIcon} languageLevelValue/>
               <DetailItem labelKey="writingLevelLabel" value={translator.writingLevel} icon={LanguagesIcon} languageLevelValue/>
               <DetailItem labelKey="workedAsTranslatorLabel" value={translator.workedAsTranslator} icon={Briefcase} />
@@ -401,8 +450,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
           <DialogHeader>
             <DialogTitle>{t('paymentModalTitle')}</DialogTitle>
             <DialogDescription>
-              {translator.dailyRate && t('paymentModalDescription', { rate: dailyRateDisplay || '...' })}
-              {!translator.dailyRate && t('paymentModalDescription', { rate: '...' })}
+              {dailyRateDisplay !== t('notProvided') ? t('paymentModalDescription', { rate: dailyRateDisplay }) : t('paymentModalDescriptionNoRate') }
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
