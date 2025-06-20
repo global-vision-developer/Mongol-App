@@ -79,7 +79,7 @@ export interface RecommendedItem {
   yearsInChina?: number | null;
   currentCityInChina?: string | null; 
   chineseExamTaken?: boolean | null;
-  translationFields?: TranslationField[] | null; 
+  translationFields?: string | null; // Changed from TranslationField[] to string
   dailyRate?: DailyRateRange | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
@@ -197,8 +197,8 @@ export interface Translator {
   speakingLevel?: LanguageLevel | null;
   writingLevel?: LanguageLevel | null;
   workedAsTranslator?: boolean | null; 
-  translationFields?: TranslationField[] | null; 
-  canWorkInOtherCities?: string | null; // Changed from string[] to string for wcities raw data
+  translationFields?: string | null; // Changed from TranslationField[] to string
+  canWorkInOtherCities?: string | null; 
   dailyRate?: DailyRateRange | null; 
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;

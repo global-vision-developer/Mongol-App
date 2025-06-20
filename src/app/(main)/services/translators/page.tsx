@@ -36,20 +36,6 @@ const mapPriceToDailyRate = (price?: number): DailyRateRange | null => {
   return '500+';
 };
 
-// Helper function to map sector string to TranslationField array
-const mapSectorToTranslationFields = (sectorString?: string): TranslationField[] | null => {
-  if (!sectorString) return null;
-  const lowerSector = sectorString.toLowerCase();
-  if (lowerSector.includes('аялал жуулчлал') || lowerSector.includes('tourism')) return ['tourism'];
-  if (lowerSector.includes('эмнэлэг') || lowerSector.includes('medical')) return ['medical'];
-  if (lowerSector.includes('тоног төхөөрөмж') || lowerSector.includes('equipment')) return ['equipment'];
-  if (lowerSector.includes('үзэсгэлэн') || lowerSector.includes('exhibition')) return ['exhibition'];
-  if (lowerSector.includes('албан бичиг') || lowerSector.includes('official documents')) return ['official_documents'];
-  if (lowerSector.includes('албан яриа') || lowerSector.includes('official speech')) return ['official_speech'];
-  if (lowerSector.includes('машин механизм') || lowerSector.includes('machinery')) return ['machinery'];
-  return null;
-};
-
 const mapHuisToGender = (huis?: string): 'male' | 'female' | 'other' | null => {
   if (!huis) return null;
   if (huis.toLowerCase() === 'эм' || huis.toLowerCase() === 'female') return 'female';
@@ -123,7 +109,7 @@ export default function TranslatorsPage() {
               speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
               writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
               workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
-              translationFields: mapSectorToTranslationFields(nestedData.sector),
+              translationFields: nestedData.sector || null, // Store raw sector string
               canWorkInOtherCities: null, // Based on wcities complexity
               dailyRate: mapPriceToDailyRate(nestedData.price),
               chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
@@ -208,3 +194,4 @@ export default function TranslatorsPage() {
     </div>
   );
 }
+

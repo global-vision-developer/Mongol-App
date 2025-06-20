@@ -9,7 +9,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { Translator, City, Order as AppOrder, TranslationField, LanguageLevel, DailyRateRange, NotificationItem, ItemType, Nationality } from "@/types";
-import { CITIES as StaticCITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants"; 
+import { CITIES as StaticCITIES } from "@/lib/constants"; 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,20 +42,6 @@ const mapPriceToDailyRate = (price?: number): DailyRateRange | null => {
   return '500+';
 };
 
-// Helper function to map sector string to TranslationField array
-const mapSectorToTranslationFields = (sectorString?: string): TranslationField[] | null => {
-  if (!sectorString) return null;
-  const lowerSector = sectorString.toLowerCase();
-  if (lowerSector.includes('аялал жуулчлал') || lowerSector.includes('tourism')) return ['tourism'];
-  if (lowerSector.includes('эмнэлэг') || lowerSector.includes('medical')) return ['medical'];
-  if (lowerSector.includes('тоног төхөөрөмж') || lowerSector.includes('equipment')) return ['equipment'];
-  if (lowerSector.includes('үзэсгэлэн') || lowerSector.includes('exhibition')) return ['exhibition'];
-  if (lowerSector.includes('албан бичиг') || lowerSector.includes('official documents')) return ['official_documents'];
-  if (lowerSector.includes('албан яриа') || lowerSector.includes('official speech')) return ['official_speech'];
-  if (lowerSector.includes('машин механизм') || lowerSector.includes('machinery')) return ['machinery'];
-  return null;
-};
-
 const mapHuisToGender = (huis?: string): 'male' | 'female' | 'other' | null => {
   if (!huis) return null;
   if (huis.toLowerCase() === 'эм' || huis.toLowerCase() === 'female') return 'female';
@@ -64,7 +50,7 @@ const mapHuisToGender = (huis?: string): 'male' | 'female' | 'other' | null => {
 };
 
 
-const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; translationFieldsValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean; isCityName?: boolean; citiesList?: City[]; genderValue?: boolean; }> = ({ labelKey, value, icon: Icon, cityValue, translationFieldsValue, languageLevelValue, dailyRateValue, isCityName, citiesList, genderValue }) => {
+const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number | boolean; icon?: React.ElementType; cityValue?: boolean; languageLevelValue?: boolean; dailyRateValue?: boolean; isCityName?: boolean; citiesList?: City[]; genderValue?: boolean; }> = ({ labelKey, value, icon: Icon, cityValue, languageLevelValue, dailyRateValue, isCityName, citiesList, genderValue }) => {
   const { t, language } = useTranslation();
   let displayValue: string | React.ReactNode = t('notProvided');
 
@@ -75,8 +61,6 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
           const city = citiesList.find(c => c.value === v); 
           return city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : v;
         }).join(', ');
-      } else if (translationFieldsValue) {
-         displayValue = value.map(v => t(`field${v.charAt(0).toUpperCase() + v.slice(1)}`)).join(', ');
       } else {
         displayValue = value.join(', ');
       }
@@ -190,8 +174,8 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
                 writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
                 workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
-                translationFields: mapSectorToTranslationFields(nestedData.sector),
-                canWorkInOtherCities: nestedData.wcities || null, // Storing raw wcities string
+                translationFields: nestedData.sector || null, // Store raw sector string
+                canWorkInOtherCities: nestedData.wcities || null,
                 dailyRate: mapPriceToDailyRate(nestedData.price),
                 chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
                 wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
@@ -411,7 +395,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
               <DetailItem labelKey="writingLevelLabel" value={translator.writingLevel} icon={LanguagesIcon} languageLevelValue/>
               <DetailItem labelKey="workedAsTranslatorLabel" value={translator.workedAsTranslator} icon={Briefcase} />
               <DetailItem labelKey="dailyRateLabel" value={translator.dailyRate} icon={Star} dailyRateValue />
-              <DetailItem labelKey="translationFieldsLabel" value={translator.translationFields} icon={Users} translationFieldsValue />
+              <DetailItem labelKey="translationFieldsLabel" value={translator.translationFields} icon={Users} />
               <DetailItem labelKey="canWorkInOtherCitiesLabel" value={translator.canWorkInOtherCities} icon={MapPin} />
               {registeredAtDate && (
                 <DetailItem labelKey="registeredAt" value={format(registeredAtDate, 'yyyy-MM-dd')} icon={UserCheck} />
