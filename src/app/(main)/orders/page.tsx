@@ -179,25 +179,15 @@ export default function OrdersPage() {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData; 
 
-        // Mongolian Phone Number
-        let finalMongolianPhoneNumber: string | null = null;
-        if (data['phone-number'] !== undefined && data['phone-number'] !== null) {
-          finalMongolianPhoneNumber = String(data['phone-number']);
-        }
+        const rawMongolianPhone = data['phone-number'];
+        const finalMongolianPhoneNumber = (rawMongolianPhone !== undefined && rawMongolianPhone !== null) ? rawMongolianPhone : null;
         
-        // China Phone Number
-        let finalChinaPhoneNumber: string | null = null;
-        if (data['china-number'] !== undefined && data['china-number'] !== null) {
-          finalChinaPhoneNumber = String(data['china-number']);
-        }
+        const rawChinaPhone = data['china-number'];
+        const finalChinaPhoneNumber = (rawChinaPhone !== undefined && rawChinaPhone !== null) ? rawChinaPhone : null;
 
-        // WeChat ID
-        let finalWechatId: string | null = null;
-        if (data['we-chat-id'] !== undefined && data['we-chat-id'] !== null) {
-          finalWechatId = String(data['we-chat-id']);
-        }
-
-        // WeChat QR Image URL
+        const rawWeChatId = data['we-chat-id'];
+        const finalWechatId = (rawWeChatId !== undefined && rawWeChatId !== null) ? rawWeChatId : null;
+        
         let finalWechatQrImageUrl: string | null = null;
         const rawWeChatImgArray = data['we-chat-img'];
         if (Array.isArray(rawWeChatImgArray) && rawWeChatImgArray.length > 0) {
@@ -207,7 +197,6 @@ export default function OrdersPage() {
           }
         }
         
-        // Main Image URL for the order item
         let mainImageUrl: string | null = null;
         if (data.imageUrl && typeof data.imageUrl === 'string' && data.imageUrl.trim() !== '') {
           mainImageUrl = data.imageUrl.trim();
