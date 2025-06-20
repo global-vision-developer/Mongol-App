@@ -153,11 +153,11 @@ export default function ProfilePage() {
             className="h-8 text-sm flex-grow"
             autoFocus
           />
-          <Button size="icon" variant="ghost" onClick={handlePhoneNumberSave} className="h-8 w-8 text-green-600 hover:text-green-700">
+          <Button size="icon" variant="ghost" onClick={handlePhoneNumberSave} className="h-8 w-8 text-green-600 hover:text-green-700" aria-label={t('save')}>
             <Save className="h-4 w-4" />
           </Button>
-          <Button size="icon" variant="ghost" onClick={handlePhoneNumberEditToggle} className="h-8 w-8 text-destructive hover:text-destructive/80">
-            <X className="h-4 w-4" />
+          <Button size="icon" variant="ghost" onClick={handlePhoneNumberEditToggle} className="h-8 w-8 text-destructive hover:text-destructive/80" aria-label={t('cancel')}>
+            {/* X icon removed as per request */}
           </Button>
         </div>
       ) : (
@@ -281,7 +281,7 @@ export default function ProfilePage() {
                      item.value 
                   )}
                   {item.actionIcon && !isEditingPhoneNumber && (
-                    <Button variant="ghost" size="icon" onClick={item.onActionClick} className="h-8 w-8">
+                    <Button variant="ghost" size="icon" onClick={item.onActionClick} className="h-8 w-8" aria-label={t('edit')}>
                       <item.actionIcon className="h-4 w-4 text-muted-foreground" />
                     </Button>
                   )}
