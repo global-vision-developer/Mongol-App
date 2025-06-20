@@ -401,7 +401,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              <DetailItem labelKey="nationalityLabel" value={translator.nationality ? t(translator.nationality) : t('notProvided')} icon={Globe} />
+              {/* Nationality item removed as per request */}
               <DetailItem labelKey="currentCityInChinaLabel" value={translator.currentCityInChina} icon={Landmark} isCityName citiesList={availableCities} />
               {translator.gender && <DetailItem labelKey="gender" value={translator.gender} icon={VenetianMask} genderValue />}
               <DetailItem labelKey="yearsInChinaLabel" value={translator.yearsInChina?.toString()} icon={CalendarDays} />
