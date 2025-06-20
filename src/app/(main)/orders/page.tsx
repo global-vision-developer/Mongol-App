@@ -91,39 +91,22 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
             ) : (
               <>
                 <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
-                {order.mongolianPhoneNumber != null ? (
-                  <div className="flex items-center text-sm mb-1">
-                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{t('mongolianPhoneNumberLabel')}: {order.mongolianPhoneNumber}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center text-sm mb-1 text-muted-foreground">
-                     <Phone className="h-4 w-4 mr-2" />
-                     <span>{t('mongolianPhoneNumberLabel')}: {t('n_a')}</span>
-                  </div>
-                )}
-                {order.chinaPhoneNumber != null ? (
-                  <div className="flex items-center text-sm mb-1">
-                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber}</span>
-                  </div>
-                ) : (
-                   <div className="flex items-center text-sm mb-1 text-muted-foreground">
-                     <Phone className="h-4 w-4 mr-2" />
-                     <span>{t('translatorContactPhoneLabel')}: {t('n_a')}</span>
-                  </div>
-                )}
-                {order.wechatId != null ? (
-                  <div className="flex items-center text-sm mb-1">
-                    <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{t('translatorContactWeChatLabel')}: {order.wechatId}</span>
-                  </div>
-                ) : (
-                   <div className="flex items-center text-sm mb-1 text-muted-foreground">
-                     <MessageCircle className="h-4 w-4 mr-2" />
-                     <span>{t('translatorContactWeChatLabel')}: {t('n_a')}</span>
-                  </div>
-                )}
+                
+                <div className="flex items-center text-sm mb-1">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{t('mongolianPhoneNumberLabel')}: {order.mongolianPhoneNumber ?? t('n_a')}</span>
+                </div>
+                
+                <div className="flex items-center text-sm mb-1">
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber ?? t('n_a')}</span>
+                </div>
+                
+                <div className="flex items-center text-sm mb-1">
+                  <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span>{t('translatorContactWeChatLabel')}: {order.wechatId ?? t('n_a')}</span>
+                </div>
+
                 {order.wechatQrImageUrl ? (
                   <div className="mt-1">
                     <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
@@ -229,9 +212,9 @@ export default function OrdersPage() {
           contactInfoRevealed: data.contactInfoRevealed || false,
           imageUrl: mainImageUrl,
           dataAiHint: data.dataAiHint || null,
-          mongolianPhoneNumber: data['phone-number'] === undefined ? null : data['phone-number'],
-          chinaPhoneNumber: data['china-number'] === undefined ? null : data['china-number'],
-          wechatId: data['we-chat-id'] === undefined ? null : data['we-chat-id'],
+          mongolianPhoneNumber: data['phone-number'], // Firestore-оос ирсэн утгыг шууд онооно
+          chinaPhoneNumber: data['china-number'],     // Firestore-оос ирсэн утгыг шууд онооно
+          wechatId: data['we-chat-id'],               // Firestore-оос ирсэн утгыг шууд онооно
           wechatQrImageUrl: finalWechatQrImageUrl,
         } as AppOrder;
       });
@@ -390,3 +373,4 @@ export default function OrdersPage() {
     </div>
   );
 }
+

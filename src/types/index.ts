@@ -127,10 +127,10 @@ export interface Order {
   contactInfoRevealed?: boolean;
   imageUrl?: string | null;
   dataAiHint?: string | null;
-  mongolianPhoneNumber?: string | number | null;
-  chinaPhoneNumber?: string | number | null;
-  wechatId?: string | number | null;
-  wechatQrImageUrl?: string | null;
+  mongolianPhoneNumber?: string | number | null | undefined;
+  chinaPhoneNumber?: string | number | null | undefined;
+  wechatId?: string | number | null | undefined;
+  wechatQrImageUrl?: string | null | undefined;
 }
 
 
@@ -255,3 +255,4 @@ export interface FAQItem {
   updatedAt?: Timestamp;
   order?: number;
 }
+
