@@ -179,9 +179,9 @@ export default function OrdersPage() {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData; 
 
-        const finalMongolianPhoneNumber = (data['phone-number'] === undefined || data['phone-number'] === null) ? null : String(data['phone-number']);
-        const finalChinaPhoneNumber = (data['china-number'] === undefined || data['china-number'] === null) ? null : String(data['china-number']);
-        const finalWechatId = (data['we-chat-id'] === undefined || data['we-chat-id'] === null) ? null : String(data['we-chat-id']);
+        const finalMongolianPhoneNumber = data['phone-number'] ?? null;
+        const finalChinaPhoneNumber = data['china-number'] ?? null;
+        const finalWechatId = data['we-chat-id'] ?? null;
         
         let finalWechatQrImageUrl: string | null = null;
         const rawWeChatImgArray = data['we-chat-img'];
@@ -207,7 +207,7 @@ export default function OrdersPage() {
           serviceName: data.serviceName || t('serviceUnnamed'),
           orderDate: data.orderDate as Timestamp, 
           status: data.status as AppOrder['status'], 
-          amount: (data.amount === undefined || data.amount === null) ? null : data.amount,
+          amount: data.amount ?? null,
           contactInfoRevealed: data.contactInfoRevealed || false,
           imageUrl: mainImageUrl,
           dataAiHint: data.dataAiHint || null,
@@ -372,3 +372,5 @@ export default function OrdersPage() {
     </div>
   );
 }
+
+    
