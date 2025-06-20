@@ -1,10 +1,11 @@
 
 'use client';
 import { useEffect, useRef } from 'react';
-import { requestForToken, setupOnMessageListener, auth, db, messaging } from '@/lib/firebase'; // Added messaging
+// Removed 'messaging' from import as it's handled by async functions now
+import { requestForToken, setupOnMessageListener, auth, db } from '@/lib/firebase'; 
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore'; // Removed arrayUnion
+import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
 import type { NotificationItem, ItemType } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -20,45 +21,58 @@ export default function AppInit() {
       console.log('Foreground message received in handleIncomingMessage:', payload);
       const currentUserId = auth.currentUser?.uid; 
 
-      let titleKey = 'unknownNotificationTitle';
-      let descriptionKey = 'unknownNotificationDescription';
-      let descriptionPlaceholders = {};
-      let imageUrl = null;
-      let dataAiHint = null;
-      let link = null;
-      let itemType: ItemType = 'general';
-      let isGlobal = false;
+      let toastTitle: string;
+      let toastDescription: string;
+
+      let fStoreTitleKey: string = 'unknownNotificationTitle';
+      let fStoreDescriptionKey: string = 'unknownNotificationDescription';
+      let fStoreDescriptionPlaceholders: Record<string, string | number | null | undefined> = {};
+      let fStoreImageUrl: string | null = null;
+      let fStoreDataAiHint: string | null = null;
+      let fStoreLink: string | null = null;
+      let fStoreItemType: ItemType = 'general';
+      let fStoreIsGlobal: boolean = false;
 
       if (payload?.data) {
-        titleKey = payload.data.titleKey || titleKey;
-        descriptionKey = payload.data.descriptionKey || descriptionKey;
+        fStoreTitleKey = payload.data.titleKey || fStoreTitleKey;
+        fStoreDescriptionKey = payload.data.descriptionKey || fStoreDescriptionKey;
         if (payload.data.descriptionPlaceholders) {
           try {
-            descriptionPlaceholders = typeof payload.data.descriptionPlaceholders === 'string'
+            fStoreDescriptionPlaceholders = typeof payload.data.descriptionPlaceholders === 'string'
               ? JSON.parse(payload.data.descriptionPlaceholders)
               : payload.data.descriptionPlaceholders;
-          } catch (e) {
-            console.error("Error parsing descriptionPlaceholders from data:", e);
-          }
+          } catch (e) { console.error("Error parsing descriptionPlaceholders:", e); fStoreDescriptionPlaceholders = {}; }
         }
-        imageUrl = payload.data.imageUrl || imageUrl;
-        dataAiHint = payload.data.dataAiHint || dataAiHint;
-        link = payload.data.link || payload.data.url || link;
-        itemType = (payload.data.itemType as ItemType) || itemType;
-        isGlobal = payload.data.isGlobal === 'true' || payload.data.isGlobal === true || isGlobal;
+        fStoreImageUrl = payload.data.imageUrl || null;
+        fStoreDataAiHint = payload.data.dataAiHint || null;
+        fStoreLink = payload.data.link || payload.data.url || null;
+        fStoreItemType = (payload.data.itemType as ItemType) || 'general';
+        fStoreIsGlobal = payload.data.isGlobal === 'true' || payload.data.isGlobal === true || false;
+
+        // For toast, prioritize data payload keys for translation
+        toastTitle = payload.data.titleKey ? t(payload.data.titleKey, fStoreDescriptionPlaceholders) : (payload.notification?.title || t(fStoreTitleKey));
+        toastDescription = payload.data.descriptionKey ? t(payload.data.descriptionKey, fStoreDescriptionPlaceholders) : (payload.notification?.body || t(fStoreDescriptionKey));
+
+      } else if (payload?.notification) {
+        // If no data payload, use notification fields directly for toast
+        toastTitle = payload.notification.title || t(fStoreTitleKey);
+        toastDescription = payload.notification.body || t(fStoreDescriptionKey);
+        
+        // For Firestore, if no data payload, use notification fields for keys as well
+        fStoreTitleKey = payload.notification.title || fStoreTitleKey;
+        fStoreDescriptionKey = payload.notification.body || fStoreDescriptionKey;
+        fStoreImageUrl = payload.notification.image || null;
+        // Other fStore fields remain default if not in notification payload
+      } else {
+        // Fallback if neither data nor notification payload is useful
+        toastTitle = t(fStoreTitleKey);
+        toastDescription = t(fStoreDescriptionKey);
       }
       
-      if(payload?.notification){
-        titleKey = payload.notification.title || titleKey;
-        descriptionKey = payload.notification.body || descriptionKey;
-        imageUrl = payload.notification.image || imageUrl;
-        // Notification payload doesn't typically carry descriptionPlaceholders, dataAiHint, link, itemType, isGlobal
-      }
-      
-      console.log('Attempting to show toast with titleKey:', titleKey, 'descriptionKey:', descriptionKey);
+      console.log('Attempting to show toast with Title:', toastTitle, 'Description:', toastDescription);
       toast({
-        title: t(titleKey, descriptionPlaceholders),
-        description: t(descriptionKey, descriptionPlaceholders),
+        title: toastTitle,
+        description: toastDescription,
       });
 
       if (!currentUserId) {
@@ -66,20 +80,20 @@ export default function AppInit() {
         return;
       }
 
-      if (payload && (payload.data || payload.notification)) {
+      if (payload) { // Check if payload itself is not null/undefined
         console.log('Foreground message payload for saving:', payload);
         
         const notificationToSave: Omit<NotificationItem, 'id'> = {
-          titleKey: titleKey,
-          descriptionKey: descriptionKey,
-          descriptionPlaceholders: descriptionPlaceholders,
+          titleKey: fStoreTitleKey, // Use potentially overridden keys
+          descriptionKey: fStoreDescriptionKey,
+          descriptionPlaceholders: fStoreDescriptionPlaceholders,
           date: serverTimestamp(),
           read: false, 
-          imageUrl: imageUrl,
-          dataAiHint: dataAiHint,
-          link: link,
-          itemType: itemType, 
-          isGlobal: isGlobal,
+          imageUrl: fStoreImageUrl,
+          dataAiHint: fStoreDataAiHint,
+          link: fStoreLink,
+          itemType: fStoreItemType, 
+          isGlobal: fStoreIsGlobal,
         };
 
         try {
@@ -99,7 +113,7 @@ export default function AppInit() {
       if (!user || !user.uid) {
         fcmSetupDoneForUserRef.current = null; 
         if (unsubscribeOnMessageRef.current) {
-          console.log('Cleaning up foreground message listener due to user logout/change.');
+          console.log('AppInit: Cleaning up foreground message listener due to user logout/change.');
           unsubscribeOnMessageRef.current();
           unsubscribeOnMessageRef.current = null;
         }
@@ -107,50 +121,57 @@ export default function AppInit() {
       }
 
       if (fcmSetupDoneForUserRef.current !== user.uid) {
-        console.log('Performing FCM token setup for user:', user.uid);
-        if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator && messaging) {
+        console.log('AppInit: Performing FCM token setup for user:', user.uid);
+        if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator) {
           try {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-              console.log('Notification permission granted.');
-              const fcmToken = await requestForToken();
+              console.log('AppInit: Notification permission granted.');
+              const fcmToken = await requestForToken(); // requestForToken is now async
 
               if (fcmToken && user.uid) {
                 try {
                   const userDocRef = doc(db, "users", user.uid);
                   await updateDoc(userDocRef, {
-                    fcmToken: fcmToken,
+                    fcmToken: fcmToken, // Changed from arrayUnion to direct assignment
                     lastTokenUpdate: serverTimestamp()
                   });
-                  console.log('FCM token synced with Firestore for user:', user.uid);
+                  console.log('AppInit: FCM token synced with Firestore for user:', user.uid);
                   fcmSetupDoneForUserRef.current = user.uid; 
                 } catch (error) {
-                  console.error('Error saving FCM token to Firestore:', error);
+                  console.error('AppInit: Error saving FCM token to Firestore:', error);
                 }
+              } else {
+                console.log('AppInit: FCM Token not received or user.uid missing.');
               }
             } else {
-              console.log('Notification permission denied.');
+              console.log('AppInit: Notification permission denied.');
             }
           } catch (error) {
-            console.error('Error during FCM token setup phase:', error);
+            console.error('AppInit: Error during FCM token setup phase:', error);
           }
         } else {
-          console.log('Environment does not support notifications or messaging not initialized (during token setup).');
+          console.log('AppInit: Environment does not support notifications.');
         }
       } else {
-        console.log('FCM token setup already done for user:', user.uid);
+        console.log('AppInit: FCM token setup already done for user:', user.uid);
       }
 
       if (!unsubscribeOnMessageRef.current) { 
-         console.log('Attempting to set up foreground message listener for user:', user.uid);
-         unsubscribeOnMessageRef.current = setupOnMessageListener(handleIncomingMessage);
-         if (!unsubscribeOnMessageRef.current) {
-           console.error("Failed to set up onMessage listener, setupOnMessageListener might have returned null (messagingInstance possibly not ready in firebase.ts).");
-         } else {
-           console.log('Foreground message listener set up successfully.');
+         console.log('AppInit: Attempting to set up foreground message listener for user:', user.uid);
+         try {
+           const unsubscribe = await setupOnMessageListener(handleIncomingMessage); // setupOnMessageListener is now async
+           if (unsubscribe) {
+             unsubscribeOnMessageRef.current = unsubscribe;
+             console.log('AppInit: Foreground message listener set up successfully.');
+           } else {
+             console.error("AppInit: Failed to set up onMessage listener (returned null).");
+           }
+         } catch (error) {
+            console.error("AppInit: Error during setupOnMessageListener call:", error);
          }
       } else {
-        console.log('Foreground message listener already seems to be set up.');
+        console.log('AppInit: Foreground message listener already seems to be set up.');
       }
     };
 
@@ -158,7 +179,7 @@ export default function AppInit() {
 
     return () => {
       if (unsubscribeOnMessageRef.current) {
-        console.log('Cleaning up foreground message listener on component unmount or user change.');
+        console.log('AppInit: Cleaning up foreground message listener on component unmount or user change.');
         unsubscribeOnMessageRef.current();
         unsubscribeOnMessageRef.current = null;
       }

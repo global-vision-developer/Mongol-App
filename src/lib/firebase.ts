@@ -1,4 +1,3 @@
-
 // lib/firebase.ts
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
@@ -11,7 +10,7 @@ import {
   isSupported as isMessagingSupported,
   type Messaging
 } from 'firebase/messaging';
-import { getStorage, type Storage } from 'firebase/storage'; // Added Storage import
+import { getStorage, type Storage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyASai6a1N3BVpG8n6CMzssFQbxdzzRhdPc",
@@ -23,17 +22,14 @@ const firebaseConfig = {
   measurementId: "G-GNT80QXXF4"
 };
 
-// Initialize Firebase
 const app: FirebaseApp = initializeApp(firebaseConfig);
 console.log("Firebase App initialized");
 
-// Initialize services
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
-const storage: Storage = getStorage(app); // Initialize Storage
+const storage: Storage = getStorage(app);
 console.log("Auth, Firestore, and Storage initialized");
 
-// Optional: Analytics
 let analytics: Analytics | undefined;
 if (typeof window !== 'undefined') {
   isAnalyticsSupported().then((supported) => {
@@ -50,36 +46,50 @@ if (typeof window !== 'undefined') {
   console.log("Not in a browser environment, Firebase Analytics not initialized.");
 }
 
-// Messaging
-let messagingInstance: Messaging | null = null;
-if (typeof window !== 'undefined') {
-  isMessagingSupported().then(supported => {
-    if (supported) {
-      try {
-        console.log("Attempting to initialize Firebase Messaging SDK...");
-        messagingInstance = getMessaging(app);
-        console.log("Firebase Messaging SDK initialized successfully.");
-      } catch (err) {
-        console.error('Failed to initialize Firebase Messaging SDK:', err);
-        messagingInstance = null; // Ensure it's null on error
-      }
-    } else {
-      console.log("Firebase Messaging is not supported by isMessagingSupported().");
-      messagingInstance = null;
+let messagingSingleton: Messaging | null = null;
+let messagingPromise: Promise<Messaging | null> | null = null;
+
+const getInitializedMessaging = (): Promise<Messaging | null> => {
+    if (messagingSingleton) {
+        return Promise.resolve(messagingSingleton);
     }
-  }).catch(err => {
-    console.error("Error checking Messaging support or initializing Messaging:", err);
-    messagingInstance = null; // Ensure it's null on error
-  });
-} else {
-  console.log("Not in a browser environment, Firebase Messaging not initialized.");
-}
+    if (messagingPromise) {
+        return messagingPromise;
+    }
+
+    messagingPromise = new Promise(async (resolve) => {
+        if (typeof window !== 'undefined') {
+            try {
+                const supported = await isMessagingSupported();
+                if (supported) {
+                    console.log("Firebase.ts: Messaging is supported. Initializing...");
+                    messagingSingleton = getMessaging(app);
+                    console.log("Firebase.ts: Messaging SDK initialized.");
+                    resolve(messagingSingleton);
+                } else {
+                    console.log("Firebase.ts: Firebase Messaging is not supported by isMessagingSupported().");
+                    messagingSingleton = null; // Ensure it's null if not supported
+                    resolve(null);
+                }
+            } catch (err) {
+                console.error('Firebase.ts: Failed to initialize Firebase Messaging SDK:', err);
+                messagingSingleton = null; // Ensure it's null on error
+                resolve(null);
+            }
+        } else {
+            console.log("Firebase.ts: Not in a browser environment, Firebase Messaging not initialized.");
+            messagingSingleton = null; // Ensure it's null
+            resolve(null);
+        }
+    });
+    return messagingPromise;
+};
 
 
-// ✅ FCM Token авах функц
 export const requestForToken = async (): Promise<string | null> => {
-  if (!messagingInstance) {
-    console.warn('Firebase Messaging instance is not available. Cannot request token.');
+  const messaging = await getInitializedMessaging();
+  if (!messaging) {
+    console.warn('requestForToken: Firebase Messaging instance is not available.');
     return null;
   }
 
@@ -87,7 +97,7 @@ export const requestForToken = async (): Promise<string | null> => {
   console.log("Attempting to get FCM token with VAPID key:", vapidKeyFromServer);
 
   try {
-    const currentToken = await getToken(messagingInstance, {
+    const currentToken = await getToken(messaging, {
       vapidKey: vapidKeyFromServer
     });
 
@@ -107,15 +117,14 @@ export const requestForToken = async (): Promise<string | null> => {
   }
 };
 
-// ✅ Foreground Notification хүлээн авах listener тохируулах
-export const setupOnMessageListener = (callback: (payload: any) => void): (() => void) | null => {
-  if (!messagingInstance) {
-    console.warn('Firebase Messaging instance is not available. Cannot set up listener.');
+export const setupOnMessageListener = async (callback: (payload: any) => void): Promise<(() => void) | null> => {
+  const messaging = await getInitializedMessaging();
+  if (!messaging) {
+    console.warn('setupOnMessageListener: Firebase Messaging instance is not available.');
     return null;
   }
   try {
-    // Returns the unsubscribe function
-    const unsubscribe = onMessage(messagingInstance, (payload) => {
+    const unsubscribe = onMessage(messaging, (payload) => {
       console.log('📩 Foreground message received:', payload);
       callback(payload);
     });
@@ -126,4 +135,6 @@ export const setupOnMessageListener = (callback: (payload: any) => void): (() =>
   }
 };
 
-export { app, auth, db, analytics, messagingInstance as messaging, storage }; // Added storage to exports
+export { app, auth, db, analytics, storage };
+// Removed direct export of 'messagingInstance as messaging'
+// AppInit.tsx will use the async setupOnMessageListener and requestForToken.
