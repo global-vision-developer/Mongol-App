@@ -179,28 +179,40 @@ export default function OrdersPage() {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData; 
 
+        // Mongolian Phone Number
         let finalMongolianPhoneNumber: string | null = null;
         if (data['phone-number'] !== undefined && data['phone-number'] !== null) {
           finalMongolianPhoneNumber = String(data['phone-number']);
         }
         
+        // China Phone Number
         let finalChinaPhoneNumber: string | null = null;
         if (data['china-number'] !== undefined && data['china-number'] !== null) {
           finalChinaPhoneNumber = String(data['china-number']);
         }
 
+        // WeChat ID
         let finalWechatId: string | null = null;
         if (data['we-chat-id'] !== undefined && data['we-chat-id'] !== null) {
           finalWechatId = String(data['we-chat-id']);
         }
 
+        // WeChat QR Image URL
         let finalWechatQrImageUrl: string | null = null;
         const rawWeChatImgArray = data['we-chat-img'];
         if (Array.isArray(rawWeChatImgArray) && rawWeChatImgArray.length > 0) {
           const firstElement = rawWeChatImgArray[0];
           if (typeof firstElement === 'object' && firstElement !== null && typeof firstElement.imageUrl === 'string' && firstElement.imageUrl.trim() !== '') {
-            finalWechatQrImageUrl = firstElement.imageUrl;
+            finalWechatQrImageUrl = firstElement.imageUrl.trim();
           }
+        }
+        
+        // Main Image URL for the order item
+        let mainImageUrl: string | null = null;
+        if (data.imageUrl && typeof data.imageUrl === 'string' && data.imageUrl.trim() !== '') {
+          mainImageUrl = data.imageUrl.trim();
+        } else if (data['nuur-zurag-url'] && typeof data['nuur-zurag-url'] === 'string' && data['nuur-zurag-url'].trim() !== '') {
+          mainImageUrl = data['nuur-zurag-url'].trim();
         }
         
         return {
@@ -211,9 +223,9 @@ export default function OrdersPage() {
           serviceName: data.serviceName || t('serviceUnnamed'),
           orderDate: data.orderDate as Timestamp,
           status: data.status as AppOrder['status'],
-          amount: data.amount === undefined ? null : data.amount,
+          amount: (data.amount === undefined || data.amount === null) ? null : data.amount,
           contactInfoRevealed: data.contactInfoRevealed || false,
-          imageUrl: data.imageUrl || data['nuur-zurag-url'] || null,
+          imageUrl: mainImageUrl,
           dataAiHint: data.dataAiHint || null,
           mongolianPhoneNumber: finalMongolianPhoneNumber,
           chinaPhoneNumber: finalChinaPhoneNumber,
@@ -376,4 +388,3 @@ export default function OrdersPage() {
     </div>
   );
 }
-
