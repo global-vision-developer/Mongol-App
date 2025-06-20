@@ -16,7 +16,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info, ShoppingBag, VenetianMask } from "lucide-react"; // Added VenetianMask for gender
+import { ArrowLeft, Star, MapPin, Phone, MessageCircle, ShieldCheck, CalendarDays, UserCheck, Users, LanguagesIcon, Briefcase, Landmark, Globe, ExternalLink, AlertTriangle, Info, ShoppingBag, VenetianMask } from "lucide-react"; 
 import { format } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceReviewForm } from "@/components/ServiceReviewForm";
@@ -191,7 +191,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
                 workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
                 translationFields: mapSectorToTranslationFields(nestedData.sector),
-                canWorkInOtherCities: null, // Keeping this null
+                canWorkInOtherCities: nestedData.wcities || null, // Storing raw wcities string
                 dailyRate: mapPriceToDailyRate(nestedData.price),
                 chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
                 wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
@@ -401,7 +401,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              {/* Nationality item removed as per request */}
+              
               <DetailItem labelKey="currentCityInChinaLabel" value={translator.currentCityInChina} icon={Landmark} isCityName citiesList={availableCities} />
               {translator.gender && <DetailItem labelKey="gender" value={translator.gender} icon={VenetianMask} genderValue />}
               <DetailItem labelKey="yearsInChinaLabel" value={translator.yearsInChina?.toString()} icon={CalendarDays} />
@@ -412,7 +412,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
               <DetailItem labelKey="workedAsTranslatorLabel" value={translator.workedAsTranslator} icon={Briefcase} />
               <DetailItem labelKey="dailyRateLabel" value={translator.dailyRate} icon={Star} dailyRateValue />
               <DetailItem labelKey="translationFieldsLabel" value={translator.translationFields} icon={Users} translationFieldsValue />
-              <DetailItem labelKey="canWorkInOtherCitiesLabel" value={translator.canWorkInOtherCities} icon={MapPin} cityValue citiesList={availableCities}/>
+              <DetailItem labelKey="canWorkInOtherCitiesLabel" value={translator.canWorkInOtherCities} icon={MapPin} />
               {registeredAtDate && (
                 <DetailItem labelKey="registeredAt" value={format(registeredAtDate, 'yyyy-MM-dd')} icon={UserCheck} />
               )}
@@ -469,3 +469,4 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
     </div>
   );
 }
+

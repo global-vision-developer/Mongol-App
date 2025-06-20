@@ -19,7 +19,7 @@ const mapLanguageLevel = (levelString?: string): LanguageLevel | null => {
 // Helper function to map price number to DailyRateRange type
 const mapPriceToDailyRate = (price?: number): DailyRateRange | null => {
   if (price === undefined || price === null) return null;
-  if (price <= 200) return '100-200'; // Assuming 100-200 is the lowest bucket
+  if (price <= 200) return '100-200'; 
   if (price <= 300) return '200-300';
   if (price <= 400) return '300-400';
   if (price <= 500) return '400-500';
@@ -30,8 +30,7 @@ const mapPriceToDailyRate = (price?: number): DailyRateRange | null => {
 const mapSectorToTranslationFields = (sectorString?: string): TranslationField[] | null => {
   if (!sectorString) return null;
   const lowerSector = sectorString.toLowerCase();
-  // This is a simple mapping, assuming sectorString is one of the known values.
-  // For multiple sectors or more complex logic, this needs expansion.
+  
   if (lowerSector.includes('аялал жуулчлал') || lowerSector.includes('tourism')) return ['tourism'];
   if (lowerSector.includes('эмнэлэг') || lowerSector.includes('medical')) return ['medical'];
   if (lowerSector.includes('тоног төхөөрөмж') || lowerSector.includes('equipment')) return ['equipment'];
@@ -46,7 +45,7 @@ const mapHuisToGender = (huis?: string): 'male' | 'female' | 'other' | null => {
   if (!huis) return null;
   if (huis.toLowerCase() === 'эм' || huis.toLowerCase() === 'female') return 'female';
   if (huis.toLowerCase() === 'эр' || huis.toLowerCase() === 'male') return 'male';
-  return 'other'; // Or null if 'other' is not applicable based on source data
+  return null; 
 };
 
 
@@ -60,13 +59,13 @@ async function getItemData(id: string): Promise<Translator | null> {
       if (entryData.categoryName === "translators") {
         const nestedData = entryData.data || {};
         
-        const registeredAtRaw = nestedData.registeredAt || nestedData.createdAt; // Fallback to createdAt if registeredAt is missing
+        const registeredAtRaw = nestedData.registeredAt || nestedData.createdAt; 
         const registeredAtDate = registeredAtRaw instanceof Timestamp
                                   ? registeredAtRaw.toDate()
                                   : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
         
         const rawPhotoUrlInput = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
-        const serviceName = nestedData.name || nestedData.title || 'Translator'; // Fallback for name
+        const serviceName = nestedData.name || nestedData.title || 'Translator'; 
         const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName.charAt(0))}`;
         let photoUrlToUse: string;
 
@@ -82,7 +81,7 @@ async function getItemData(id: string): Promise<Translator | null> {
            processedWeChatQrUrl = rawWeChatQrUrl.trim();
         }
         
-        const nationalityValue = nestedData.nationality || nestedData.irgenshil; // Added fallback
+        const nationalityValue = nestedData.nationality || nestedData.irgenshil; 
 
         return {
           id: docSnap.id,
@@ -90,8 +89,8 @@ async function getItemData(id: string): Promise<Translator | null> {
           name: serviceName,
           photoUrl: photoUrlToUse,
           nationality: nationalityValue as Nationality || null,
-          inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null), // Fallback for inChinaNow
-          yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null), // Fallback for yearsInChina
+          inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null), 
+          yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null), 
           currentCityInChina: nestedData.khot || null, // City ID
           chineseExamTaken: !!nestedData.exam,
           chineseExamDetails: nestedData.exam || null,
@@ -99,7 +98,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
           workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
           translationFields: mapSectorToTranslationFields(nestedData.sector),
-          canWorkInOtherCities: null, // Keeping this null as wcities parsing is complex
+          canWorkInOtherCities: nestedData.wcities || null, // Storing raw wcities string
           dailyRate: mapPriceToDailyRate(nestedData.price),
           chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
           wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
@@ -112,8 +111,8 @@ async function getItemData(id: string): Promise<Translator | null> {
           gender: mapHuisToGender(nestedData.huis),
           itemType: 'translator' as ItemType,
           registeredAt: registeredAtDate,
-          isActive: typeof nestedData.isActive === 'boolean' ? nestedData.isActive : true, // Default to true if not specified
-          isProfileComplete: typeof nestedData.isProfileComplete === 'boolean' ? nestedData.isProfileComplete : true, // Default to true
+          isActive: typeof nestedData.isActive === 'boolean' ? nestedData.isActive : true, 
+          isProfileComplete: typeof nestedData.isProfileComplete === 'boolean' ? nestedData.isProfileComplete : true, 
           views: typeof nestedData.views === 'number' ? nestedData.views : 0,
           dataAiHint: nestedData.dataAiHint || "translator portrait",
         } as Translator;
@@ -136,8 +135,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 export async function generateStaticParams(): Promise<Params[]> {
   try {
     const entriesRef = collection(db, "entries");
-    // Ensure we only try to generate params for active translators if such a field exists
-    // For now, generating for all translators in "translators" category
+    
     const q = query(entriesRef, where("categoryName", "==", "translators"));
     const snapshot = await getDocs(q);
     const paths = snapshot.docs.map((doc) => ({
@@ -154,3 +152,4 @@ export default async function TranslatorDetailPageServer({ params }: { params: {
   const itemData = await getItemData(params.id);
   return <TranslatorDetailClientPage itemData={itemData} params={params} itemType="translator" />;
 }
+

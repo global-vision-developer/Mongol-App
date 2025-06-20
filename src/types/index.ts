@@ -60,8 +60,8 @@ export interface RecommendedItem {
   gender?: 'male' | 'female' | 'other' | null; 
   city?: string; 
   testLevel?: string;
-  speakingLevel?: LanguageLevel | null; // Changed from string to LanguageLevel
-  writingLevel?: LanguageLevel | null; // Changed from string to LanguageLevel
+  speakingLevel?: LanguageLevel | null; 
+  writingLevel?: LanguageLevel | null; 
   hasWorkedBefore?: boolean;
   possibleFields?: string[];
   availableCities?: string[] | string;
@@ -74,12 +74,12 @@ export interface RecommendedItem {
   availabilityStatus?: string;
   dataAiHint?: string;
   itemType: ItemType;
-  nationality?: Nationality | null; // Added null
+  nationality?: Nationality | null; 
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
   currentCityInChina?: string | null; 
   chineseExamTaken?: boolean | null;
-  translationFields?: TranslationField[] | null; // Added null
+  translationFields?: TranslationField[] | null; 
   dailyRate?: DailyRateRange | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
@@ -192,32 +192,32 @@ export interface Translator {
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
   currentCityInChina?: string | null; // City ID
-  chineseExamTaken?: boolean | null; // Was string (HSK level), now boolean
-  chineseExamDetails?: string | null; // To store "HSK5" or similar
+  chineseExamTaken?: boolean | null; 
+  chineseExamDetails?: string | null; 
   speakingLevel?: LanguageLevel | null;
   writingLevel?: LanguageLevel | null;
-  workedAsTranslator?: boolean | null; // Was string "Тийм/Үгүй"
-  translationFields?: TranslationField[] | null; // Was string like "Аялал жуулчлал"
-  canWorkInOtherCities?: string[] | null; // Array of City IDs
-  dailyRate?: DailyRateRange | null; // Was number, now string range
+  workedAsTranslator?: boolean | null; 
+  translationFields?: TranslationField[] | null; 
+  canWorkInOtherCities?: string | null; // Changed from string[] to string for wcities raw data
+  dailyRate?: DailyRateRange | null; 
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
-  city?: string; // City ID (often same as currentCityInChina for translators)
+  city?: string; 
   averageRating?: number | null;
   reviewCount?: number;
   totalRatingSum?: number;
   description?: string;
-  gender?: 'male' | 'female' | 'other' | null; // Was "Эр/Эм"
-  itemType: ItemType; // Should be 'translator'
+  gender?: 'male' | 'female' | 'other' | null; 
+  itemType: ItemType; 
   idCardFrontImageUrl?: string;
   idCardBackImageUrl?: string;
   selfieImageUrl?: string;
-  wechatQrImageUrl?: string | null; // Added null
+  wechatQrImageUrl?: string | null; 
   registeredAt?: Timestamp | Date | string; 
   isActive?: boolean;
   isProfileComplete?: boolean;
   views?: number;
-  dataAiHint?: string; // For ServiceCard
+  dataAiHint?: string; 
 }
 
 
@@ -252,3 +252,4 @@ export interface FAQItem {
   updatedAt?: Timestamp; 
   order?: number; 
 }
+
