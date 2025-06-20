@@ -75,6 +75,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
             const entryData = docSnap.data();
             if (entryData.categoryName === "factories") { 
               const nestedData = entryData.data || {};
+              const serviceName = nestedData.name || nestedData.title || t('serviceUnnamed');
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
@@ -83,16 +84,19 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
                     finalImageUrl = trimmedUrl;
                 }
               }
+              const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+              const imageUrlToUse = finalImageUrl || placeholder;
+
               const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
                 description: detail.description || '',
-                imageUrl: detail.imageUrl || '',
+                imageUrl: detail.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(detail.name || t('productUnnamed') || 'Product')}`,
                 name: detail.name || undefined,
               }));
 
               const fetchedItem = {
                 id: docSnap.id,
-                name: nestedData.name || nestedData.title || t('serviceUnnamed'),
-                imageUrl: finalImageUrl, // Will be undefined if nuur-zurag-url is invalid
+                name: serviceName,
+                imageUrl: imageUrlToUse, 
                 description: nestedData.taniltsuulga || nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
@@ -150,7 +154,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
     }
   };
 
-  const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com');
+  const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com') || item?.imageUrl?.includes('placehold.co');
 
   if (loadingInitial) {
     return (
@@ -199,7 +203,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Factory')}`}
+              src={item.imageUrl}
               alt={item.name || t('factoryDetailTitle')}
               layout="fill"
               objectFit="cover"
@@ -244,13 +248,13 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
                     <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
                       <div className="relative aspect-video">
                         <Image
-                          src={showcaseItem.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(showcaseItem.description || 'Product')}`}
-                          alt={showcaseItem.description || t('productImageAlt') || 'Product image'}
+                          src={showcaseItem.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(showcaseItem.name || showcaseItem.description || t('productUnnamed') || 'Product')}`}
+                          alt={showcaseItem.name || showcaseItem.description || t('productImageAlt') || 'Product image'}
                           layout="fill"
                           objectFit="cover"
                           className="bg-muted"
                           data-ai-hint={showcaseItem.description ? showcaseItem.description.substring(0,20) : "product item"}
-                          unoptimized={showcaseItem.imageUrl?.startsWith('data:') || showcaseItem.imageUrl?.includes('lh3.googleusercontent.com')}
+                          unoptimized={showcaseItem.imageUrl?.startsWith('data:') || showcaseItem.imageUrl?.includes('lh3.googleusercontent.com') || showcaseItem.imageUrl?.includes('placehold.co')}
                         />
                       </div>
                       <CardContent className="p-3">

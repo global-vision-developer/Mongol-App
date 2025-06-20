@@ -96,7 +96,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
 
   useEffect(() => {
     if (itemData) {
-      setTranslator(itemData); // itemData.currentCityInChina will be an ID
+      setTranslator(itemData); 
       setLoadingInitial(false);
     } else if (params.id && !itemData) {
       const fetchTranslator = async () => {
@@ -113,11 +113,17 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                                         ? registeredAtRaw.toDate() 
                                         : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
               
+              const serviceName = nestedData.name || t('serviceUnnamed');
               const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
               let finalImageUrl: string | undefined = undefined;
-              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
-                  finalImageUrl = rawImageUrl.trim();
+              if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
+                  const trimmedUrl = rawImageUrl.trim();
+                  if (trimmedUrl.startsWith('http://') || trimmedUrl.startsWith('https://')) {
+                    finalImageUrl = trimmedUrl;
+                  }
               }
+              const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+              const imageUrlToUse = finalImageUrl || placeholder;
               
               const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
               let finalWeChatQrUrl: string | undefined = undefined;
@@ -128,8 +134,8 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
               setTranslator({ 
                 id: docSnap.id, 
                 uid: nestedData.uid || docSnap.id,
-                name: nestedData.name || t('serviceUnnamed'),
-                photoUrl: finalImageUrl,
+                name: serviceName,
+                photoUrl: imageUrlToUse,
                 nationality: nestedData.nationality as Nationality,
                 inChinaNow: nestedData.inChinaNow,
                 yearsInChina: nestedData.yearsInChina,
@@ -154,6 +160,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 isActive: nestedData.isActive,
                 isProfileComplete: nestedData.isProfileComplete,
                 views: nestedData.views,
+                dataAiHint: nestedData.dataAiHint || "translator portrait",
               } as Translator);
             } else {
               setTranslator(null);
@@ -242,7 +249,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
     }
   };
   
-  const mainImageShouldUnoptimize = translator?.photoUrl?.startsWith('data:') || translator?.photoUrl?.includes('lh3.googleusercontent.com');
+  const mainImageShouldUnoptimize = translator?.photoUrl?.startsWith('data:') || translator?.photoUrl?.includes('lh3.googleusercontent.com') || translator?.photoUrl?.includes('placehold.co');
 
   if (loadingInitial) {
     return (
@@ -308,12 +315,12 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={translator.photoUrl || "https://placehold.co/600x400.png"}
+              src={translator.photoUrl!} // It will always have a value (actual or placeholder)
               alt={translator.name || "Translator"}
               layout="fill"
               objectFit="cover"
               className="bg-muted"
-              data-ai-hint="translator portrait professional"
+              data-ai-hint={translator.dataAiHint || "translator portrait professional"}
               unoptimized={mainImageShouldUnoptimize}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>

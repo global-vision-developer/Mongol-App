@@ -24,7 +24,8 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
             processedImageUrl = trimmedUrl;
           }
         }
-        const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(nestedData.name || nestedData.title || 'Factory')}`;
+        const serviceName = nestedData.name || nestedData.title || 'Factory';
+        const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
 
         const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
           description: detail.description || '',
@@ -34,7 +35,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
 
         return {
           id: docSnap.id,
-          name: nestedData.name || nestedData.title || 'Unnamed Factory',
+          name: serviceName,
           imageUrl: processedImageUrl || placeholder,
           description: nestedData.taniltsuulga || nestedData.setgegdel || '',
           location: nestedData.khot || undefined,

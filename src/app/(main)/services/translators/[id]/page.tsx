@@ -28,7 +28,8 @@ async function getItemData(id: string): Promise<Translator | null> {
             processedPhotoUrl = trimmedUrl;
           }
         }
-        const photoPlaceholder = `https://placehold.co/300x400.png?text=${encodeURIComponent(nestedData.name || 'T')}`;
+        const serviceName = nestedData.name || 'Translator';
+        const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
         
         const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
         let processedWeChatQrUrl: string | undefined = undefined;
@@ -38,12 +39,11 @@ async function getItemData(id: string): Promise<Translator | null> {
             processedWeChatQrUrl = trimmedQrUrl;
           }
         }
-        // QR code can be optional, so if not a valid URL, it remains undefined. Client component handles missing QR.
 
         return {
           id: docSnap.id,
           uid: nestedData.uid || docSnap.id,
-          name: nestedData.name || 'Unnamed Translator',
+          name: serviceName,
           photoUrl: processedPhotoUrl || photoPlaceholder,
           nationality: nestedData.nationality as Nationality,
           inChinaNow: nestedData.inChinaNow,
@@ -58,7 +58,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           dailyRate: nestedData.dailyRate as DailyRateRange,
           chinaPhoneNumber: nestedData.chinaPhoneNumber,
           wechatId: nestedData.wechatId,
-          wechatQrImageUrl: processedWeChatQrUrl, // Can be undefined
+          wechatQrImageUrl: processedWeChatQrUrl, 
           city: nestedData.khot || nestedData.currentCityInChina,
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
@@ -69,6 +69,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           isActive: nestedData.isActive,
           isProfileComplete: nestedData.isProfileComplete,
           views: nestedData.views,
+          dataAiHint: nestedData.dataAiHint || "translator portrait", // Added dataAiHint
         } as Translator;
       }
     }

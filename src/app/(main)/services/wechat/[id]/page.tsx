@@ -23,7 +23,8 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
             processedImageUrl = trimmedUrl;
           }
         }
-        const imagePlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(nestedData.name || 'WeChat')}`;
+        const serviceName = nestedData.name || 'WeChat Service';
+        const imagePlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
         
         const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
         let processedWeChatQrUrl: string | undefined = undefined;
@@ -33,11 +34,10 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
             processedWeChatQrUrl = trimmedQrUrl;
           }
         }
-        // QR code can be optional.
 
         return {
           id: docSnap.id,
-          name: nestedData.name || 'Unnamed WeChat Service',
+          name: serviceName,
           imageUrl: processedImageUrl || imagePlaceholder,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
@@ -48,7 +48,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           itemType: 'wechat' as ItemType,
           dataAiHint: nestedData.dataAiHint || "wechat item",
           wechatId: nestedData.wechatId,
-          wechatQrImageUrl: processedWeChatQrUrl, // Can be undefined
+          wechatQrImageUrl: processedWeChatQrUrl, 
         } as RecommendedItem;
       }
     }

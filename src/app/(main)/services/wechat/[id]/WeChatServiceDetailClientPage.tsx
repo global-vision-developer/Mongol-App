@@ -78,6 +78,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
             const entryData = docSnap.data();
             if (entryData.categoryName === itemType) {
               const nestedData = entryData.data || {};
+              const serviceName = nestedData.name || t('serviceUnnamed');
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
@@ -86,6 +87,9 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
                     finalImageUrl = trimmedUrl;
                 }
               }
+              const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+              const imageUrlToUse = finalImageUrl || placeholder;
+
               const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
               let finalWeChatQrUrl: string | undefined = undefined;
               if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
@@ -93,8 +97,8 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
               }
               const fetchedItem = {
                 id: docSnap.id,
-                name: nestedData.name || t('serviceUnnamed'),
-                imageUrl: finalImageUrl, // Will be undefined if nuur-zurag-url is invalid
+                name: serviceName,
+                imageUrl: imageUrlToUse,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
@@ -198,8 +202,8 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
     }
   };
 
-  const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com');
-  const qrImageShouldUnoptimize = item?.wechatQrImageUrl?.startsWith('data:') || item?.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
+  const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com') || item?.imageUrl?.includes('placehold.co');
+  const qrImageShouldUnoptimize = item?.wechatQrImageUrl?.startsWith('data:') || item?.wechatQrImageUrl?.includes('lh3.googleusercontent.com') || item?.wechatQrImageUrl?.includes('placehold.co');
 
   if (loadingInitial) {
     return (
@@ -252,7 +256,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'WeChat')}`}
+              src={item.imageUrl}
               alt={item.name || t('wechatItemDetailTitle')}
               layout="fill"
               objectFit="cover"

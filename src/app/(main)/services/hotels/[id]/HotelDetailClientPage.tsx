@@ -83,6 +83,7 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
             const entryData = docSnap.data();
             if (entryData.categoryName === "hotels") {
               const nestedData = entryData.data || {};
+              const serviceName = nestedData.name || t('serviceUnnamed');
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
@@ -91,10 +92,13 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
                     finalImageUrl = trimmedUrl;
                 }
               }
+              const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+              const imageUrlToUse = finalImageUrl || placeholder;
+
               const fetchedItem = {
                 id: docSnap.id,
-                name: nestedData.name || t('serviceUnnamed'),
-                imageUrl: finalImageUrl, // Will be undefined if nuur-zurag-url is invalid
+                name: serviceName,
+                imageUrl: imageUrlToUse,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
@@ -207,6 +211,8 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
     }
   };
 
+  const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com') || item?.imageUrl?.includes('placehold.co');
+
   if (loadingInitial) {
     return (
       <div className="space-y-4 p-4">
@@ -236,7 +242,6 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
       </div>
     );
   }
-  const mainImageShouldUnoptimize = item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com');
 
   return (
     <div className="pb-20">
@@ -256,7 +261,7 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Hotel')}`}
+              src={item.imageUrl}
               alt={item.name || t('hotelDetailTitle')}
               layout="fill"
               objectFit="cover"
@@ -307,7 +312,7 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
                             objectFit="cover"
                             className="bg-muted"
                             data-ai-hint={room.name ? room.name.substring(0,15) : "hotel room interior"}
-                            unoptimized={room.imageUrl?.startsWith('data:') || room.imageUrl?.includes('lh3.googleusercontent.com')}
+                            unoptimized={room.imageUrl?.startsWith('data:') || room.imageUrl?.includes('lh3.googleusercontent.com') || room.imageUrl?.includes('placehold.co')}
                             />
                         </div>
                         <CardContent className="p-3">

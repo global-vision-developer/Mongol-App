@@ -75,6 +75,7 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
             const entryData = docSnap.data();
             if (entryData.categoryName === itemType) { // itemType here refers to 'hospital'
               const nestedData = entryData.data || {};
+              const serviceName = nestedData.name || t('serviceUnnamed');
               const rawImageUrl = nestedData['nuur-zurag-url'];
               let finalImageUrl: string | undefined = undefined;
               if (typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
@@ -83,10 +84,13 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
                     finalImageUrl = trimmedUrl;
                 }
               }
+              const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
+              const imageUrlToUse = finalImageUrl || placeholder;
+
               const fetchedItem = {
                 id: docSnap.id,
-                name: nestedData.name || t('serviceUnnamed'),
-                imageUrl: finalImageUrl, // Will be undefined if nuur-zurag-url is invalid
+                name: serviceName,
+                imageUrl: imageUrlToUse,
                 description: nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
@@ -141,7 +145,7 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
     }
   };
 
-  const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com');
+  const mainImageShouldUnoptimize = item?.imageUrl?.startsWith('data:') || item?.imageUrl?.includes('lh3.googleusercontent.com') || item?.imageUrl?.includes('placehold.co');
 
   if (loadingInitial) {
     return (
@@ -190,7 +194,7 @@ export default function HospitalDetailClientPage({ params, itemType, itemData }:
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Hospital')}`}
+              src={item.imageUrl}
               alt={item.name || t('hospitalDetailTitle')}
               layout="fill"
               objectFit="cover"

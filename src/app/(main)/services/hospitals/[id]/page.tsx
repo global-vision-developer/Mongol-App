@@ -24,11 +24,12 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
             processedImageUrl = trimmedUrl;
           }
         }
-        const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(nestedData.name || 'Hospital')}`;
+        const serviceName = nestedData.name || 'Hospital';
+        const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
 
         return {
           id: docSnap.id,
-          name: nestedData.name || 'Unnamed Hospital',
+          name: serviceName,
           imageUrl: processedImageUrl || placeholder,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,

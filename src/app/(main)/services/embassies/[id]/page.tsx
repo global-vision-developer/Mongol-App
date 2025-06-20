@@ -24,11 +24,12 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
             processedImageUrl = trimmedUrl;
           }
         }
-        const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(nestedData.name || 'Embassy')}`;
+        const serviceName = nestedData.name || 'Embassy';
+        const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
 
         return {
           id: docSnap.id,
-          name: nestedData.name || 'Unnamed Embassy',
+          name: serviceName,
           imageUrl: processedImageUrl || placeholder,
           description: nestedData.setgegdel || '',
           location: nestedData.khot || undefined,
@@ -37,7 +38,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'embassy' as ItemType,
-          dataAiHint: nestedData.dataAiHint || "embassy item",
+          dataAiHint: nestedData.dataAiHint || "embassy building flag",
         } as RecommendedItem;
       }
     }
