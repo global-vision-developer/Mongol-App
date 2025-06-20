@@ -79,7 +79,7 @@ export interface RecommendedItem {
   yearsInChina?: number | null;
   currentCityInChina?: string | null; 
   chineseExamTaken?: boolean | null;
-  translationFields?: string | null; // Changed from TranslationField[] to string
+  translationFields?: string | null; 
   dailyRate?: DailyRateRange | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
@@ -125,6 +125,7 @@ export interface Order {
   contactInfoRevealed?: boolean;
   imageUrl?: string | null;
   dataAiHint?: string | null;
+  mongolianPhoneNumber?: string | null; // Added for Mongolian phone number
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
   wechatQrImageUrl?: string | null;
@@ -197,7 +198,7 @@ export interface Translator {
   speakingLevel?: LanguageLevel | null;
   writingLevel?: LanguageLevel | null;
   workedAsTranslator?: boolean | null; 
-  translationFields?: string | null; // Changed from TranslationField[] to string
+  translationFields?: string | null; 
   canWorkInOtherCities?: string | null; 
   dailyRate?: DailyRateRange | null; 
   chinaPhoneNumber?: string | null;

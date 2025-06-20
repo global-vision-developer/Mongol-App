@@ -421,7 +421,8 @@ const translations: Record<Language, Record<string, string>> = {
     day: "өдөр",
     loadingOrders: "Захиалга уншиж байна...",
     status: "Төлөв",
-    translatorContactPhoneLabel: "Утас",
+    mongolianPhoneNumberLabel: "Монгол утас",
+    translatorContactPhoneLabel: "Хятад утас", // Was "Утас"
     translatorContactWeChatLabel: "WeChat ID",
     translatorContactWeChatQrLabel: "WeChat QR",
     deleteOrderTitle: "Захиалга устгах",
@@ -897,7 +898,8 @@ const translations: Record<Language, Record<string, string>> = {
     day: "天",
     loadingOrders: "正在加载订单...",
     status: "状态",
-    translatorContactPhoneLabel: "电话",
+    mongolianPhoneNumberLabel: "蒙古电话",
+    translatorContactPhoneLabel: "中国电话", // Was "电话"
     translatorContactWeChatLabel: "微信号",
     translatorContactWeChatQrLabel: "微信二维码",
     deleteOrderTitle: "删除订单",
@@ -1008,3 +1010,4 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
+

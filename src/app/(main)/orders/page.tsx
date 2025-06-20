@@ -88,6 +88,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
             ) : (
               <>
                 <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
+                {order.mongolianPhoneNumber && (
+                  <div className="flex items-center text-sm mb-1">
+                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <span>{t('mongolianPhoneNumberLabel')}: {order.mongolianPhoneNumber}</span>
+                  </div>
+                )}
                 {order.chinaPhoneNumber && (
                   <div className="flex items-center text-sm mb-1">
                     <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -173,14 +179,20 @@ export default function OrdersPage() {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData; // data here is the Order document itself
 
+        let finalMongolianPhoneNumber: string | null = null;
+        if (data['phone-number'] !== undefined && data['phone-number'] !== null) {
+          finalMongolianPhoneNumber = String(data['phone-number']);
+        } else if (data.mongolianPhoneNumber !== undefined && data.mongolianPhoneNumber !== null) {
+          finalMongolianPhoneNumber = String(data.mongolianPhoneNumber);
+        }
+        
         let finalChinaPhoneNumber: string | null = null;
         if (data['china-number'] !== undefined && data['china-number'] !== null) {
           finalChinaPhoneNumber = String(data['china-number']);
-        } else if (data['phone-number'] !== undefined && data['phone-number'] !== null) {
-          finalChinaPhoneNumber = String(data['phone-number']);
         } else if (data.chinaPhoneNumber !== undefined && data.chinaPhoneNumber !== null) { // Fallback to already mapped camelCase
           finalChinaPhoneNumber = String(data.chinaPhoneNumber);
         }
+
 
         let finalWechatId: string | null = null;
         if (data['we-chat-id'] !== undefined && data['we-chat-id'] !== null) {
@@ -190,9 +202,9 @@ export default function OrdersPage() {
         }
 
         let finalWechatQrImageUrl: string | null = null;
-        if (data.wechatQrImageUrl) { // Ideal field name
+        if (data.wechatQrImageUrl) { 
           finalWechatQrImageUrl = data.wechatQrImageUrl;
-        } else if (data['we-chat-img']) { // User mentioned this
+        } else if (data['we-chat-img']) { 
           if (typeof data['we-chat-img'] === 'string' && data['we-chat-img'].trim() !== '') {
             finalWechatQrImageUrl = data['we-chat-img'];
           } else if (Array.isArray(data['we-chat-img']) && data['we-chat-img'].length > 0) {
@@ -217,6 +229,7 @@ export default function OrdersPage() {
           contactInfoRevealed: data.contactInfoRevealed || false,
           imageUrl: data.imageUrl || data['nuur-zurag-url'] || null,
           dataAiHint: data.dataAiHint || null,
+          mongolianPhoneNumber: finalMongolianPhoneNumber,
           chinaPhoneNumber: finalChinaPhoneNumber,
           wechatId: finalWechatId,
           wechatQrImageUrl: finalWechatQrImageUrl,
