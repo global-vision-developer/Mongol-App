@@ -4,7 +4,7 @@ import HospitalDetailClientPage from './HospitalDetailClientPage';
 import { collection, getDocs, doc, getDoc, type DocumentData, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
-import type { RecommendedItem, ItemType } from '@/types';
+import type { RecommendedItem, ItemType, ShowcaseItem } from '@/types';
 
 async function getItemData(id: string): Promise<RecommendedItem | null> {
   try {
@@ -26,6 +26,13 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           imageUrlToUse = placeholder;
         }
 
+        const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
+          description: detail.description || '',
+          imageUrl: detail.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(detail.name || 'Service')}`,
+          name: detail.name || undefined,
+          dataAiHint: detail.dataAiHint || (detail.name ? detail.name.substring(0,15) : (detail.description ? detail.description.substring(0,15) : "showcase service"))
+        }));
+
         return {
           id: docSnap.id,
           name: serviceName,
@@ -38,6 +45,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'hospital' as ItemType,
           dataAiHint: nestedData.dataAiHint || "hospital item",
+          showcaseItems: showcaseItems,
         } as RecommendedItem;
       }
     }
@@ -74,3 +82,4 @@ export default async function HospitalDetailPageServer({ params }: { params: { i
   const itemData = await getItemData(params.id);
   return <HospitalDetailClientPage itemData={itemData} params={params} itemType="hospital" />;
 }
+

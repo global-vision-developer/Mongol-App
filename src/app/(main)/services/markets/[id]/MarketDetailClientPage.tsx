@@ -8,13 +8,14 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
-import type { RecommendedItem, ItemType, City } from "@/types"; // Added City
+import type { RecommendedItem, ItemType, City, ShowcaseItem } from "@/types"; 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Star, MapPin, AlertTriangle, Info } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowLeft, Star, MapPin, AlertTriangle, Info, PackageSearch } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceReviewForm } from "@/components/ServiceReviewForm";
-import { useCity } from "@/contexts/CityContext"; // Import useCity
+import { useCity } from "@/contexts/CityContext"; 
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -47,9 +48,9 @@ interface MarketDetailClientPageProps {
 
 export default function MarketDetailClientPage({ params, itemType, itemData }: MarketDetailClientPageProps) {
   const router = useRouter();
-  const { t, language } = useTranslation(); // Added language
+  const { t, language } = useTranslation(); 
   const { user } = useAuth();
-  const { availableCities } = useCity(); // Get available cities
+  const { availableCities } = useCity(); 
 
   const [item, setItem] = useState<RecommendedItem | null>(itemData);
   const [loadingInitial, setLoadingInitial] = useState(!itemData && !!params.id);
@@ -60,7 +61,7 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
       setItem(itemData);
       setLoadingInitial(false);
       if (itemData.location && availableCities.length > 0) {
-        const city = availableCities.find(c => c.value === itemData.location); // location is ID
+        const city = availableCities.find(c => c.value === itemData.location); 
         setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : itemData.location);
       } else {
         setDisplayLocationName(itemData.location || null);
@@ -86,18 +87,26 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
                 imageUrlToUse = placeholder;
               }
 
+              const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
+                description: detail.description || '',
+                imageUrl: detail.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(detail.name || t('productUnnamed') || 'Product')}`,
+                name: detail.name || undefined,
+                dataAiHint: detail.dataAiHint || (detail.name ? detail.name.substring(0,15) : (detail.description ? detail.description.substring(0,15) : "showcase product"))
+              }));
+
               const fetchedItem = {
                 id: docSnap.id,
                 name: serviceName,
                 imageUrl: imageUrlToUse,
                 description: nestedData.setgegdel || '',
-                location: nestedData.khot || undefined, // City ID
+                location: nestedData.khot || undefined, 
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
                 price: nestedData.price === undefined ? null : nestedData.price,
                 itemType: entryData.categoryName as ItemType,
                 dataAiHint: nestedData.dataAiHint || "market item",
+                showcaseItems: showcaseItems,
               } as RecommendedItem;
               setItem(fetchedItem);
               if (fetchedItem.location && availableCities.length > 0) {
@@ -126,7 +135,7 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
     }
   }, [itemData, params.id, itemType, t, availableCities, language]);
 
-  useEffect(() => { // Update displayLocationName when language or availableCities changes
+  useEffect(() => { 
     if (item?.location && availableCities.length > 0) {
         const city = availableCities.find(c => c.value === item.location);
         setDisplayLocationName(city ? (language === 'cn' && city.label_cn ? city.label_cn : city.label) : item.location);
@@ -193,7 +202,7 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={item.imageUrl}
+              src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Market')}`}
               alt={item.name || t('marketDetailTitle')}
               layout="fill"
               objectFit="cover"
@@ -226,6 +235,41 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
                 </div>
               </div>
             </div>
+
+            {item.showcaseItems && item.showcaseItems.length > 0 && (
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-xl font-semibold text-foreground flex items-center">
+                  <PackageSearch className="h-6 w-6 mr-2 text-primary"/>
+                  {t('productShowcaseTitle') || "Бүтээгдэхүүний танилцуулга"}
+                </h3>
+                <ScrollArea className="w-full whitespace-nowrap rounded-md">
+                  <div className="flex space-x-4 pb-4">
+                    {item.showcaseItems.map((showcaseItem, index) => (
+                      <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow w-[280px] flex-shrink-0">
+                        <div className="relative aspect-video">
+                          <Image
+                            src={showcaseItem.imageUrl || `https://placehold.co/400x225.png?text=${encodeURIComponent(showcaseItem.name || showcaseItem.description || t('productUnnamed') || 'Product')}`}
+                            alt={showcaseItem.name || showcaseItem.description || t('productImageAlt') || 'Product image'}
+                            layout="fill"
+                            objectFit="cover"
+                            className="bg-muted"
+                            data-ai-hint={showcaseItem.dataAiHint || (showcaseItem.name ? showcaseItem.name.substring(0,15) : (showcaseItem.description ? showcaseItem.description.substring(0,15) : "showcase product"))}
+                            unoptimized={showcaseItem.imageUrl?.startsWith('data:') || showcaseItem.imageUrl?.includes('lh3.googleusercontent.com') || showcaseItem.imageUrl?.includes('placehold.co')}
+                          />
+                        </div>
+                        <CardContent className="p-3">
+                          {showcaseItem.name && <CardTitle className="text-sm font-semibold mb-1 line-clamp-1">{showcaseItem.name}</CardTitle>}
+                          <CardDescription className="text-xs text-muted-foreground line-clamp-2">
+                            {showcaseItem.description || t('noProductDescription') || 'No description available.'}
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -241,3 +285,4 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
     </div>
   );
 }
+

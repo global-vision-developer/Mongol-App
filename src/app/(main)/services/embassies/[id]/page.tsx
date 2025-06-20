@@ -4,7 +4,7 @@ import EmbassyDetailClientPage from './EmbassyDetailClientPage';
 import { collection, getDocs, doc, getDoc, type DocumentData, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Params } from 'next/dist/shared/lib/router/utils/route-matcher';
-import type { RecommendedItem, ItemType } from '@/types';
+import type { RecommendedItem, ItemType, ShowcaseItem } from '@/types';
 
 async function getItemData(id: string): Promise<RecommendedItem | null> {
   try {
@@ -26,6 +26,13 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           imageUrlToUse = placeholder;
         }
 
+        const showcaseItems: ShowcaseItem[] = (nestedData.delgerengui || []).map((detail: any) => ({
+          description: detail.description || '',
+          imageUrl: detail.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(detail.name || 'Info')}`,
+          name: detail.name || undefined,
+          dataAiHint: detail.dataAiHint || (detail.name ? detail.name.substring(0,15) : (detail.description ? detail.description.substring(0,15) : "showcase info"))
+        }));
+
         return {
           id: docSnap.id,
           name: serviceName,
@@ -38,6 +45,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'embassy' as ItemType,
           dataAiHint: nestedData.dataAiHint || "embassy building flag",
+          showcaseItems: showcaseItems,
         } as RecommendedItem;
       }
     }
@@ -74,3 +82,4 @@ export default async function EmbassyDetailPageServer({ params }: { params: { id
   const itemData = await getItemData(params.id);
   return <EmbassyDetailClientPage itemData={itemData} params={params} itemType="embassy" />;
 }
+
