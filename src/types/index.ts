@@ -5,21 +5,21 @@ import type { Timestamp } from 'firebase/firestore';
 export type Language = 'mn' | 'cn';
 
 export interface City {
-  value: string; 
-  label: string; 
-  label_cn?: string; 
-  isMajor?: boolean; 
-  order?: number; 
-  cityType?: 'major' | 'other' | 'all'; 
-  id?: string; 
+  value: string;
+  label: string;
+  label_cn?: string;
+  isMajor?: boolean;
+  order?: number;
+  cityType?: 'major' | 'other' | 'all';
+  id?: string;
 }
 
 export interface Airport {
-  value: string; 
-  label: string; 
+  value: string;
+  label: string;
   city: string;
   iata: string;
-  searchTerms: string; 
+  searchTerms: string;
 }
 
 
@@ -27,20 +27,20 @@ export type ServiceGroupId = 'flights' | 'hotels' | 'translators' | 'wechat' | '
 
 export interface ServiceGroup {
   id: ServiceGroupId;
-  titleKey: string; 
+  titleKey: string;
   icon: LucideIcon;
   href: string;
 }
 
 export interface CarouselBannerItem {
-  id: string; 
+  id: string;
   imageUrl: string;
   link?: string;
-  altText?: string; 
-  dataAiHint?: string; 
+  altText?: string;
+  dataAiHint?: string;
   isActive?: boolean;
-  createdAt?: Timestamp | any; 
-  description?: string; 
+  createdAt?: Timestamp | any;
+  description?: string;
 }
 
 export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight' | 'message' | 'order' | 'update' | 'general';
@@ -48,8 +48,9 @@ export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' |
 export interface ShowcaseItem {
   description: string;
   imageUrl: string;
-  name?: string; 
-  [key: string]: any; 
+  name?: string;
+  dataAiHint?: string; // Added dataAiHint for showcase items
+  [key: string]: any;
 }
 
 export interface RecommendedItem {
@@ -57,11 +58,11 @@ export interface RecommendedItem {
   name: string;
   imageUrl?: string;
   description?: string;
-  gender?: 'male' | 'female' | 'other' | null; 
-  city?: string; 
+  gender?: 'male' | 'female' | 'other' | null;
+  city?: string;
   testLevel?: string;
-  speakingLevel?: LanguageLevel | null; 
-  writingLevel?: LanguageLevel | null; 
+  speakingLevel?: LanguageLevel | null;
+  writingLevel?: LanguageLevel | null;
   hasWorkedBefore?: boolean;
   possibleFields?: string[];
   availableCities?: string[] | string;
@@ -69,17 +70,17 @@ export interface RecommendedItem {
   averageRating?: number | null;
   reviewCount?: number;
   totalRatingSum?: number;
-  location?: string; 
+  location?: string;
   primaryLanguage?: string;
   availabilityStatus?: string;
   dataAiHint?: string;
   itemType: ItemType;
-  nationality?: Nationality | null; 
+  nationality?: Nationality | null;
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
-  currentCityInChina?: string | null; 
+  currentCityInChina?: string | null;
   chineseExamTaken?: boolean | null;
-  translationFields?: string | null; 
+  translationFields?: string | null;
   dailyRate?: DailyRateRange | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
@@ -88,12 +89,13 @@ export interface RecommendedItem {
     description: string;
     imageUrl: string;
     name?: string;
+    dataAiHint?: string; // Added dataAiHint for room items
     [key: string]: any;
   }>;
   showcaseItems?: ShowcaseItem[];
   isMainSection?: boolean;
   taniltsuulga?: string;
-  subcategory?: string | null; 
+  subcategory?: string | null;
 }
 
 export interface UserProfile {
@@ -104,7 +106,7 @@ export interface UserProfile {
   phoneNumber?: string | null;
   lastName?: string | null;
   firstName?: string | null;
-  dateOfBirth?: string | null; 
+  dateOfBirth?: string | null;
   gender?: 'male' | 'female' | 'other' | null;
   homeAddress?: string | null;
   fcmTokens?: string[];
@@ -125,14 +127,14 @@ export interface Order {
   contactInfoRevealed?: boolean;
   imageUrl?: string | null;
   dataAiHint?: string | null;
-  mongolianPhoneNumber?: string | number | null; 
+  mongolianPhoneNumber?: string | number | null;
   chinaPhoneNumber?: string | number | null;
   wechatId?: string | number | null;
   wechatQrImageUrl?: string | null;
 }
 
 
-export interface SavedDocData extends RecommendedItem { 
+export interface SavedDocData extends RecommendedItem {
   savedAt: Timestamp | any;
 }
 
@@ -141,7 +143,7 @@ export interface NotificationItem {
   id: string;
   titleKey: string;
   descriptionKey: string;
-  descriptionPlaceholders?: Record<string, string | number | null | undefined>; 
+  descriptionPlaceholders?: Record<string, string | number | null | undefined>;
   date: Timestamp | any;
   read: boolean;
   imageUrl?: string | null;
@@ -193,48 +195,48 @@ export interface Translator {
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
   currentCityInChina?: string | null; // City ID
-  chineseExamTaken?: boolean | null; 
-  chineseExamDetails?: string | null; 
+  chineseExamTaken?: boolean | null;
+  chineseExamDetails?: string | null;
   speakingLevel?: LanguageLevel | null;
   writingLevel?: LanguageLevel | null;
-  workedAsTranslator?: boolean | null; 
-  translationFields?: string | null; 
-  canWorkInOtherCities?: string | null; 
-  dailyRate?: DailyRateRange | null; 
+  workedAsTranslator?: boolean | null;
+  translationFields?: string | null; // Changed from TranslationField[]
+  canWorkInOtherCities?: string | null; // Changed from string[]
+  dailyRate?: DailyRateRange | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
-  city?: string; 
+  city?: string;
   averageRating?: number | null;
   reviewCount?: number;
   totalRatingSum?: number;
   description?: string;
-  gender?: 'male' | 'female' | 'other' | null; 
-  itemType: ItemType; 
+  gender?: 'male' | 'female' | 'other' | null;
+  itemType: ItemType;
   idCardFrontImageUrl?: string;
   idCardBackImageUrl?: string;
   selfieImageUrl?: string;
-  wechatQrImageUrl?: string | null; 
-  registeredAt?: Timestamp | Date | string; 
+  wechatQrImageUrl?: string | null;
+  registeredAt?: Timestamp | Date | string;
   isActive?: boolean;
   isProfileComplete?: boolean;
   views?: number;
-  dataAiHint?: string; 
+  dataAiHint?: string;
 }
 
 
-export interface SavedPageItem extends RecommendedItem { 
+export interface SavedPageItem extends RecommendedItem {
   savedAt: Timestamp | any;
-  
+
 }
 
 export interface Review {
-  id: string; 
+  id: string;
   itemId: string;
   itemType: ItemType;
   userId: string;
   userName?: string | null;
   userPhotoUrl?: string | null;
-  rating: number; 
+  rating: number;
   comment?: string;
   createdAt: Timestamp | any;
   updatedAt?: Timestamp | any;
@@ -246,11 +248,11 @@ export interface FAQItem {
   id: string;
   question: string;
   answer: string;
-  topic: string; 
+  topic: string;
   createdAt: Timestamp;
-  createdBy?: string; 
-  isPredefined?: boolean; 
-  updatedAt?: Timestamp; 
-  order?: number; 
+  createdBy?: string;
+  isPredefined?: boolean;
+  updatedAt?: Timestamp;
+  order?: number;
 }
 

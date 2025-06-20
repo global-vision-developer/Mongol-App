@@ -15,6 +15,7 @@ import { ArrowLeft, Star, MapPin, AlertTriangle, Info, PackageSearch } from "luc
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceReviewForm } from "@/components/ServiceReviewForm";
 import { useCity } from "@/contexts/CityContext"; // Import useCity
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Import ScrollArea and ScrollBar
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -23,7 +24,7 @@ const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null 
     if (Array.isArray(value)) {
       displayValue = value.join(', ');
     } else if (labelKey === 'ratingLabel' && typeof value === 'number') {
-      displayValue = `${value.toFixed(1)} / 10`; 
+      displayValue = `${value.toFixed(1)} / 10`;
     } else {
       displayValue = value.toString();
     }
@@ -73,7 +74,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const entryData = docSnap.data();
-            if (entryData.categoryName === "factories") { 
+            if (entryData.categoryName === "factories") {
               const nestedData = entryData.data || {};
               const serviceName = nestedData.name || nestedData.title || t('serviceUnnamed');
               const rawImageUrl = nestedData['nuur-zurag-url'];
@@ -90,12 +91,13 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
                 description: detail.description || '',
                 imageUrl: detail.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(detail.name || t('productUnnamed') || 'Product')}`,
                 name: detail.name || undefined,
+                dataAiHint: detail.dataAiHint || (detail.name ? detail.name.substring(0,15) : (detail.description ? detail.description.substring(0,15) : "showcase product"))
               }));
 
               const fetchedItem = {
                 id: docSnap.id,
                 name: serviceName,
-                imageUrl: imageUrlToUse, 
+                imageUrl: imageUrlToUse,
                 description: nestedData.taniltsuulga || nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
@@ -134,7 +136,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
       fetchItem();
     }
   }, [itemData, params.id, t, availableCities, language]);
-  
+
   useEffect(() => { // Update displayLocationName when language or availableCities changes
     if (item?.location && availableCities.length > 0) {
         const city = availableCities.find(c => c.value === item.location);
@@ -242,29 +244,32 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
                   <PackageSearch className="h-6 w-6 mr-2 text-primary"/>
                   {t('productShowcaseTitle') || "Бүтээгдэхүүний танилцуулга"}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {item.showcaseItems.map((showcaseItem, index) => (
-                    <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                      <div className="relative aspect-video">
-                        <Image
-                          src={showcaseItem.imageUrl || `https://placehold.co/400x300.png?text=${encodeURIComponent(showcaseItem.name || showcaseItem.description || t('productUnnamed') || 'Product')}`}
-                          alt={showcaseItem.name || showcaseItem.description || t('productImageAlt') || 'Product image'}
-                          layout="fill"
-                          objectFit="cover"
-                          className="bg-muted"
-                          data-ai-hint={showcaseItem.description ? showcaseItem.description.substring(0,20) : "product item"}
-                          unoptimized={showcaseItem.imageUrl?.startsWith('data:') || showcaseItem.imageUrl?.includes('lh3.googleusercontent.com') || showcaseItem.imageUrl?.includes('placehold.co')}
-                        />
-                      </div>
-                      <CardContent className="p-3">
-                        {showcaseItem.name && <CardTitle className="text-sm font-semibold mb-1 line-clamp-1">{showcaseItem.name}</CardTitle>}
-                        <CardDescription className="text-xs text-muted-foreground line-clamp-2">
-                          {showcaseItem.description || t('noProductDescription') || 'No description available.'}
-                        </CardDescription>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                <ScrollArea className="w-full whitespace-nowrap rounded-md">
+                  <div className="flex space-x-4 pb-4">
+                    {item.showcaseItems.map((showcaseItem, index) => (
+                      <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow w-[280px] flex-shrink-0">
+                        <div className="relative aspect-video"> {/* Changed to aspect-video for better horizontal display */}
+                          <Image
+                            src={showcaseItem.imageUrl || `https://placehold.co/400x225.png?text=${encodeURIComponent(showcaseItem.name || showcaseItem.description || t('productUnnamed') || 'Product')}`}
+                            alt={showcaseItem.name || showcaseItem.description || t('productImageAlt') || 'Product image'}
+                            layout="fill"
+                            objectFit="cover"
+                            className="bg-muted"
+                            data-ai-hint={showcaseItem.dataAiHint || (showcaseItem.name ? showcaseItem.name.substring(0,15) : (showcaseItem.description ? showcaseItem.description.substring(0,15) : "showcase product"))}
+                            unoptimized={showcaseItem.imageUrl?.startsWith('data:') || showcaseItem.imageUrl?.includes('lh3.googleusercontent.com') || showcaseItem.imageUrl?.includes('placehold.co')}
+                          />
+                        </div>
+                        <CardContent className="p-3">
+                          {showcaseItem.name && <CardTitle className="text-sm font-semibold mb-1 line-clamp-1">{showcaseItem.name}</CardTitle>}
+                          <CardDescription className="text-xs text-muted-foreground line-clamp-2">
+                            {showcaseItem.description || t('noProductDescription') || 'No description available.'}
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
               </div>
             )}
           </CardContent>
