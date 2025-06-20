@@ -77,7 +77,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
       <CardContent className="p-4 pt-0">
         <div className="text-sm text-muted-foreground">
           <p>{t('status')}: <span className="font-medium text-foreground">{t(getStatusTextKey(order.status))}</span></p>
-          {order.amount && <p>{t('orderAmount')}: <span className="font-medium text-foreground">{order.amount}</span></p>}
+          {order.amount != null && <p>{t('orderAmount')}: <span className="font-medium text-foreground">{order.amount}</span></p>}
         </div>
         {order.contactInfoRevealed && (
           <div className="mt-3 pt-3 border-t">
@@ -178,13 +178,9 @@ export default function OrdersPage() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData; 
-
-        const finalMongolianPhoneNumber = data['phone-number'] ?? null;
-        const finalChinaPhoneNumber = data['china-number'] ?? null;
-        const finalWechatId = data['we-chat-id'] ?? null;
         
         let finalWechatQrImageUrl: string | null = null;
-        const rawWeChatImgArray = data['we-chat-img'];
+        const rawWeChatImgArray = data['we-chat-img']; // Firestore field name
         if (Array.isArray(rawWeChatImgArray) && rawWeChatImgArray.length > 0) {
           const firstElement = rawWeChatImgArray[0];
           if (typeof firstElement === 'object' && firstElement !== null && typeof firstElement.imageUrl === 'string' && firstElement.imageUrl.trim() !== '') {
@@ -207,13 +203,13 @@ export default function OrdersPage() {
           serviceName: data.serviceName || t('serviceUnnamed'),
           orderDate: data.orderDate as Timestamp, 
           status: data.status as AppOrder['status'], 
-          amount: data.amount ?? null,
+          amount: data.amount === undefined ? null : data.amount, // Ensure null if undefined
           contactInfoRevealed: data.contactInfoRevealed || false,
           imageUrl: mainImageUrl,
           dataAiHint: data.dataAiHint || null,
-          mongolianPhoneNumber: finalMongolianPhoneNumber,
-          chinaPhoneNumber: finalChinaPhoneNumber,
-          wechatId: finalWechatId,
+          mongolianPhoneNumber: data['phone-number'], // Direct assignment
+          chinaPhoneNumber: data['china-number'], // Direct assignment
+          wechatId: data['we-chat-id'], // Direct assignment
           wechatQrImageUrl: finalWechatQrImageUrl,
         } as AppOrder;
       });
@@ -372,5 +368,7 @@ export default function OrdersPage() {
     </div>
   );
 }
+
+    
 
     
