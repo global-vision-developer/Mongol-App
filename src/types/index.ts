@@ -109,7 +109,7 @@ export interface UserProfile {
   dateOfBirth?: string | null;
   gender?: 'male' | 'female' | 'other' | null;
   homeAddress?: string | null;
-  fcmTokens?: string[];
+  fcmToken?: string | null; // Changed from fcmTokens: string[]
   lastTokenUpdate?: Timestamp;
   points?: number;
 }
@@ -255,4 +255,3 @@ export interface FAQItem {
   updatedAt?: Timestamp;
   order?: number;
 }
-

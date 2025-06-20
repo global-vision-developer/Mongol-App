@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { requestForToken, setupOnMessageListener, auth, db, messaging } from '@/lib/firebase'; // Added messaging
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, updateDoc, arrayUnion, serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore'; // Removed arrayUnion
 import type { NotificationItem, ItemType } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -103,7 +103,7 @@ export default function AppInit() {
                 try {
                   const userDocRef = doc(db, "users", user.uid);
                   await updateDoc(userDocRef, {
-                    fcmTokens: arrayUnion(fcmToken),
+                    fcmToken: fcmToken, // Changed to store a single token directly
                     lastTokenUpdate: serverTimestamp()
                   });
                   console.log('FCM token synced with Firestore for user:', user.uid);
