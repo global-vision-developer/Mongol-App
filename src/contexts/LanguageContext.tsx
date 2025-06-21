@@ -70,18 +70,13 @@ const translations: Record<Language, Record<string, string>> = {
     // Banners (example alt texts)
     banner_promo1_alt: "Урамшуулал 1",
     banner_promo2_alt: "Онцлох үйлчилгээ",
-    // Dummy page titles
+    // Page specific
     myOrders: "Миний захиалгууд",
     mySavedItems: "Миний хадгалсан зүйлс",
     myNotifications: "Миний мэдэгдлүүд",
-    // No myProfile, using profilePageTitle instead
     noOrdersPlaceholder: "Танд одоогоор захиалга байхгүй байна.",
     ordersNoPurchasesMade: "Та худалдан авалт хийгээгүй байна",
-    ordersNeedsTab: "Хэрэгцээ", // This key might be unused now
     wechatOrdersTab: "WeChat",
-    ordersPaymentFilter: "Төлбөр",
-    ordersTicketFilter: "Тасалбар",
-    ordersRefundFilter: "Буцаалт",
     noSavedItemsPlaceholder: "Танд одоогоор хадгалсан зүйл байхгүй байна.",
     noNotificationsPlaceholder: "Танд одоогоор мэдэгдэл байхгүй байна.",
     email: "И-мэйл",
@@ -90,7 +85,7 @@ const translations: Record<Language, Record<string, string>> = {
     confirmPassword: "Нууц үг давтах",
     alreadyHaveAccount: "Бүртгэлтэй юу? Нэвтрэх",
     dontHaveAccount: "Бүртгэлгүй юу? Бүртгүүлэх",
-    // Profile & Settings Page specific (consolidated)
+    // Profile & Settings
     settings: "Тохиргоо",
     notificationSettings: "Мэдэгдлийн тохиргоо",
     manageNotificationPreferences: "И-мэйл болон апп-ын мэдэгдлээ удирдаарай.",
@@ -116,8 +111,6 @@ const translations: Record<Language, Record<string, string>> = {
     enterCredentialsLogin: "Нэвтрэхийн тулд мэдээллээ оруулна уу.",
     createYourAccount: "Mongol-д бүртгүүлээрэй.",
     // Notification specific
-    notification_promo_title: "Онцгой урамшуулал!",
-    notification_promo_desc: "Манай шинэ үйлчилгээнд 50% хямдралтай. Битгий алдаарай!",
     notification_update_title: "Системийн шинэчлэл",
     notification_update_desc: "Аппликейшн шинэчлэгдлээ. Шинэ боломжуудтай танилцана уу.",
     unknownNotificationTitle: "Мэдэгдэл",
@@ -125,10 +118,6 @@ const translations: Record<Language, Record<string, string>> = {
     translatorContactRevealedNotificationDescription: "Орчуулагч {{serviceName}}: Утас: {{translatorPhoneNumber}}, WeChat: {{translatorWeChatId}}.",
     // Flight Search Page
     flightsPageTitle: "Нислэг",
-    fromAirport: "Хаанаас", // Will be replaced by fromCity
-    toAirport: "Хаашаа", // Will be replaced by toCity
-    departureAirportPlaceholder: "Нисэх буудал сонгох", // Will be replaced
-    arrivalAirportPlaceholder: "Нисэх буудал сонгох", // Will be replaced
     selectDepartureDate: "Нисэх өдрөө сонгоно уу",
     selectDatePlaceholder: "Огноо сонгох",
     passengers: "Зорчигч",
@@ -139,9 +128,6 @@ const translations: Record<Language, Record<string, string>> = {
     searchFlights: "Нислэг хайх",
     swapAirports: "Чиглэл солих",
     back: "Буцах",
-    selectAirportDialogTitle: "Таны явах чиглэл", // Will be replaced
-    searchAirportsPlaceholder: "Хайх", // Will be replaced
-    noAirportsFound: "Нисэх буудал олдсонгүй", // Will be replaced
     fromCity: "Хаанаас (Хот)",
     toCity: "Хаашаа (Хот)",
     departureCityPlaceholder: "Явах хот сонгох",
@@ -157,7 +143,7 @@ const translations: Record<Language, Record<string, string>> = {
     fetchHotelsError: "Буудлын мэдээлэл татахад алдаа гарлаа.",
     noHotelsFound: "Сонгосон хотод зочид буудал олдсонгүй.",
     loginToBookHotel: "Буудал захиалахын тулд нэвтэрнэ үү.",
-    // New Profile Page Translations
+    // Profile Page
     profilePageTitle: "Хэрэглэгч",
     personalInfo: "Хувийн мэдээлэл",
     personalInfoProgress: "Хувийн мэдээлэл {{percent}} бөглөсөн",
@@ -189,26 +175,12 @@ const translations: Record<Language, Record<string, string>> = {
     price: "Үнэ",
     // Hospitals Page
     hospitalsPageTitle: "Эмнэлэг",
-    hospitalCategoryTraditional: "Уламжлалт эмнэлэг",
-    hospitalCategoryInnerMongolia: "Өвөрмонголын Эмнэлэгүүд",
-    hospitalCategoryGuangzhou: "Гуанжоу Эмнэлэгүүд",
-    hospitalCategoryShanghai: "Шанхайн Эмнэлэгүүд",
-    hospitalCategoryBeijing: "Бээжин Эмнэлэгүүд",
-    allCategories: "Бүх категори",
     allHospitalsSectionTitle: "Эмнэлгүүд",
     // Embassies Page
     embassiesPageTitle: "Элчин сайд",
-    embassyMFA: "Элчин сайдын яам",
-    embassyConsulate: "Өргөмжит Консулын Газ...",
     embassiesListingTitle: "Элчин сайдын яамд/Консулын газрууд",
     // WeChat Page
     wechatPageTitle: "Хэрэгцээт WeChat",
-    wechatBus: "Хөххот, Бээжин авто...",
-    wechatTaxi: "Хөххот, Бээжин такси",
-    wechatKidsFashion: "Хүүхдийн хувцас",
-    wechatBeautyProducts: "Гоо сайханы бүтээгдэхүүн",
-    wechatABCopy: "A, B copy",
-    wechatAllCategories: "Бүх категор",
     // Factories Page
     factoriesPageTitle: "Үйлдвэр",
     allFactoriesSectionTitle: "Үйлдвэрүүд",
@@ -295,7 +267,7 @@ const translations: Record<Language, Record<string, string>> = {
     languageLevelBasic: "Анхан",
     workedAsTranslatorLabel: "Орчуулга хийж байсан уу?",
     translationFieldsLabel: "Орчуулга хийх боломжтой салбарууд",
-    fieldTourism: "Аялал жуулчлал",
+    fieldTourism: "Аялал зугаалга",
     fieldMedical: "Эмнэлэг, эмчилгээ",
     fieldEquipment: "Тоног төхөөрөмж",
     fieldExhibition: "Үзэсгэлэн худалдаа",
@@ -336,7 +308,7 @@ const translations: Record<Language, Record<string, string>> = {
     requiredError: "Энэ талбарыг заавал бөглөнө үү.",
     invalidNumberError: "Хүчинтэй тоо оруулна уу.",
     // Help & Support Page
-    helpSupportPageTitle: "Тусламж", // Was "Тусламж ба Дэмжлэг"
+    helpSupportPageTitle: "Тусламж",
     helpSupportPageSubtitle: "Танд тулгарч буй асуудлаар бидэнтэй холбогдоорой эсвэл түгээмэл асуултуудтай танилцана уу.",
     faqTitle: "Түгээмэл Асуултууд",
     faqSubtitle: "Олон хэрэглэгчдийн сонирхдог асуулт, хариултууд.",
@@ -551,17 +523,13 @@ const translations: Record<Language, Record<string, string>> = {
     // Banners (example alt texts)
     banner_promo1_alt: "促销1",
     banner_promo2_alt: "特色服务",
-    // Dummy page titles
+    // Page specific
     myOrders: "我的订单",
     mySavedItems: "我保存的项目",
     myNotifications: "我的通知",
     noOrdersPlaceholder: "您目前没有订单。",
     ordersNoPurchasesMade: "您还没有购买任何商品",
-    ordersNeedsTab: "需求",
     wechatOrdersTab: "微信服务",
-    ordersPaymentFilter: "付款",
-    ordersTicketFilter: "票务",
-    ordersRefundFilter: "退款",
     noSavedItemsPlaceholder: "您目前没有已保存的项目。",
     noNotificationsPlaceholder: "您目前没有通知。",
     email: "电子邮件",
@@ -570,7 +538,7 @@ const translations: Record<Language, Record<string, string>> = {
     confirmPassword: "确认密码",
     alreadyHaveAccount: "已有账户？登录",
     dontHaveAccount: "没有账户？注册",
-    // Profile & Settings Page specific (consolidated)
+    // Profile & Settings
     settings: "设置",
     notificationSettings: "通知设置",
     manageNotificationPreferences: "管理您的电子邮件和应用内通知。",
@@ -596,8 +564,6 @@ const translations: Record<Language, Record<string, string>> = {
     enterCredentialsLogin: "请输入您的凭据以登录。",
     createYourAccount: "创建您的 Mongol 账户。",
     // Notification specific
-    notification_promo_title: "特别促销！",
-    notification_promo_desc: "我们的新服务有50%的折扣。不要错过！",
     notification_update_title: "系统更新",
     notification_update_desc: "应用程序已更新。查看新功能。",
     unknownNotificationTitle: "通知",
@@ -605,10 +571,6 @@ const translations: Record<Language, Record<string, string>> = {
     translatorContactRevealedNotificationDescription: "翻译员 {{serviceName}}: 电话: {{translatorPhoneNumber}}, 微信: {{translatorWeChatId}}.",
     // Flight Search Page
     flightsPageTitle: "航班",
-    fromAirport: "从哪里", // Will be replaced by fromCity
-    toAirport: "到哪里", // Will be replaced by toCity
-    departureAirportPlaceholder: "选择出发机场", // Will be replaced
-    arrivalAirportPlaceholder: "选择到达机场", // Will be replaced
     selectDepartureDate: "选择出发日期",
     selectDatePlaceholder: "选择日期",
     passengers: "乘客",
@@ -619,9 +581,6 @@ const translations: Record<Language, Record<string, string>> = {
     searchFlights: "搜索航班",
     swapAirports: "交换方向",
     back: "返回",
-    selectAirportDialogTitle: "您的航线", // Will be replaced
-    searchAirportsPlaceholder: "搜索", // Will be replaced
-    noAirportsFound: "未找到机场", // Will be replaced
     fromCity: "从 (城市)",
     toCity: "到 (城市)",
     departureCityPlaceholder: "选择出发城市",
@@ -637,7 +596,7 @@ const translations: Record<Language, Record<string, string>> = {
     fetchHotelsError: "获取酒店数据时出错。",
     noHotelsFound: "未找到所选城市的酒店。",
     loginToBookHotel: "请登录以预订酒店。",
-    // New Profile Page Translations
+    // Profile Page
     profilePageTitle: "用户中心",
     personalInfo: "个人信息",
     personalInfoProgress: "个人信息已完成 {{percent}}",
@@ -669,26 +628,12 @@ const translations: Record<Language, Record<string, string>> = {
     price: "价格",
     // Hospitals Page
     hospitalsPageTitle: "医院",
-    hospitalCategoryTraditional: "传统医院",
-    hospitalCategoryInnerMongolia: "内蒙古医院",
-    hospitalCategoryGuangzhou: "广州医院",
-    hospitalCategoryShanghai: "上海医院",
-    hospitalCategoryBeijing: "北京医院",
-    allCategories: "所有类别",
     allHospitalsSectionTitle: "医院列表",
     // Embassies Page
     embassiesPageTitle: "大使馆",
-    embassyMFA: "大使馆/外交部",
-    embassyConsulate: "领事馆...",
     embassiesListingTitle: "大使馆/领事馆列表",
     // WeChat Page
     wechatPageTitle: "实用微信服务",
-    wechatBus: "呼和浩特, 北京公交...",
-    wechatTaxi: "呼和浩特, 北京出租车",
-    wechatKidsFashion: "童装",
-    wechatBeautyProducts: "美妆产品",
-    wechatABCopy: "A, B 货",
-    wechatAllCategories: "所有分类",
     // Factories Page
     factoriesPageTitle: "工厂",
     allFactoriesSectionTitle: "所有工厂",
@@ -816,7 +761,7 @@ const translations: Record<Language, Record<string, string>> = {
     requiredError: "此字段为必填项。",
     invalidNumberError: "请输入有效的数字。",
     // Help & Support Page
-    helpSupportPageTitle: "帮助与支持", // Was "帮助与支持"
+    helpSupportPageTitle: "帮助与支持",
     helpSupportPageSubtitle: "如果您遇到任何问题，请联系我们或查看常见问题。",
     faqTitle: "常见问题解答",
     faqSubtitle: "许多用户感兴趣的问题和答案。",
@@ -864,7 +809,7 @@ const translations: Record<Language, Record<string, string>> = {
     getContactInfoButton: "获取联系方式",
     contactInfoPaymentPlaceholder: "支付后可查看联系方式。",
     paymentModalTitle: "支付",
-    paymentModalDescription: "支付 {{rate}} 元后即可获取翻译员联系方式。",
+    paymentModalDescription: "{{rate}} 元后即可获取翻译员联系方式。",
     paymentModalDescriptionNoRate: "获取翻译员联系方式需支付服务费。",
     payButton: "支付",
     orderCreatedSuccess: "订单创建成功！",
@@ -905,7 +850,7 @@ const translations: Record<Language, Record<string, string>> = {
     loadingOrders: "正在加载订单...",
     status: "状态",
     mongolianPhoneNumberLabel: "蒙古电话",
-    translatorContactPhoneLabel: "中国电话", // Was "电话"
+    translatorContactPhoneLabel: "中国电话",
     translatorContactWeChatLabel: "微信号",
     translatorContactWeChatQrLabel: "微信二维码",
     deleteOrderTitle: "删除订单",
@@ -958,7 +903,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Subcategory filtering
     allSubcategories: "所有子类别",
     filterBySubcategory: "按子类别筛选",
-    allCategoriesFilter: "全部", // For Saved page filter
+    allCategoriesFilter: "全部",
     genderMale: "男",
     genderFemale: "女",
     genderOther: "其他",
@@ -973,7 +918,7 @@ const translations: Record<Language, Record<string, string>> = {
     // City Selection Sheet
     majorCitiesTitle: "主要城市",
     otherCitiesTitle: "其他城市",
-  },
+  }
 };
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -1016,3 +961,5 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
+
+    
