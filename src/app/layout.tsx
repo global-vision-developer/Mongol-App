@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from "@/components/ui/toaster";
 import { PT_Sans, Space_Grotesk } from 'next/font/google';
 import { cn } from '@/lib/utils';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
 const ptSans = PT_Sans({
   subsets: ['latin', 'cyrillic'],
@@ -54,8 +55,10 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
-          {children}
-          <Toaster />
+          <LanguageProvider>
+            {children}
+            <Toaster />
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

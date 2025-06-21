@@ -6,14 +6,12 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { LanguageProvider } from '@/contexts/LanguageContext'; // If form itself uses t()
 
 export default function PersonalInfoPage() {
   const { t } = useTranslation();
   const router = useRouter();
 
   return (
-    <LanguageProvider>
       <div className="space-y-6 max-w-2xl mx-auto">
         <div className="flex items-center sticky top-0 z-10 bg-background py-3 md:relative md:py-0 -mx-4 px-4 md:mx-0 md:px-0 border-b md:border-none mb-2 md:mb-0">
           <Button variant="ghost" size="icon" onClick={() => router.back()} className="md:hidden mr-2">
@@ -27,6 +25,5 @@ export default function PersonalInfoPage() {
         </div>
         <PersonalInfoForm />
       </div>
-    </LanguageProvider>
   );
 }
