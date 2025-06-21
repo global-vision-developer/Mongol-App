@@ -1,8 +1,7 @@
 
 "use client";
 import type { Language } from '@/types';
-import type React from 'react';
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 interface LanguageContextType {
   language: Language;
@@ -936,7 +935,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.setItem('appLanguage', lang);
   };
 
-  const t = (key: string, replacements?: Record<string, string | number | null | undefined>, fallback?: string): string => {
+  const t = useCallback((key: string, replacements?: Record<string, string | number | null | undefined>, fallback?: string): string => {
     let translation = translations[language]?.[key] || translations['mn']?.[key] || fallback || key;
     if (replacements) {
       Object.entries(replacements).forEach(([placeholder, value]) => {
@@ -945,7 +944,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     }
     return translation;
-  };
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t }}>
