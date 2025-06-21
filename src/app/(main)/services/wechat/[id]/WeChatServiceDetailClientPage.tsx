@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, runTransaction, increment, collection as firestoreCollection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -163,33 +163,40 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
 
     setIsBooking(true);
     try {
-      const orderData: Omit<AppOrder, 'id'> = {
-        userId: user.uid,
-        serviceType: itemType,
-        serviceId: item.id,
-        serviceName: item.name || t('serviceUnnamed'),
-        orderDate: serverTimestamp(),
-        status: 'confirmed', 
-        imageUrl: item.imageUrl || null,
-        dataAiHint: item.dataAiHint || "wechat service item",
-        amount: item.price === undefined ? null : item.price,
-      };
-      await addDoc(firestoreCollection(db, "orders"), orderData);
+      const newOrderRef = doc(firestoreCollection(db, "orders"));
+      const newNotificationRef = doc(firestoreCollection(db, "users", user.uid, "notifications"));
+      const userDocRef = doc(db, "users", user.uid);
+      
+      await runTransaction(db, async (transaction) => {
+        const orderData: Omit<AppOrder, 'id'> = {
+          userId: user.uid,
+          serviceType: itemType,
+          serviceId: item.id,
+          serviceName: item.name || t('serviceUnnamed'),
+          orderDate: serverTimestamp(),
+          status: 'confirmed', 
+          imageUrl: item.imageUrl || null,
+          dataAiHint: item.dataAiHint || "wechat service item",
+          amount: item.price === undefined ? null : item.price,
+        };
+        transaction.set(newOrderRef, orderData);
 
-      const notificationData: Omit<NotificationItem, 'id'> = {
-        titleKey: 'orderSuccessNotificationTitle',
-        descriptionKey: 'orderSuccessNotificationDescription',
-        descriptionPlaceholders: { serviceName: item.name || t('serviceUnnamed') },
-        date: serverTimestamp(),
-        read: false,
-        itemType: itemType,
-        link: `/orders`,
-        imageUrl: item.imageUrl || null,
-        dataAiHint: item.dataAiHint || "wechat service item",
-      };
-      if (user?.uid) {
-        await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
-      }
+        const notificationData: Omit<NotificationItem, 'id'> = {
+          titleKey: 'orderSuccessNotificationTitle',
+          descriptionKey: 'orderSuccessNotificationDescription',
+          descriptionPlaceholders: { serviceName: item.name || t('serviceUnnamed') },
+          date: serverTimestamp(),
+          read: false,
+          itemType: itemType,
+          link: `/orders`,
+          imageUrl: item.imageUrl || null,
+          dataAiHint: item.dataAiHint || "wechat service item",
+        };
+        transaction.set(newNotificationRef, notificationData);
+
+        transaction.update(userDocRef, { points: increment(15) });
+      });
+
 
       toast({ title: t('orderSuccessNotificationTitle'), description: t('orderSuccessNotificationDescription', { serviceName: item.name || t('serviceUnnamed') }) });
     } catch (error) {
@@ -369,4 +376,3 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
     </div>
   );
 }
-

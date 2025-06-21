@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, serverTimestamp, addDoc, collection as firestoreCollection, Timestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, runTransaction, increment, collection as firestoreCollection, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -223,41 +223,47 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
     if (!user || !translator) return;
     setIsProcessingPayment(true);
     try {
-      const orderData: Omit<AppOrder, 'id'> = {
-        userId: user.uid,
-        serviceType: itemType, 
-        serviceId: translator.id,
-        serviceName: translator.name || t('serviceUnnamed'),
-        orderDate: serverTimestamp(),
-        status: 'contact_revealed', 
-        amount: translator.dailyRate || null, 
-        contactInfoRevealed: true,
-        imageUrl: translator.photoUrl || null,
-        dataAiHint: "translator portrait",
-        chinaPhoneNumber: translator.chinaPhoneNumber || null,
-        wechatId: translator.wechatId || null,
-        wechatQrImageUrl: translator.wechatQrImageUrl || null,
-      };
-      await addDoc(firestoreCollection(db, "orders"), orderData);
-      
-      const notificationData: Omit<NotificationItem, 'id'> = {
-        titleKey: 'orderSuccessNotificationTitle',
-        descriptionKey: 'translatorContactRevealedNotificationDescription', 
-        descriptionPlaceholders: { 
-            serviceName: translator.name || t('serviceUnnamed'),
-            translatorPhoneNumber: translator.chinaPhoneNumber || t('notProvided'),
-            translatorWeChatId: translator.wechatId || t('notProvided'),
-        },
-        date: serverTimestamp(),
-        read: false,
-        itemType: itemType, 
-        link: `/orders`, 
-        imageUrl: translator.photoUrl || null,
-        dataAiHint: "translator portrait"
-      };
-      if (user?.uid) {
-        await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
-      }
+      const newOrderRef = doc(firestoreCollection(db, "orders"));
+      const newNotificationRef = doc(firestoreCollection(db, "users", user.uid, "notifications"));
+      const userDocRef = doc(db, "users", user.uid);
+
+      await runTransaction(db, async (transaction) => {
+        const orderData: Omit<AppOrder, 'id'> = {
+          userId: user.uid,
+          serviceType: itemType, 
+          serviceId: translator.id,
+          serviceName: translator.name || t('serviceUnnamed'),
+          orderDate: serverTimestamp(),
+          status: 'contact_revealed', 
+          amount: translator.dailyRate || null, 
+          contactInfoRevealed: true,
+          imageUrl: translator.photoUrl || null,
+          dataAiHint: "translator portrait",
+          chinaPhoneNumber: translator.chinaPhoneNumber || null,
+          wechatId: translator.wechatId || null,
+          wechatQrImageUrl: translator.wechatQrImageUrl || null,
+        };
+        transaction.set(newOrderRef, orderData);
+
+        const notificationData: Omit<NotificationItem, 'id'> = {
+          titleKey: 'orderSuccessNotificationTitle',
+          descriptionKey: 'translatorContactRevealedNotificationDescription', 
+          descriptionPlaceholders: { 
+              serviceName: translator.name || t('serviceUnnamed'),
+              translatorPhoneNumber: translator.chinaPhoneNumber || t('notProvided'),
+              translatorWeChatId: translator.wechatId || t('notProvided'),
+          },
+          date: serverTimestamp(),
+          read: false,
+          itemType: itemType, 
+          link: `/orders`, 
+          imageUrl: translator.photoUrl || null,
+          dataAiHint: "translator portrait"
+        };
+        transaction.set(newNotificationRef, notificationData);
+
+        transaction.update(userDocRef, { points: increment(15) });
+      });
 
       toast({ title: t('orderCreatedSuccess'), description: t('contactInfoAvailableInOrders') });
       setIsPaymentModalOpen(false);

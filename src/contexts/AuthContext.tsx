@@ -15,7 +15,7 @@ import {
   updatePassword as firebaseUpdatePassword,
   sendEmailVerification,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc, DocumentData, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, DocumentData, serverTimestamp, onSnapshot } from "firebase/firestore";
 import type { UserProfile } from "@/types";
 
 interface AuthContextType {
@@ -47,44 +47,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dateOfBirth: firestoreData?.dateOfBirth || null,
     gender: firestoreData?.gender || null,
     homeAddress: firestoreData?.homeAddress || null,
+    points: firestoreData?.points || 0,
   });
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubscribeUserDoc: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (unsubscribeUserDoc) {
+        unsubscribeUserDoc();
+        unsubscribeUserDoc = null;
+      }
+
       if (firebaseUser) {
-        // Only set the user in the app's context if their email has been verified.
         if (firebaseUser.emailVerified) {
-            try {
-            const userDocRef = doc(db, "users", firebaseUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            if (userDocSnap.exists()) {
-                setUser(formatUser(firebaseUser, userDocSnap.data()));
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+
+          unsubscribeUserDoc = onSnapshot(userDocRef, (docSnap) => {
+            if (docSnap.exists()) {
+              setUser(formatUser(firebaseUser, docSnap.data()));
             } else {
-                // This will create the user doc if it doesn't exist upon first verified login
-                const initialUserData: UserProfile & { createdAt: any } = {
+              const initialUserData = {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName,
                 photoURL: firebaseUser.photoURL,
-                phoneNumber: null,
-                firstName: null,
-                lastName: null,
-                dateOfBirth: null,
-                gender: null,
-                homeAddress: null,
                 createdAt: serverTimestamp(),
-                };
-                await setDoc(userDocRef, initialUserData);
+                points: 0,
+              };
+              setDoc(userDocRef, initialUserData).then(() => {
                 setUser(formatUser(firebaseUser, initialUserData));
+              });
             }
-            } catch (error) {
-            console.error("Error fetching user data from Firestore:", error);
-            setUser(null); 
+          }, (error) => {
+            console.error("Error with onSnapshot listener:", error);
+            setUser(null);
             signOut(auth);
-            }
+          });
+
         } else {
-            // If user exists but is not verified, treat them as logged out from the app's state.
-             setUser(null);
+          setUser(null);
         }
       } else {
         setUser(null);
@@ -92,7 +94,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeUserDoc) {
+        unsubscribeUserDoc();
+      }
+    };
   }, []);
 
   const login = async (email: string, pass: string) => {
@@ -105,7 +112,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (error as any).code = 'auth/email-not-verified'; // Custom code for the form to catch
         throw error;
       }
-      // If verified, onAuthStateChanged listener will handle setting the user state.
     } catch (error) {
       setLoading(false); 
       throw error;
@@ -118,9 +124,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(result.user, { displayName: name });
       
-      await sendEmailVerification(result.user);
+      const userDocRef = doc(db, "users", result.user.uid);
+      await setDoc(userDocRef, {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: name,
+        photoURL: result.user.photoURL,
+        createdAt: serverTimestamp(),
+        points: 0 // Initialize points
+      });
 
-      // Sign the user out immediately so they are forced to verify and then log in.
+      await sendEmailVerification(result.user);
       await signOut(auth);
     } catch (error) {
       throw error;
@@ -143,16 +157,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updatePhoneNumber = async (phoneNumber: string) => {
     if (!user) throw new Error("User not logged in");
-    setLoading(true);
     try {
       const userDocRef = doc(db, "users", user.uid);
       await updateDoc(userDocRef, { phoneNumber, updatedAt: serverTimestamp() });
-      setUser((prevUser) => ({ ...prevUser!, phoneNumber }));
     } catch (error) {
       console.error("Error updating phone number:", error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -176,50 +186,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updatePersonalInformation = async (data: Partial<Pick<UserProfile, 'firstName' | 'lastName' | 'dateOfBirth' | 'gender' | 'homeAddress'>>) => {
     if (!user || !auth.currentUser) throw new Error("User not logged in");
-    setLoading(true);
     try {
       const firebaseUser = auth.currentUser;
       const displayName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
 
-      // Update Firebase Auth profile
       if (displayName && displayName !== firebaseUser.displayName) {
         await updateProfile(firebaseUser, { displayName });
       }
 
-      // Update Firestore document
       const userDocRef = doc(db, "users", user.uid);
       const updateData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
       
       await updateDoc(userDocRef, {
         ...updateData,
-        displayName: displayName || user.displayName, // also save to firestore to keep in sync
+        displayName: displayName || user.displayName,
         updatedAt: serverTimestamp()
       });
-      
-      // Update local state
-      setUser((prevUser) => ({ ...prevUser!, ...updateData, displayName }));
     } catch (error) {
       console.error("Personal info update error:", error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
   const updateProfilePicture = async (photoURL: string) => {
     if (!auth.currentUser) throw new Error("User not logged in.");
-    setLoading(true);
     try {
       const firebaseUser = auth.currentUser;
       await updateProfile(firebaseUser, { photoURL });
       const userDocRef = doc(db, "users", firebaseUser.uid);
       await updateDoc(userDocRef, { photoURL, updatedAt: serverTimestamp() });
-      setUser((prevUser) => ({ ...prevUser!, photoURL }));
     } catch (error) {
       console.error("Error updating profile picture:", error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 

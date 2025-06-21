@@ -254,7 +254,7 @@ export default function ProfilePage() {
             <Gift className="h-7 w-7 text-primary" />
             <div>
               <p className="font-semibold">{t('totalPoints')}</p>
-              <p className="text-xl font-bold text-primary">0</p>
+              <p className="text-xl font-bold text-primary">{user?.points || 0}</p>
             </div>
           </div>
           <ChevronRight className="h-6 w-6 text-muted-foreground" />

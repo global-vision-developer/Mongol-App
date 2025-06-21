@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { doc, getDoc, addDoc, collection as firestoreCollection, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, runTransaction, increment, collection as firestoreCollection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -161,33 +161,40 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
     if (!user || !item) return;
     setIsProcessingInquiry(true);
     try {
-      const orderData: Omit<AppOrder, 'id'> = {
-        userId: user.uid,
-        serviceType: "hotel",
-        serviceId: item.id,
-        serviceName: item.name || t('serviceUnnamed'),
-        orderDate: serverTimestamp(),
-        status: 'contact_revealed', 
-        amount: item.price === undefined ? null : item.price, 
-        imageUrl: item.imageUrl || null,
-        dataAiHint: item.dataAiHint || "hotel building",
-      };
-      await addDoc(firestoreCollection(db, "orders"), orderData);
+      const newOrderRef = doc(firestoreCollection(db, "orders"));
+      const newNotificationRef = doc(firestoreCollection(db, "users", user.uid, "notifications"));
+      const userDocRef = doc(db, "users", user.uid);
 
-      const notificationData: Omit<NotificationItem, 'id'> = {
-        titleKey: 'hotelInquirySubmittedTitle',
-        descriptionKey: 'hotelInquirySubmittedDesc',
-        descriptionPlaceholders: { serviceName: item.name || t('serviceUnnamed') },
-        date: serverTimestamp(),
-        read: false,
-        itemType: "hotel",
-        link: `/orders`,
-        imageUrl: item.imageUrl || null,
-        dataAiHint: item.dataAiHint || "hotel building",
-      };
-      if (user?.uid) {
-        await addDoc(firestoreCollection(db, "users", user.uid, "notifications"), notificationData);
-      }
+      await runTransaction(db, async (transaction) => {
+        const orderData: Omit<AppOrder, 'id'> = {
+          userId: user.uid,
+          serviceType: "hotel",
+          serviceId: item.id,
+          serviceName: item.name || t('serviceUnnamed'),
+          orderDate: serverTimestamp(),
+          status: 'contact_revealed', 
+          amount: item.price === undefined ? null : item.price, 
+          imageUrl: item.imageUrl || null,
+          dataAiHint: item.dataAiHint || "hotel building",
+        };
+        transaction.set(newOrderRef, orderData);
+        
+        const notificationData: Omit<NotificationItem, 'id'> = {
+          titleKey: 'hotelInquirySubmittedTitle',
+          descriptionKey: 'hotelInquirySubmittedDesc',
+          descriptionPlaceholders: { serviceName: item.name || t('serviceUnnamed') },
+          date: serverTimestamp(),
+          read: false,
+          itemType: "hotel",
+          link: `/orders`,
+          imageUrl: item.imageUrl || null,
+          dataAiHint: item.dataAiHint || "hotel building",
+        };
+        transaction.set(newNotificationRef, notificationData);
+
+        transaction.update(userDocRef, { points: increment(15) });
+      });
+
 
       toast({ title: t('hotelInquirySubmittedTitle'), description: t('hotelInquirySubmittedDesc', { serviceName: item.name || t('serviceUnnamed') }) });
       setIsPaymentModalOpen(false);
