@@ -213,7 +213,7 @@ export function RegisterTranslatorForm() {
         isProfileComplete: true, 
       };
       
-      await setDoc(doc(db, "orchluulagchid", user.uid), fullTranslatorProfile);
+      await setDoc(doc(db, "ankets", user.uid), fullTranslatorProfile);
       setSubmissionSuccess(true);
 
     } catch (error) {
