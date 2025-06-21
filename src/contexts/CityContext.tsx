@@ -1,4 +1,3 @@
-
 "use client";
 import type { City } from '@/types';
 import React, { createContext, useContext, useState, useEffect } from 'react';
@@ -22,8 +21,18 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { t } = useLanguage(); // For translating "All"
 
   useEffect(() => {
-    const fetchCities = async () => {
+    const fetchCitiesAndSetDefault = async () => {
       setLoadingCities(true);
+      const allOption: City = {
+        id: 'all',
+        value: 'all', // Special value for "All"
+        label: t('allCities', undefined, 'Бүгд'),
+        label_cn: t('allCities', undefined, '全部'),
+        isMajor: true, 
+        order: -1, 
+        cityType: 'all',
+      };
+      
       try {
         const citiesColRef = collection(db, "cities");
         const q = query(citiesColRef, orderBy("order", "asc"), orderBy("name", "asc"));
@@ -42,62 +51,39 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } as City;
         });
 
-        const allOption: City = {
-          id: 'all',
-          value: 'all', // Special value for "All"
-          label: t('allCities', undefined, 'Бүгд'),
-          label_cn: t('allCities', undefined, '全部'),
-          isMajor: true, 
-          order: -1, 
-          cityType: 'all',
-        };
-
         const citiesWithAll = [allOption, ...fetchedCities];
         setAvailableCities(citiesWithAll);
-
-        const savedCityValue = typeof window !== "undefined" ? localStorage.getItem('selectedCityValue') : null; // Store ID now
-        if (savedCityValue) {
-          const city = citiesWithAll.find(c => c.value === savedCityValue); // Find by ID
-          setSelectedCityState(city || allOption);
-        } else {
-          setSelectedCityState(allOption);
-        }
+        
+        // This is the key change for hydration: Set a consistent default first.
+        // The server and client will both initially render with "All".
+        setSelectedCityState(allOption);
 
       } catch (error) {
         console.error("Error fetching cities from Firestore:", error);
-        const allOptionFallback: City = {
-          id: 'all',
-          value: 'all',
-          label: t('allCities', undefined, 'Бүгд'),
-          label_cn: t('allCities', undefined, '全部'),
-          isMajor: true,
-          order: -1,
-          cityType: 'all',
-        };
-        setAvailableCities([allOptionFallback]);
-        setSelectedCityState(allOptionFallback);
+        setAvailableCities([allOption]);
+        setSelectedCityState(allOption);
       } finally {
         setLoadingCities(false);
       }
     };
 
-    if (typeof window !== 'undefined') { 
-      fetchCities();
-    } else { 
-      const allOptionFallback: City = {
-          id: 'all',
-          value: 'all',
-          label: t('allCities', undefined, 'Бүгд'),
-          label_cn: t('allCities', undefined, '全部'),
-          isMajor: true,
-          order: -1,
-          cityType: 'all',
-        };
-      setAvailableCities([allOptionFallback]);
-      setSelectedCityState(allOptionFallback);
-      setLoadingCities(false);
-    }
+    fetchCitiesAndSetDefault();
   }, [t]);
+
+  // This second useEffect runs ONLY on the client, after hydration, to sync with localStorage.
+  useEffect(() => {
+    // Only run if cities have been loaded and we're on the client
+    if (typeof window !== 'undefined' && availableCities.length > 1) {
+        const savedCityValue = localStorage.getItem('selectedCityValue');
+        if (savedCityValue) {
+          const city = availableCities.find(c => c.value === savedCityValue);
+          if (city) {
+            setSelectedCityState(city);
+          }
+        }
+    }
+  }, [availableCities]); // Reruns when the list of cities is populated.
+
 
   const setSelectedCity = (city: City) => {
     setSelectedCityState(city);
