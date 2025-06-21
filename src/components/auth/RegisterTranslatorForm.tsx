@@ -19,8 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { Translator, Nationality, LanguageLevel, DailyRateRange, TranslationField, ItemType } from "@/types";
-import { CITIES, TranslationFields as GlobalTranslationFields } from "@/lib/constants"; 
+import { TranslationFields as GlobalTranslationFields } from "@/lib/constants"; 
 import { AlertCircle, CheckCircle2, FileImage, ArrowLeft } from "lucide-react";
+import { useCity } from "@/contexts/CityContext";
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -83,6 +84,7 @@ export function RegisterTranslatorForm() {
   const { t, language } = useTranslation();
   const { toast } = useToast();
   const router = useRouter();
+  const { availableCities, loadingCities } = useCity();
   
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -342,12 +344,12 @@ export function RegisterTranslatorForm() {
                       name="currentCityInChina"
                       control={control}
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isSubmitting}>
+                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isSubmitting || loadingCities}>
                           <SelectTrigger id="currentCityInChina">
-                            <SelectValue placeholder={t('selectCurrentCityInChinaPlaceholder')} />
+                            <SelectValue placeholder={loadingCities ? t('loading') : t('selectCurrentCityInChinaPlaceholder')} />
                           </SelectTrigger>
                           <SelectContent>
-                            {CITIES.filter(c => c.value !== 'all').map(city => (
+                            {availableCities.filter(c => c.value !== 'all').map(city => (
                               <SelectItem key={city.value} value={city.value}>
                                 {language === 'cn' && city.label_cn ? city.label_cn : city.label}
                               </SelectItem>
@@ -488,7 +490,7 @@ export function RegisterTranslatorForm() {
                     control={control}
                     render={({ field }) => (
                       <div className="grid grid-cols-2 gap-2">
-                        {CITIES.filter(c => c.value !== 'all').map(cityOpt => (
+                        {availableCities.filter(c => c.value !== 'all').map(cityOpt => (
                           <div key={cityOpt.value} className="flex items-center space-x-2">
                             <Checkbox
                               id={`city-${cityOpt.value}`}
@@ -501,7 +503,7 @@ export function RegisterTranslatorForm() {
                                   field.onChange(currentValues.filter(v => v !== cityOpt.value));
                                 }
                               }}
-                              disabled={isSubmitting}
+                              disabled={isSubmitting || loadingCities}
                             />
                             <Label htmlFor={`city-${cityOpt.value}`} className="text-sm font-normal">
                                {language === 'cn' && cityOpt.label_cn ? cityOpt.label_cn : cityOpt.label}
