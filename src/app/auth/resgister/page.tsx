@@ -1,10 +1,5 @@
-import { RegisterForm } from "@/components/auth/RegisterForm";
-import { LanguageProvider } from "@/contexts/LanguageContext"; // Required for t() in RegisterForm
-
-export default function RegisterPage() {
-  return (
-    <LanguageProvider> {/* RegisterForm uses useTranslation, needs provider */}
-        <RegisterForm />
-    </LanguageProvider>
-  );
+// This file is inside a misspelled folder "resgister" and should be deleted.
+// The correct registration page is located at /src/app/auth/register/page.tsx
+export default function MisspelledRegisterPage() {
+  return null;
 }

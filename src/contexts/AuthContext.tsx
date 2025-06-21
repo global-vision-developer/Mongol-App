@@ -175,19 +175,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updatePersonalInformation = async (data: Partial<Pick<UserProfile, 'firstName' | 'lastName' | 'dateOfBirth' | 'gender' | 'homeAddress'>>) => {
-    if (!user) throw new Error("User not logged in");
+    if (!user || !auth.currentUser) throw new Error("User not logged in");
     setLoading(true);
     try {
+      const firebaseUser = auth.currentUser;
+      const displayName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+
+      // Update Firebase Auth profile
+      if (displayName && displayName !== firebaseUser.displayName) {
+        await updateProfile(firebaseUser, { displayName });
+      }
+
+      // Update Firestore document
       const userDocRef = doc(db, "users", user.uid);
       const updateData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
       
       await updateDoc(userDocRef, {
         ...updateData,
+        displayName: displayName || user.displayName, // also save to firestore to keep in sync
         updatedAt: serverTimestamp()
       });
-      setUser((prevUser) => ({ ...prevUser!, ...updateData }));
+      
+      // Update local state
+      setUser((prevUser) => ({ ...prevUser!, ...updateData, displayName }));
     } catch (error) {
-      console.error("Error updating personal information:", error);
+      console.error("Personal info update error:", error);
       throw error;
     } finally {
       setLoading(false);
