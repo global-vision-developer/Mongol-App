@@ -25,27 +25,33 @@ export function LoginForm() {
     e.preventDefault();
     try {
       await login(email, password);
-      toast({ title: t("login"), description: t("welcome") }); // Use t() for title too
+      toast({ title: t("login"), description: t("welcome") });
       router.push("/services"); 
     } catch (error) {
       let errorMessage = t("authErrorGenericLogin");
       const firebaseError = error as FirebaseError;
-      switch (firebaseError.code) {
-        case "auth/invalid-credential":
-        case "auth/user-not-found": // Legacy, but good to keep
-        case "auth/wrong-password": // Legacy
-          errorMessage = t("authErrorInvalidCredential");
-          break;
-        case "auth/invalid-email":
-          errorMessage = t("authErrorInvalidEmail");
-          break;
-        case "auth/too-many-requests":
-          errorMessage = t("authErrorTooManyRequests");
-          break;
-        default:
-          // Keep the generic message if no specific code matches
-          break;
+
+      if (firebaseError.code === 'auth/email-not-verified') {
+        errorMessage = t("loginFailedEmailNotVerified");
+      } else {
+        switch (firebaseError.code) {
+          case "auth/invalid-credential":
+          case "auth/user-not-found": // Legacy, but good to keep
+          case "auth/wrong-password": // Legacy
+            errorMessage = t("authErrorInvalidCredential");
+            break;
+          case "auth/invalid-email":
+            errorMessage = t("authErrorInvalidEmail");
+            break;
+          case "auth/too-many-requests":
+            errorMessage = t("authErrorTooManyRequests");
+            break;
+          default:
+            // Keep the generic message if no specific code matches
+            break;
+        }
       }
+      
       toast({
         title: t("loginFailed"), // Translate title
         description: errorMessage,

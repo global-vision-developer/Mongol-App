@@ -38,9 +38,9 @@ export function RegisterForm() {
       await register(email, password, displayName);
       toast({
         title: t("registrationSuccess"),
-        description: t("welcome"),
+        description: t("registrationSuccessVerifyEmail"),
       });
-      router.push("/services"); 
+      router.push("/auth/login"); 
     } catch (error: any) {
       let errorMessage = t("authErrorGenericRegister");
       const firebaseError = error as FirebaseError;

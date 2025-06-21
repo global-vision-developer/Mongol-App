@@ -231,6 +231,9 @@ const translations: Record<Language, Record<string, string>> = {
     registrationError: "Бүртгүүлэх явцад алдаа гарлаа.",
     error: "Алдаа",
     passwordsDoNotMatchError: "Нууц үг таарахгүй байна.",
+    registrationSuccessVerifyEmail: "Баталгаажуулах линк таны имэйл хаяг руу илгээлээ. Нэвтрэхээсээ өмнө имэйлээ шалгана уу.",
+    loginFailed: "Нэвтрэхэд алдаа гарлаа",
+    loginFailedEmailNotVerified: "Имэйл хаяг баталгаажаагүй байна. Имэйлээ шалгаж, баталгаажуулна уу.",
     // Password Update specific
     changePasswordPageTitle: "Нууц үг солих",
     currentPasswordLabel: "Хуучин нууц үг",
@@ -708,6 +711,9 @@ const translations: Record<Language, Record<string, string>> = {
     registrationError: "注册时发生错误。",
     error: "错误",
     passwordsDoNotMatchError: "密码不匹配。",
+    registrationSuccessVerifyEmail: "验证链接已发送至您的电子邮箱。请在登录前进行验证。",
+    loginFailed: "登录失败",
+    loginFailedEmailNotVerified: "您的电子邮件未经验证。请检查您的电子邮件并进行验证。",
     // Password Update specific
     changePasswordPageTitle: "修改密码",
     currentPasswordLabel: "旧密码",
@@ -1010,4 +1016,3 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
-

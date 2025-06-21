@@ -12,7 +12,8 @@ import {
   User,
   EmailAuthProvider,
   reauthenticateWithCredential,
-  updatePassword as firebaseUpdatePassword, // Renamed to avoid conflict
+  updatePassword as firebaseUpdatePassword,
+  sendEmailVerification,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, DocumentData, serverTimestamp } from "firebase/firestore";
 import type { UserProfile } from "@/types";
@@ -51,32 +52,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        try {
-          const userDocRef = doc(db, "users", firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists()) {
-            setUser(formatUser(firebaseUser, userDocSnap.data()));
-          } else {
-            // This will create the user doc with basic info + personal info fields as null/undefined
-            const initialUserData: UserProfile & { createdAt: any } = {
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              displayName: firebaseUser.displayName,
-              photoURL: firebaseUser.photoURL,
-              phoneNumber: null,
-              firstName: null,
-              lastName: null,
-              dateOfBirth: null,
-              gender: null,
-              homeAddress: null,
-              createdAt: serverTimestamp(),
-            };
-            await setDoc(userDocRef, initialUserData);
-            setUser(formatUser(firebaseUser, initialUserData));
-          }
-        } catch (error) {
-          console.error("Error fetching user data from Firestore:", error);
-          setUser(formatUser(firebaseUser)); 
+        // Only set the user in the app's context if their email has been verified.
+        if (firebaseUser.emailVerified) {
+            try {
+            const userDocRef = doc(db, "users", firebaseUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                setUser(formatUser(firebaseUser, userDocSnap.data()));
+            } else {
+                // This will create the user doc if it doesn't exist upon first verified login
+                const initialUserData: UserProfile & { createdAt: any } = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                photoURL: firebaseUser.photoURL,
+                phoneNumber: null,
+                firstName: null,
+                lastName: null,
+                dateOfBirth: null,
+                gender: null,
+                homeAddress: null,
+                createdAt: serverTimestamp(),
+                };
+                await setDoc(userDocRef, initialUserData);
+                setUser(formatUser(firebaseUser, initialUserData));
+            }
+            } catch (error) {
+            console.error("Error fetching user data from Firestore:", error);
+            setUser(null); 
+            signOut(auth);
+            }
+        } else {
+            // If user exists but is not verified, treat them as logged out from the app's state.
+             setUser(null);
         }
       } else {
         setUser(null);
@@ -90,7 +98,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, pass: string) => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      if (!userCredential.user.emailVerified) {
+        await signOut(auth); // Sign them out
+        const error = new Error("Email not verified.");
+        (error as any).code = 'auth/email-not-verified'; // Custom code for the form to catch
+        throw error;
+      }
+      // If verified, onAuthStateChanged listener will handle setting the user state.
     } catch (error) {
       setLoading(false); 
       throw error;
@@ -102,9 +117,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const result = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(result.user, { displayName: name });
+      
+      await sendEmailVerification(result.user);
+
+      // Sign the user out immediately so they are forced to verify and then log in.
+      await signOut(auth);
     } catch (error) {
-      setLoading(false);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
