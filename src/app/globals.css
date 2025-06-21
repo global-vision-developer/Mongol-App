@@ -107,31 +107,31 @@
 
 /* Page Transition Animations */
 @keyframes slideInFromRight {
-  0% {
-    transform: translateX(50px);
+  from {
+    transform: translateX(20px);
     opacity: 0;
   }
-  100% {
+  to {
     transform: translateX(0);
     opacity: 1;
   }
 }
 
 .animate-page-slide-in-right {
-  animation: slideInFromRight 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: slideInFromRight 0.4s ease-out forwards;
 }
 
 @keyframes slideInFromBottom {
-  0% {
-    transform: translateY(50px);
+  from {
+    transform: translateY(20px);
     opacity: 0;
   }
-  100% {
+  to {
     transform: translateY(0);
     opacity: 1;
   }
 }
 
 .animate-page-slide-in-bottom {
-  animation: slideInFromBottom 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: slideInFromBottom 0.4s ease-out forwards;
 }
