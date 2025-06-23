@@ -1,3 +1,4 @@
+
 // lib/firebase.ts
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
@@ -13,13 +14,13 @@ import {
 import { getStorage, type Storage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyASai6a1N3BVpG8n6CMzssFQbxdzzRhdPc",
-  authDomain: "setgelzuin-app.firebaseapp.com",
-  projectId: "setgelzuin-app",
-  storageBucket: "setgelzuin-app.firebasestorage.app",
-  messagingSenderId: "397784045864",
-  appId: "1:397784045864:web:dd035abe90938e4725581d",
-  measurementId: "G-GNT80QXXF4"
+  apiKey: "AIzaSyC8fm6JfwUqtr_YBpg01hxo6JKAQQ8kgPc",
+  authDomain: "mbad-c532e.firebaseapp.com",
+  projectId: "mbad-c532e",
+  storageBucket: "mbad-c532e.firebasestorage.app",
+  messagingSenderId: "634830609207",
+  appId: "1:634830609207:web:d23ecb61175f8ee56fd8b2",
+  measurementId: "G-EHLS0LGKEM"
 };
 
 const app: FirebaseApp = initializeApp(firebaseConfig);
