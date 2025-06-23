@@ -27,7 +27,8 @@ interface AuthContextType {
   updatePhoneNumber: (phoneNumber: string) => Promise<void>;
   updateUserPassword: (currentPass: string, newPass: string) => Promise<void>;
   updatePersonalInformation: (data: Partial<Pick<UserProfile, 'firstName' | 'lastName' | 'dateOfBirth' | 'gender' | 'homeAddress'>>) => Promise<void>;
-  updateProfilePicture: (photoURL: string) => Promise<void>; // Added
+  updateProfilePicture: (photoURL: string) => Promise<void>;
+  sendVerificationEmailForUnverifiedUser: (email: string, pass: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,6 +118,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error;
     }
   };
+  
+  const sendVerificationEmailForUnverifiedUser = async (email: string, pass: string) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      if (userCredential.user) {
+        await sendEmailVerification(userCredential.user);
+      }
+      await signOut(auth); // Sign out immediately after sending
+    } catch (error) {
+      console.error("Error during resend verification flow:", error);
+      throw error; // Re-throw to be handled by the calling component
+    }
+  };
+
 
   const register = async (email: string, pass: string, name: string) => {
     setLoading(true);
@@ -223,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updatePhoneNumber, updateUserPassword, updatePersonalInformation, updateProfilePicture }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updatePhoneNumber, updateUserPassword, updatePersonalInformation, updateProfilePicture, sendVerificationEmailForUnverifiedUser }}>
       {children}
     </AuthContext.Provider>
   );

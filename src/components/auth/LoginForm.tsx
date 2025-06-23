@@ -16,13 +16,40 @@ import type { FirebaseError } from "firebase/app";
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { login, loading } = useAuth();
+  const { login, loading, sendVerificationEmailForUnverifiedUser } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
   const { t } = useTranslation();
 
+  const [emailForVerification, setEmailForVerification] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResendVerification = async () => {
+    if (!emailForVerification) return;
+    setIsResending(true);
+    try {
+      await sendVerificationEmailForUnverifiedUser(emailForVerification, password);
+      toast({
+        title: t('registrationSuccess'), // Re-use "Success" title
+        description: t('verificationEmailSent'),
+      });
+      setEmailForVerification(null); // Hide the button after successful sending
+    } catch (error) {
+      // The error might be due to wrong password, we can show a generic message
+      toast({
+        title: t('error'),
+        description: t('authErrorGenericRegister'), // A generic error is fine here
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailForVerification(null);
     try {
       await login(email, password);
       toast({ title: t("login"), description: t("welcome") });
@@ -30,9 +57,10 @@ export function LoginForm() {
     } catch (error) {
       let errorMessage = t("authErrorGenericLogin");
       const firebaseError = error as FirebaseError;
-
+      
       if (firebaseError.code === 'auth/email-not-verified') {
         errorMessage = t("loginFailedEmailNotVerified");
+        setEmailForVerification(email); // Set email to show the resend button
       } else {
         switch (firebaseError.code) {
           case "auth/invalid-credential":
@@ -96,6 +124,21 @@ export function LoginForm() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? t('loading') : t('login')}
           </Button>
+
+          {emailForVerification && (
+            <div className="text-center text-sm">
+                <Button
+                    type="button"
+                    variant="link"
+                    className="p-0 h-auto font-medium"
+                    onClick={handleResendVerification}
+                    disabled={isResending}
+                >
+                    {isResending ? t('resending') : t('resendVerificationEmail')}
+                </Button>
+            </div>
+           )}
+
           <p className="text-sm text-muted-foreground">
             {t('dontHaveAccount')}{" "}
             <Link href="/auth/register" className="font-medium text-primary hover:underline">
