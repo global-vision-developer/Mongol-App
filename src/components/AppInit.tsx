@@ -1,8 +1,7 @@
 
 'use client';
 import { useEffect, useRef } from 'react';
-// Removed 'messaging' from import as it's handled by async functions now
-import { requestForToken, setupOnMessageListener, auth, db } from '@/lib/firebase'; 
+import { requestForToken, setupOnMessageListener, auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
@@ -13,17 +12,17 @@ export default function AppInit() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { t } = useTranslation();
-  const fcmSetupDoneForUserRef = useRef<string | null>(null);
-  const unsubscribeOnMessageRef = useRef<(() => void) | null>(null);
+
+  // This ref tracks if the setup has been performed for the current user's session
+  const setupCompletedForUser = useRef<string | null>(null);
 
   useEffect(() => {
+    // This function will be called by the message listener
     const handleIncomingMessage = async (payload: any) => {
-      console.log('Foreground message received in handleIncomingMessage:', payload);
-      const currentUserId = auth.currentUser?.uid; 
+      const currentUserId = auth.currentUser?.uid;
 
       let toastTitle: string;
       let toastDescription: string;
-
       let fStoreTitleKey: string = 'unknownNotificationTitle';
       let fStoreDescriptionKey: string = 'unknownNotificationDescription';
       let fStoreDescriptionPlaceholders: Record<string, string | number | null | undefined> = {};
@@ -49,59 +48,42 @@ export default function AppInit() {
         fStoreItemType = (payload.data.itemType as ItemType) || 'general';
         fStoreIsGlobal = payload.data.isGlobal === 'true' || payload.data.isGlobal === true || false;
 
-        // For toast, prioritize data payload keys for translation
         toastTitle = payload.data.titleKey ? t(payload.data.titleKey, fStoreDescriptionPlaceholders) : (payload.notification?.title || t(fStoreTitleKey));
         toastDescription = payload.data.descriptionKey ? t(payload.data.descriptionKey, fStoreDescriptionPlaceholders) : (payload.notification?.body || t(fStoreDescriptionKey));
-
       } else if (payload?.notification) {
-        // If no data payload, use notification fields directly for toast
         toastTitle = payload.notification.title || t(fStoreTitleKey);
         toastDescription = payload.notification.body || t(fStoreDescriptionKey);
-        
-        // For Firestore, if no data payload, use notification fields for keys as well
         fStoreTitleKey = payload.notification.title || fStoreTitleKey;
         fStoreDescriptionKey = payload.notification.body || fStoreDescriptionKey;
         fStoreImageUrl = payload.notification.image || null;
-        // Other fStore fields remain default if not in notification payload
       } else {
-        // Fallback if neither data nor notification payload is useful
         toastTitle = t(fStoreTitleKey);
         toastDescription = t(fStoreDescriptionKey);
       }
-      
-      console.log('Attempting to show toast with Title:', toastTitle, 'Description:', toastDescription);
+
       toast({
         title: toastTitle,
         description: toastDescription,
       });
 
-      if (!currentUserId) {
-        console.warn("User not available, cannot save foreground notification to Firestore.");
-        return;
-      }
+      if (!currentUserId) return;
 
-      if (payload) { // Check if payload itself is not null/undefined
-        console.log('Foreground message payload for saving:', payload);
-        
+      if (payload) {
         const notificationToSave: Omit<NotificationItem, 'id'> = {
-          titleKey: fStoreTitleKey, // Use potentially overridden keys
+          titleKey: fStoreTitleKey,
           descriptionKey: fStoreDescriptionKey,
           descriptionPlaceholders: fStoreDescriptionPlaceholders,
           date: serverTimestamp(),
-          read: false, 
+          read: false,
           imageUrl: fStoreImageUrl,
           dataAiHint: fStoreDataAiHint,
           link: fStoreLink,
-          itemType: fStoreItemType, 
+          itemType: fStoreItemType,
           isGlobal: fStoreIsGlobal,
         };
-
         try {
           if (!notificationToSave.isGlobal) {
-              await addDoc(collection(db, "users", currentUserId, "notifications"), notificationToSave);
-              console.log("Foreground user-specific notification saved to Firestore for user:", currentUserId);
-          } else {
-              console.log("Global notification received in foreground, not saving to user's subcollection from client.");
+            await addDoc(collection(db, "users", currentUserId, "notifications"), notificationToSave);
           }
         } catch (error) {
           console.error("Error saving foreground notification to Firestore:", error);
@@ -109,82 +91,60 @@ export default function AppInit() {
       }
     };
 
-    const setupFcmLogic = async () => {
-      if (!user || !user.uid) {
-        fcmSetupDoneForUserRef.current = null; 
-        if (unsubscribeOnMessageRef.current) {
-          console.log('AppInit: Cleaning up foreground message listener due to user logout/change.');
-          unsubscribeOnMessageRef.current();
-          unsubscribeOnMessageRef.current = null;
-        }
+    // Main logic for FCM setup
+    const initializeFcm = async () => {
+      // Exit if no user or if setup has already been completed for this user in this session
+      if (!user || setupCompletedForUser.current === user.uid) {
         return;
       }
+      // Mark setup as in-progress for this user to prevent re-runs
+      setupCompletedForUser.current = user.uid;
+      console.log(`AppInit: Running one-time FCM setup for user ${user.uid}.`);
 
-      if (fcmSetupDoneForUserRef.current !== user.uid) {
-        console.log('AppInit: Performing FCM token setup for user:', user.uid);
-        if (typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator) {
-          try {
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-              console.log('AppInit: Notification permission granted.');
-              const fcmToken = await requestForToken(); // requestForToken is now async
-
-              if (fcmToken && user.uid) {
-                try {
-                  const userDocRef = doc(db, "users", user.uid);
-                  await updateDoc(userDocRef, {
-                    fcmToken: fcmToken, // Changed from arrayUnion to direct assignment
-                    lastTokenUpdate: serverTimestamp()
-                  });
-                  console.log('AppInit: FCM token synced with Firestore for user:', user.uid);
-                  fcmSetupDoneForUserRef.current = user.uid; 
-                } catch (error) {
-                  console.error('AppInit: Error saving FCM token to Firestore:', error);
-                }
-              } else {
-                console.log('AppInit: FCM Token not received or user.uid missing.');
-              }
-            } else {
-              console.log('AppInit: Notification permission denied.');
-            }
-          } catch (error) {
-            console.error('AppInit: Error during FCM token setup phase:', error);
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          const fcmToken = await requestForToken();
+          
+          // CRITICAL FIX: Only update Firestore if the token is new or has changed.
+          if (fcmToken && fcmToken !== user.fcmToken) {
+            console.log("AppInit: New FCM token found, updating Firestore.");
+            const userDocRef = doc(db, "users", user.uid);
+            await updateDoc(userDocRef, {
+              fcmToken: fcmToken,
+              lastTokenUpdate: serverTimestamp()
+            });
           }
-        } else {
-          console.log('AppInit: Environment does not support notifications.');
         }
-      } else {
-        console.log('AppInit: FCM token setup already done for user:', user.uid);
-      }
-
-      if (!unsubscribeOnMessageRef.current) { 
-         console.log('AppInit: Attempting to set up foreground message listener for user:', user.uid);
-         try {
-           const unsubscribe = await setupOnMessageListener(handleIncomingMessage); // setupOnMessageListener is now async
-           if (unsubscribe) {
-             unsubscribeOnMessageRef.current = unsubscribe;
-             console.log('AppInit: Foreground message listener set up successfully.');
-           } else {
-             console.error("AppInit: Failed to set up onMessage listener (returned null).");
-           }
-         } catch (error) {
-            console.error("AppInit: Error during setupOnMessageListener call:", error);
-         }
-      } else {
-        console.log('AppInit: Foreground message listener already seems to be set up.');
+      } catch (error) {
+        console.error("AppInit: Error during FCM initialization:", error);
       }
     };
 
-    setupFcmLogic();
+    initializeFcm();
 
+    // Setup foreground listener, it returns an unsubscribe function.
+    let unsubscribe: (() => void) | null = null;
+    const setupListener = async () => {
+        if(user) { // Only set up listener if user is logged in
+            unsubscribe = await setupOnMessageListener(handleIncomingMessage);
+        }
+    };
+    setupListener();
+
+    // Cleanup function for the useEffect hook
     return () => {
-      if (unsubscribeOnMessageRef.current) {
-        console.log('AppInit: Cleaning up foreground message listener on component unmount or user change.');
-        unsubscribeOnMessageRef.current();
-        unsubscribeOnMessageRef.current = null;
+      if (unsubscribe) {
+        console.log("AppInit: Cleaning up foreground message listener.");
+        unsubscribe();
+      }
+      // When the user logs out (user object becomes null), we reset the ref
+      // so that the setup can run again for the next user who logs in.
+      if (!user) {
+        setupCompletedForUser.current = null;
       }
     };
-  }, [user, t, toast]); 
+  }, [user, t, toast]); // Dependency array is correct.
 
   return null;
 }
