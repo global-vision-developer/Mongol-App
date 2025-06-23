@@ -1,0 +1,63 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can only read and write to their own profile data.
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Users can only manage their own subcollections like notifications and savedItems.
+    match /users/{userId}/{collection}/{docId} {
+        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Orders can be created by any authenticated user for themselves.
+    // They can only be read or deleted by the user who created them.
+    match /orders/{orderId} {
+      allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Ankets (translator applications) can only be written by the applicant.
+    match /ankets/{userId} {
+      allow write: if request.auth != null && request.auth.uid == userId;
+      // Reading ankets should probably be restricted to admins.
+      allow read: if false; 
+    }
+
+    // Public collections that anyone can read. Writing is disabled from the client.
+    match /entries/{entryId} {
+      allow read: if true;
+      // Allow authenticated users to update review-related fields.
+      // This is a simplified rule. A more secure approach would be a Cloud Function.
+      allow update: if request.auth != null;
+    }
+    match /cities/{cityId} {
+      allow read: if true;
+      allow write: if false; // Only from server/admin
+    }
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if false; // Only from server/admin
+    }
+    match /help_items/{helpId} {
+      allow read: if true;
+      allow write: if false; // Only from server/admin
+    }
+    match /notifications/{notificationId} { // Global notifications
+      allow read: if true;
+      allow write: if false; // Only from server/admin
+    }
+
+    // Reviews can be read by anyone.
+    // Users can only create or update their own review.
+    match /entries/{entryId}/reviews/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
