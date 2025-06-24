@@ -94,7 +94,7 @@ export const requestForToken = async (): Promise<string | null> => {
     return null;
   }
 
-  const vapidKeyFromServer = "BNz9Zeh0p8jBbVb9Ib_JudJkS5kfKI6-xkezgpEoomhJQ6vn1GyRAPst2W2FJ-H-I3f2kD_KwEU1tE73gB5ledQ";
+  const vapidKeyFromServer = "BKm-UFW7sk0sV3T_B1zwflA9LIsX2HaUwLQMgzG_7QrEC6pah0MN5ki8sWqDm4PLnfXtFoS7RNBHhMSyzSpOq_4";
   console.log("Attempting to get FCM token with VAPID key:", vapidKeyFromServer);
 
   try {
