@@ -69,7 +69,7 @@ export default function WeChatPage() {
 
           const rawImageUrl = nestedData['cover-image'];
           let finalImageUrl: string | undefined = undefined;
-          if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+          if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
             finalImageUrl = rawImageUrl.trim();
           }
 
@@ -87,7 +87,7 @@ export default function WeChatPage() {
             dataAiHint: nestedData.dataAiHint || "wechat item",
             wechatId: nestedData.wechatId, 
             wechatQrImageUrl: nestedData.wechatQrImageUrl, 
-            subcategory: nestedData.subcategory || null,
+            subcategory: nestedData['sub-category'] || null,
             rooms: nestedData.uruunuud || [],
           } as RecommendedItem;
         });

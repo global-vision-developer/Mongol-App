@@ -69,7 +69,7 @@ export default function HospitalsPage() {
 
           const rawImageUrl = nestedData['cover-image'];
           let finalImageUrl: string | undefined = undefined;
-          if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
+          if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '') {
             finalImageUrl = rawImageUrl.trim();
           }
           
@@ -85,7 +85,7 @@ export default function HospitalsPage() {
             price: nestedData.price === undefined ? null : nestedData.price,
             itemType: mapCategoryToSingularItemType(entryData.categoryName),
             dataAiHint: nestedData.dataAiHint || "hospital item",
-            subcategory: nestedData.subcategory || null,
+            subcategory: nestedData['sub-category'] || null,
           } as RecommendedItem;
         });
         setAllHospitalItems(items);
