@@ -93,9 +93,8 @@ export interface RecommendedItem {
     [key: string]: any;
   }>;
   showcaseItems?: ShowcaseItem[];
-  isMainSection?: boolean;
-  taniltsuulga?: string;
   subcategory?: string | null;
+  link?: string;
 }
 
 export interface UserProfile {

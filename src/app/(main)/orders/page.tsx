@@ -232,8 +232,6 @@ export default function OrdersPage() {
         let mainImageUrl: string | null = null;
         if (data.imageUrl && typeof data.imageUrl === 'string' && data.imageUrl.trim() !== '') {
           mainImageUrl = data.imageUrl.trim();
-        } else if (data['nuur-zurag-url'] && typeof data['nuur-zurag-url'] === 'string' && data['nuur-zurag-url'].trim() !== '') {
-          mainImageUrl = data['nuur-zurag-url'].trim();
         }
 
         const isContactInfoRevealed = data.contactInfoRevealed === true || data.status === 'contact_revealed' || data.status === 'confirmed' || data.status === 'completed';

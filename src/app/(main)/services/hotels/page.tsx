@@ -66,7 +66,7 @@ export default function HotelsPage() {
           const entryData = doc.data();
           const nestedData = entryData.data || {};
           
-          const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
+          const rawImageUrl = nestedData['cover-image'];
           let finalImageUrl: string | undefined = undefined;
           if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
             finalImageUrl = rawImageUrl.trim();
@@ -76,7 +76,7 @@ export default function HotelsPage() {
             id: doc.id,
             name: nestedData.name || t('serviceUnnamed'),
             imageUrl: finalImageUrl,
-            description: nestedData.setgegdel || '',
+            description: nestedData.description || '',
             location: nestedData.city || undefined, // This is the city ID from entries.data.city
             averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
             reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,

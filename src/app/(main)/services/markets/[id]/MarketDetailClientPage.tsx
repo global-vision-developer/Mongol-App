@@ -77,7 +77,7 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
             if (entryData.categoryName === itemType) {
               const nestedData = entryData.data || {};
               const serviceName = nestedData.name || t('serviceUnnamed');
-              const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
+              const rawImageUrl = nestedData['cover-image'];
               const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
               let imageUrlToUse: string;
 
@@ -98,7 +98,7 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
                 id: docSnap.id,
                 name: serviceName,
                 imageUrl: imageUrlToUse,
-                description: nestedData.description || nestedData.setgegdel || '',
+                description: nestedData.description || '',
                 location: nestedData.city || undefined, 
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
@@ -240,7 +240,7 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-xl font-semibold text-foreground flex items-center">
                   <PackageSearch className="h-6 w-6 mr-2 text-primary"/>
-                  {t('productShowcaseTitle') || "Дэлгэрэнгүй зурагууд"}
+                  {t('productShowcaseTitle')}
                 </h3>
                 <ScrollArea className="w-full whitespace-nowrap rounded-md">
                   <div className="flex space-x-4 pb-4">

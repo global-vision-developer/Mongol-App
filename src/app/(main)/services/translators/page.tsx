@@ -88,7 +88,7 @@ export default function TranslatorsPage() {
                 return null;
             }
 
-            const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'] || nestedData.photoUrl; 
+            const rawImageUrl = nestedData['cover-image'] || nestedData.photoUrl; 
             let finalImageUrl: string | undefined = undefined;
              if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
                 finalImageUrl = rawImageUrl.trim();
@@ -98,7 +98,7 @@ export default function TranslatorsPage() {
             return {
               id: doc.id,
               uid: nestedData.uid || doc.id, 
-              name: nestedData.name || nestedData.title || t('serviceUnnamed'),
+              name: nestedData.name || t('serviceUnnamed'),
               photoUrl: finalImageUrl,
               nationality: (nestedData.nationality || nestedData.irgenshil) as Nationality || null,
               inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null),
@@ -118,7 +118,7 @@ export default function TranslatorsPage() {
               averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
               reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
               totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
-              description: nestedData.setgegdel || nestedData.description || '',
+              description: nestedData.description || '',
               gender: mapHuisToGender(nestedData.huis),
               itemType: 'translator' as ItemType, 
               isActive: typeof nestedData.isActive === 'boolean' ? nestedData.isActive : true,

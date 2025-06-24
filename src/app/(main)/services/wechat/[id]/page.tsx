@@ -15,7 +15,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
       const entryData = docSnap.data();
       if (entryData.categoryName === "wechat") {
         const nestedData = entryData.data || {};
-        const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
+        const rawImageUrl = nestedData['cover-image'];
         const serviceName = nestedData.name || 'WeChat Service';
         const imagePlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
         let imageUrlToUse: string;
@@ -44,7 +44,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           id: docSnap.id,
           name: serviceName,
           imageUrl: imageUrlToUse,
-          description: nestedData.description || nestedData.setgegdel || '',
+          description: nestedData.description || '',
           location: nestedData.city || undefined,
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,

@@ -36,7 +36,7 @@ const fetchEntriesByCategory = async (
     const nestedData = entryData.data || {};
     const categoryNameFromDoc = entryData.categoryName;
     
-    const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
+    const rawImageUrl = nestedData['cover-image'];
     let finalImageUrl: string | undefined = undefined;
     if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
       finalImageUrl = rawImageUrl.trim();
@@ -44,9 +44,9 @@ const fetchEntriesByCategory = async (
 
     return { 
       id: doc.id, 
-      name: nestedData.name || nestedData.title || null, 
+      name: nestedData.name || null, 
       imageUrl: finalImageUrl,
-      description: nestedData.taniltsuulga || nestedData.setgegdel || '',
+      description: nestedData.description || '',
       location: nestedData.city || undefined, 
       city: nestedData.city || undefined,
       rating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : (nestedData.unelgee === null ? undefined : nestedData.unelgee),
@@ -62,7 +62,6 @@ const fetchEntriesByCategory = async (
       }),
       rooms: nestedData.uruunuud || [],
       showcaseItems: nestedData.delgerengui || [],
-      isMainSection: typeof nestedData.golheseg === 'boolean' ? nestedData.golheseg : undefined,
     } as RecommendedItem;
   });
 };

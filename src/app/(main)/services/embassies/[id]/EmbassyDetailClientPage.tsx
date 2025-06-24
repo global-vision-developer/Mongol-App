@@ -78,7 +78,7 @@ export default function EmbassyDetailClientPage({ params, itemType, itemData }: 
             if (entryData.categoryName === "embassies") { 
               const nestedData = entryData.data || {};
               const serviceName = nestedData.name || t('serviceUnnamed');
-              const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
+              const rawImageUrl = nestedData['cover-image'];
               const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
               let imageUrlToUse: string;
 
@@ -99,7 +99,7 @@ export default function EmbassyDetailClientPage({ params, itemType, itemData }: 
                 id: docSnap.id,
                 name: serviceName,
                 imageUrl: imageUrlToUse,
-                description: nestedData.description || nestedData.setgegdel || '',
+                description: nestedData.description || '',
                 location: nestedData.city || undefined, 
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,

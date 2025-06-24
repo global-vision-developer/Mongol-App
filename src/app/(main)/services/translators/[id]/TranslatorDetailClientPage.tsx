@@ -141,8 +141,8 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                                         ? registeredAtRaw.toDate() 
                                         : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
               
-              const serviceName = nestedData.name || nestedData.title || t('serviceUnnamed');
-              const rawPhotoUrlInput = nestedData['cover-image'] || nestedData['nuur-zurag-url'] || nestedData.photoUrl;
+              const serviceName = nestedData.name || t('serviceUnnamed');
+              const rawPhotoUrlInput = nestedData['cover-image'] || nestedData.photoUrl;
               const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName.charAt(0))}`;
               let photoUrlToUse: string;
 
@@ -184,7 +184,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
-                description: nestedData.description || nestedData.setgegdel || '',
+                description: nestedData.description || '',
                 gender: mapHuisToGender(nestedData.huis),
                 itemType: entryData.categoryName as ItemType, 
                 registeredAt: registeredAtDate,
