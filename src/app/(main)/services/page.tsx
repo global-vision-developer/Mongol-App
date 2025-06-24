@@ -1,3 +1,4 @@
+
 import { collection, getDocs, limit, query, where, type Query as FirestoreQueryType, type DocumentData } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { RecommendedItem, ItemType } from "@/types";
@@ -35,8 +36,8 @@ const fetchEntriesByCategory = async (
     const nestedData = entryData.data || {};
     const categoryNameFromDoc = entryData.categoryName;
     
+    const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
     let finalImageUrl: string | undefined = undefined;
-    const rawImageUrl = nestedData['nuur-zurag-url'];
     if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
       finalImageUrl = rawImageUrl.trim();
     }

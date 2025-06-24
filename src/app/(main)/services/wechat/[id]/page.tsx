@@ -15,7 +15,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
       const entryData = docSnap.data();
       if (entryData.categoryName === "wechat") {
         const nestedData = entryData.data || {};
-        const rawImageUrl = nestedData['nuur-zurag-url'];
+        const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
         const serviceName = nestedData.name || 'WeChat Service';
         const imagePlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
         let imageUrlToUse: string;
@@ -91,4 +91,3 @@ export default async function WeChatServiceDetailPageServer({ params }: { params
   const itemData = await getItemData(params.id);
   return <WeChatServiceDetailClientPage itemData={itemData} params={params} itemType="wechat" />;
 }
-

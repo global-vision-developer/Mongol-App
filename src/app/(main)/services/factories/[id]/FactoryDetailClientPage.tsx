@@ -77,7 +77,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
             if (entryData.categoryName === "factories") {
               const nestedData = entryData.data || {};
               const serviceName = nestedData.name || nestedData.title || t('serviceUnnamed');
-              const rawImageUrl = nestedData['nuur-zurag-url'];
+              const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
               const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
               let imageUrlToUse: string;
 

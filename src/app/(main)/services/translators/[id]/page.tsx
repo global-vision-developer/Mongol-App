@@ -49,7 +49,7 @@ async function getItemData(id: string): Promise<Translator | null> {
                                   ? registeredAtRaw.toDate()
                                   : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
         
-        const rawPhotoUrlInput = nestedData['nuur-zurag-url'] || nestedData.photoUrl;
+        const rawPhotoUrlInput = nestedData['cover-image'] || nestedData['nuur-zurag-url'] || nestedData.photoUrl;
         const serviceName = nestedData.name || nestedData.title || 'Translator'; 
         const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName.charAt(0))}`;
         let photoUrlToUse: string;
@@ -63,7 +63,8 @@ async function getItemData(id: string): Promise<Translator | null> {
         const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
         let processedWeChatQrUrl: string | undefined = undefined;
         if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
-           processedWeChatQrUrl = rawWeChatQrUrl.trim();
+           const trimmedQrUrl = rawWeChatQrUrl.trim();
+           processedWeChatQrUrl = trimmedQrUrl;
         }
         
         const nationalityValue = nestedData.nationality || nestedData.irgenshil; 
@@ -137,4 +138,3 @@ export default async function TranslatorDetailPageServer({ params }: { params: {
   const itemData = await getItemData(params.id);
   return <TranslatorDetailClientPage itemData={itemData} params={params} itemType="translator" />;
 }
-

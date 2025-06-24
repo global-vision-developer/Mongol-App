@@ -69,8 +69,8 @@ export default function FactoriesPage() {
           const entryData = doc.data() as DocumentData;
           const nestedData = entryData.data || {};
 
+          const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
           let finalImageUrl: string | undefined = undefined;
-          const rawImageUrl = nestedData['nuur-zurag-url'];
           if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
             finalImageUrl = rawImageUrl.trim();
           }

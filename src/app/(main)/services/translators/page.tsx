@@ -88,8 +88,8 @@ export default function TranslatorsPage() {
                 return null;
             }
 
+            const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'] || nestedData.photoUrl; 
             let finalImageUrl: string | undefined = undefined;
-            const rawImageUrl = nestedData['nuur-zurag-url'] || nestedData.photoUrl; 
              if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
                 finalImageUrl = rawImageUrl.trim();
             }
@@ -194,4 +194,3 @@ export default function TranslatorsPage() {
     </div>
   );
 }
-

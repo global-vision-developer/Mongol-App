@@ -15,7 +15,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
       const entryData = docSnap.data();
       if (entryData.categoryName === "hospitals") {
         const nestedData = entryData.data || {};
-        const rawImageUrl = nestedData['nuur-zurag-url'];
+        const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
         const serviceName = nestedData.name || 'Hospital';
         const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
         let imageUrlToUse: string;
@@ -82,4 +82,3 @@ export default async function HospitalDetailPageServer({ params }: { params: { i
   const itemData = await getItemData(params.id);
   return <HospitalDetailClientPage itemData={itemData} params={params} itemType="hospital" />;
 }
-

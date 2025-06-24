@@ -84,7 +84,7 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
             if (entryData.categoryName === "hotels") {
               const nestedData = entryData.data || {};
               const serviceName = nestedData.name || t('serviceUnnamed');
-              const rawImageUrl = nestedData['nuur-zurag-url'];
+              const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
               const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
               let imageUrlToUse: string;
 

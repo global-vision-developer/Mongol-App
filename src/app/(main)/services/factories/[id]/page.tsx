@@ -15,7 +15,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
       const entryData = docSnap.data();
       if (entryData.categoryName === "factories") {
         const nestedData = entryData.data || {};
-        const rawImageUrl = nestedData['nuur-zurag-url'];
+        const rawImageUrl = nestedData['cover-image'] || nestedData['nuur-zurag-url'];
         const serviceName = nestedData.name || nestedData.title || 'Factory';
         const placeholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName)}`;
         let imageUrlToUse: string;
