@@ -45,7 +45,7 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
             value: doc.id, // Use Firestore document ID as the value
             label: data.name, // Mongolian name (from Firestore 'name' field)
             label_cn: data.nameCN, // Chinese name (from Firestore 'nameCN' field)
-            isMajor: data.cityType === 'major',
+            isMajor: data.cityType === 'Major',
             order: data.order,
             cityType: data.cityType as 'major' | 'other',
           } as City;

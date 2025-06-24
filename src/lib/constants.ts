@@ -2,8 +2,6 @@
 import type { ServiceGroup, HospitalCategory, EmbassyCategoryItem, WeChatCategoryItem, RecommendedItem, Airport, TranslationField } from '@/types';
 import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Grid3x3, BusFront, CarTaxiFront, Copy } from 'lucide-react';
 
-// CITIES array is removed as it will be fetched from Firestore by CityContext
-
 export const AIRPORTS: Airport[] = [
   { value: "UBN", label: "Ulaanbaatar / Улаанбаатар (UBN)", city: "Улаанбаатар", iata: "UBN", searchTerms: "Ulaanbaatar Улаанбаатар UBN ULN CIN" },
   { value: "ERL", label: "Ereen / Эрээн хот (ERL)", city: "Эрээн хот", iata: "ERL", searchTerms: "Ereen Эрээн хот ERL" },
