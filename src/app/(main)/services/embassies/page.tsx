@@ -56,7 +56,7 @@ export default function EmbassiesPage() {
         const queryConstraints = [where("categoryName", "==", "embassies")]; 
         
         if (selectedCity.value !== "all") {
-          queryConstraints.push(where("data.khot", "==", selectedCity.value));
+          queryConstraints.push(where("data.city", "==", selectedCity.value));
         }
         
         const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
@@ -77,7 +77,7 @@ export default function EmbassiesPage() {
             name: nestedData.name || t('serviceUnnamed'),
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
-            location: nestedData.khot || undefined,
+            location: nestedData.city || undefined,
             averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
             reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
             totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,

@@ -77,7 +77,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           nationality: nationalityValue as Nationality || null,
           inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null), 
           yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null), 
-          currentCityInChina: nestedData.khot || null, // City ID
+          currentCityInChina: nestedData.city || null, // City ID
           chineseExamTaken: !!nestedData.exam,
           chineseExamDetails: nestedData.exam || null,
           speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
@@ -89,7 +89,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
           wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
           wechatQrImageUrl: processedWeChatQrUrl, 
-          city: nestedData.khot || null, // City ID
+          city: nestedData.city || null, // City ID
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
           totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,

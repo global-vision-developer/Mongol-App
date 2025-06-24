@@ -55,9 +55,9 @@ export default function MarketsPage() {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "markets")]; 
         
-        // Filter by data.khot (city ID) using selectedCity.value (city ID)
+        // Filter by data.city (city ID) using selectedCity.value (city ID)
         if (selectedCity.value !== "all") {
-          queryConstraints.push(where("data.khot", "==", selectedCity.value));
+          queryConstraints.push(where("data.city", "==", selectedCity.value));
         }
 
         const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
@@ -78,7 +78,7 @@ export default function MarketsPage() {
             name: nestedData.name || t('serviceUnnamed'),
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
-            location: nestedData.khot || undefined, // City ID
+            location: nestedData.city || undefined, // City ID
             averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
             reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
             totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,

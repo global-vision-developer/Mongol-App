@@ -54,9 +54,9 @@ export default function HotelsPage() {
         const entriesRef = collection(db, "entries");
         const queryConstraints = [where("categoryName", "==", "hotels")]; 
         
-        // Filter by data.khot (city ID) using selectedCity.value (which is the city ID)
+        // Filter by data.city (city ID) using selectedCity.value (which is the city ID)
         if (selectedCity.value !== "all") {
-          queryConstraints.push(where("data.khot", "==", selectedCity.value));
+          queryConstraints.push(where("data.city", "==", selectedCity.value));
         }
 
         const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
@@ -77,7 +77,7 @@ export default function HotelsPage() {
             name: nestedData.name || t('serviceUnnamed'),
             imageUrl: finalImageUrl,
             description: nestedData.setgegdel || '',
-            location: nestedData.khot || undefined, // This is the city ID from entries.data.khot
+            location: nestedData.city || undefined, // This is the city ID from entries.data.city
             averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
             reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
             totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,

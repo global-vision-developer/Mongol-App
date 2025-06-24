@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -98,7 +99,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
                 name: serviceName,
                 imageUrl: imageUrlToUse,
                 description: nestedData.description || nestedData.taniltsuulga || nestedData.setgegdel || '',
-                location: nestedData.khot || undefined, // City ID
+                location: nestedData.city || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,

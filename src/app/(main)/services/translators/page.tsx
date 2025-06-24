@@ -73,7 +73,7 @@ export default function TranslatorsPage() {
         ];
         
         if (selectedCity.value !== "all") {
-          queryConstraints.push(where("data.khot", "==", selectedCity.value)); 
+          queryConstraints.push(where("data.city", "==", selectedCity.value)); 
         }
         
         const q: FirestoreQueryType = query(entriesRef, ...queryConstraints);
@@ -103,7 +103,7 @@ export default function TranslatorsPage() {
               nationality: (nestedData.nationality || nestedData.irgenshil) as Nationality || null,
               inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null),
               yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null),
-              currentCityInChina: nestedData.khot || null,
+              currentCityInChina: nestedData.city || null,
               chineseExamTaken: !!nestedData.exam,
               chineseExamDetails: nestedData.exam || null,
               speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
@@ -114,7 +114,7 @@ export default function TranslatorsPage() {
               dailyRate: mapPriceToDailyRate(nestedData.price),
               chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
               wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
-              city: nestedData.khot || null, 
+              city: nestedData.city || null, 
               averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
               reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
               totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
