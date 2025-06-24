@@ -1,4 +1,3 @@
-
 "use client";
 import type { Language } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -183,7 +182,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Factories Page
     factoriesPageTitle: "Үйлдвэр",
     allFactoriesSectionTitle: "Үйлдвэрүүд",
-    productShowcaseTitle: "Бүтээгдэхүүний танилцуулга",
+    productShowcaseTitle: "Дэлгэрэнгүй зурагууд",
     productImageAlt: "Бүтээгдэхүүний зураг",
     noProductDescription: "Бүтээгдэхүүний тайлбар байхгүй.",
     // Markets Page
@@ -646,7 +645,7 @@ const translations: Record<Language, Record<string, string>> = {
     // Factories Page
     factoriesPageTitle: "工厂",
     allFactoriesSectionTitle: "所有工厂",
-    productShowcaseTitle: "产品展示",
+    productShowcaseTitle: "详细图片",
     productImageAlt: "产品图片",
     noProductDescription: "暂无产品描述。",
     // Markets Page

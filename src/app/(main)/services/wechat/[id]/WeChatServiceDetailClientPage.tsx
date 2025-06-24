@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -318,7 +317,7 @@ export default function WeChatServiceDetailClientPage({ params, itemType, itemDa
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-xl font-semibold text-foreground flex items-center">
                   <PackageSearch className="h-6 w-6 mr-2 text-primary"/>
-                  {t('productShowcaseTitle') || "Дэлгэрэнгүй"}
+                  {t('productShowcaseTitle') || "Дэлгэрэнгүй зурагууд"}
                 </h3>
                 <ScrollArea className="w-full whitespace-nowrap rounded-md">
                   <div className="flex space-x-4 pb-4">
