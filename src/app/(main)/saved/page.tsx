@@ -2,19 +2,29 @@
 "use client";
 import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Heart } from 'lucide-react'; 
+import { Heart, Trash2 } from 'lucide-react'; 
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp, doc, deleteDoc } from 'firebase/firestore';
 import { SavedItemCard } from '@/components/SavedTranslatorListItem'; 
 import type { SavedPageItem, ItemType, SavedItemCategoryFilter, ServiceGroupId } from '@/types'; 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { SERVICE_GROUPS } from '@/lib/constants';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
-const VALID_ITEM_TYPES: ItemType[] = ['service', 'translator', 'hotel', 'wechat', 'promo', 'market', 'factory', 'hospital', 'embassy'];
 
 // Helper function to map plural service group ID to singular ItemType
 const mapServiceGroupIdToItemType = (serviceGroupId: ServiceGroupId): ItemType => {
@@ -37,9 +47,14 @@ const mapServiceGroupIdToItemType = (serviceGroupId: ServiceGroupId): ItemType =
 export default function SavedPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [savedItems, setSavedItems] = useState<SavedPageItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [activeFilter, setActiveFilter] = useState<SavedItemCategoryFilter>('all');
+  
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [selectedItemIdForDeletion, setSelectedItemIdForDeletion] = useState<string | null>(null);
+
 
   const filterCategories = useMemo(() => {
     return SERVICE_GROUPS
@@ -127,6 +142,41 @@ export default function SavedPage() {
     return savedItems.filter(item => item.itemType === activeFilter);
   }, [savedItems, activeFilter]);
 
+  const handleUnsaveRequest = (itemId: string) => {
+    setSelectedItemIdForDeletion(itemId);
+    setIsAlertOpen(true);
+  };
+
+  const handleUnsaveConfirm = async () => {
+    if (!user || !selectedItemIdForDeletion) {
+      toast({
+        title: t('error'),
+        description: t('unsaveErrorGeneric'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const itemDocRef = doc(db, "users", user.uid, "savedItems", selectedItemIdForDeletion);
+      await deleteDoc(itemDocRef);
+      toast({
+        title: t('unsaveSuccessTitle'),
+        description: t('unsaveSuccessDesc'),
+      });
+    } catch (error) {
+      console.error("Error unsaving item: ", error);
+      toast({
+        title: t('error'),
+        description: t('unsaveErrorGeneric'),
+        variant: "destructive",
+      });
+    } finally {
+      setSelectedItemIdForDeletion(null);
+      setIsAlertOpen(false);
+    }
+  };
+
 
   if (authLoading || (!user && !authLoading) || (user && loadingItems && filteredSavedItems.length === 0)) {
      return (
@@ -195,11 +245,27 @@ export default function SavedPage() {
              <h2 className="text-lg font-semibold mt-4 mb-2 px-3">{t(filterCategories.find(fc => fc.id === activeFilter)?.titleKey || '')}</h2>
           )} */}
           {filteredSavedItems.map(item => (
-            <SavedItemCard key={item.id + (item.itemType || '')} item={item} />
+            <SavedItemCard key={item.id + (item.itemType || '')} item={item} onUnsaveRequest={handleUnsaveRequest}/>
           ))}
         </div>
       )}
+
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('unsaveItemTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('unsaveItemConfirmation')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsAlertOpen(false)}>{t('cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnsaveConfirm}>
+              {t('unsaveButtonLabel')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
-

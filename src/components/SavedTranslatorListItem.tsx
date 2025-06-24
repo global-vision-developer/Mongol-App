@@ -3,12 +3,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-// Card, CardContent, CardHeader, CardTitle зэрэг нь одоо ашиглагдахгүй байж магадгүй тул шаардлагагүй бол устгаж болно.
-// Гэхдээ дотоод зохион байгуулалтад хэрэглэж болно.
-import { MapPin } from "lucide-react";
+import { MapPin, Trash2 } from "lucide-react";
 import type { SavedPageItem } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useCity } from '@/contexts/CityContext'; // Import useCity
+import { useCity } from '@/contexts/CityContext';
+import { Button } from './ui/button';
+import { cn } from '@/lib/utils';
 
 // Helper function to get detail page link
 const getDetailPageLink = (item: SavedPageItem): string => {
@@ -36,14 +36,14 @@ const getDetailPageLink = (item: SavedPageItem): string => {
   }
 };
 
-interface SavedItemCardProps { // Нэрийг SavedItemCardProps болгов
+interface SavedItemCardProps {
   item: SavedPageItem;
+  onUnsaveRequest: (itemId: string) => void;
 }
 
-// Экспортолж буй компонентын нэрийг SavedItemCard болгов
-export const SavedItemCard: React.FC<SavedItemCardProps> = ({ item }) => {
+export const SavedItemCard: React.FC<SavedItemCardProps> = ({ item, onUnsaveRequest }) => {
   const { t, language } = useTranslation();
-  const { availableCities } = useCity(); // Get available cities from context
+  const { availableCities } = useCity();
 
   const cityValue = item.currentCityInChina || item.city || item.location;
   const cityObject = cityValue ? (availableCities.find(c => c.value === cityValue) || {label: cityValue, label_cn: cityValue}) : null;
@@ -67,8 +67,8 @@ export const SavedItemCard: React.FC<SavedItemCardProps> = ({ item }) => {
   const detailPageLink = getDetailPageLink(item);
 
   return (
-    <Link href={detailPageLink} className="block hover:bg-muted/50 transition-colors rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-      <div className="p-3 flex items-center gap-4 border-b last:border-b-0">
+    <div className="group relative flex items-center gap-4 border-b p-3 last:border-b-0 hover:bg-muted/50 transition-colors rounded-lg">
+      <Link href={detailPageLink} className="flex flex-1 items-center gap-4 min-w-0">
         <div className="relative h-16 w-16 shrink-0">
            <Image
             src={item.imageUrl || placeholderImage}
@@ -94,8 +94,19 @@ export const SavedItemCard: React.FC<SavedItemCardProps> = ({ item }) => {
             </div>
           )}
         </div>
-      </div>
-    </Link>
+      </Link>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-muted-foreground hover:text-destructive/80"
+        onClick={(e) => {
+          e.stopPropagation();
+          onUnsaveRequest(item.id);
+        }}
+        aria-label={t('unsave')}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
   );
 };
-
