@@ -302,11 +302,11 @@ const translations: Record<Language, Record<string, string>> = {
     applicationSubmittedSuccessTitle: "Анкет амжилттай илгээгдлээ!",
     applicationSubmittedSuccessDescription: "Таны мэдээллийг бид хүлээн авлаа. Удахгүй тантай холбогдох болно.",
     backToProfileButton: "Профайл руу буцах",
-    fileSizeError: "{{fileName}} файлын хэмжээ хэтэрсэн (Макс: 2MB).",
-    idCardFrontImageSizeError: "Иргэний үнэмлэхний урд талын зургийн хэмжээ хэтэрсэн (Макс: 2MB).",
-    idCardBackImageSizeError: "Иргэний үнэмлэхний ард талын зургийн хэмжээ хэтэрсэн (Макс: 2MB).",
-    selfieImageSizeError: "Нүүр зургийн хэмжээ хэтэрсэн (Макс: 2MB).",
-    wechatQrImageSizeError: "WeChat QR зургийн хэмжээ хэтэрсэн (Макс: 2MB).",
+    fileSizeError: "{{fileName}} файлын хэмжээ хэтэрсэн (Макс: 5MB).",
+    idCardFrontImageSizeError: "Иргэний үнэмлэхний урд талын зургийн хэмжээ хэтэрсэн (Макс: 5MB).",
+    idCardBackImageSizeError: "Иргэний үнэмлэхний ард талын зургийн хэмжээ хэтэрсэн (Макс: 5MB).",
+    selfieImageSizeError: "Нүүр зургийн хэмжээ хэтэрсэн (Макс: 5MB).",
+    wechatQrImageSizeError: "WeChat QR зургийн хэмжээ хэтэрсэн (Макс: 5MB).",
     requiredError: "Энэ талбарыг заавал бөглөнө үү.",
     invalidNumberError: "Хүчинтэй тоо оруулна уу.",
     // Help & Support Page
@@ -758,11 +758,11 @@ const translations: Record<Language, Record<string, string>> = {
     applicationSubmittedSuccessTitle: "申请已成功提交！",
     applicationSubmittedSuccessDescription: "我们已收到您的信息，并将尽快与您联系。",
     backToProfileButton: "返回个人中心",
-    fileSizeError: "文件 {{fileName}} 大小超出限制 (最大: 2MB)。",
-    idCardFrontImageSizeError: "身份证正面照片大小超出限制 (最大: 2MB)。",
-    idCardBackImageSizeError: "身份证反面照片大小超出限制 (最大: 2MB)。",
-    selfieImageSizeError: "自拍照大小超出限制 (最大: 2MB)。",
-    wechatQrImageSizeError: "微信二维码照片大小超出限制 (最大: 2MB)。",
+    fileSizeError: "文件 {{fileName}} 大小超出限制 (最大: 5MB)。",
+    idCardFrontImageSizeError: "身份证正面照片大小超出限制 (最大: 5MB)。",
+    idCardBackImageSizeError: "身份证反面照片大小超出限制 (最大: 5MB)。",
+    selfieImageSizeError: "自拍照大小超出限制 (最大: 5MB)。",
+    wechatQrImageSizeError: "微信二维码照片大小超出限制 (最大: 5MB)。",
     requiredError: "此字段为必填项。",
     invalidNumberError: "请输入有效的数字。",
     // Help & Support Page
@@ -966,5 +966,3 @@ export const useLanguage = (): LanguageContextType => {
   }
   return context;
 };
-
-    

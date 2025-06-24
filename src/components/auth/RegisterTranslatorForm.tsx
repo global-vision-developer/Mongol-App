@@ -22,6 +22,7 @@ import type { Translator, Nationality, LanguageLevel, DailyRateRange, Translatio
 import { TranslationFields as GlobalTranslationFields } from "@/lib/constants"; 
 import { AlertCircle, CheckCircle2, FileImage, ArrowLeft } from "lucide-react";
 import { useCity } from "@/contexts/CityContext";
+import { uploadAnketImage, type AnketImageType } from '@/lib/storageService';
 
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -156,7 +157,7 @@ export function RegisterTranslatorForm() {
 
   const onSubmit = async (data: CombinedFormData) => {
     if (step === 1) {
-      const isValid = await trigger(); 
+      const isValid = await trigger();
       if (isValid) {
         setStep(2);
       }
@@ -164,17 +165,51 @@ export function RegisterTranslatorForm() {
     }
 
     if (!user) {
-      toast({ title: t('mustBeLoggedInToRegister'), variant: "destructive" });
+      toast({ title: t('mustBeLoggedInToRegister'), variant: 'destructive' });
       return;
     }
     setIsSubmitting(true);
 
     try {
-      // Image upload simulation/placeholders - replace with actual Firebase Storage uploads
-      const idCardFrontImageUrl = data.idCardFrontImage ? `placeholder_id_front_${user.uid}` : null;
-      const idCardBackImageUrl = data.idCardBackImage ? `placeholder_id_back_${user.uid}` : null;
-      const selfieImageUrl = data.selfieImage ? `placeholder_selfie_${user.uid}` : null;
-      const wechatQrImageUrl = data.wechatQrImage ? `placeholder_qr_${user.uid}` : null;
+      const uploadTasks: Promise<{ type: AnketImageType; url: string }>[] = [];
+
+      if (data.idCardFrontImage) {
+        uploadTasks.push(
+          uploadAnketImage(user.uid, data.idCardFrontImage, 'idCardFront').then((url) => ({ type: 'idCardFront', url }))
+        );
+      }
+      if (data.idCardBackImage) {
+        uploadTasks.push(
+          uploadAnketImage(user.uid, data.idCardBackImage, 'idCardBack').then((url) => ({ type: 'idCardBack', url }))
+        );
+      }
+      if (data.selfieImage) {
+        uploadTasks.push(
+          uploadAnketImage(user.uid, data.selfieImage, 'selfie').then((url) => ({ type: 'selfie', url }))
+        );
+      }
+      if (data.wechatQrImage) {
+        uploadTasks.push(
+          uploadAnketImage(user.uid, data.wechatQrImage, 'wechatQr').then((url) => ({ type: 'wechatQr', url }))
+        );
+      }
+
+      const uploadResults = await Promise.all(uploadTasks);
+      
+      const imageUrls = uploadResults.reduce((acc, result) => {
+        switch(result.type) {
+            case 'idCardFront': acc.idCardFrontImageUrl = result.url; break;
+            case 'idCardBack': acc.idCardBackImageUrl = result.url; break;
+            case 'selfie': acc.selfieImageUrl = result.url; break;
+            case 'wechatQr': acc.wechatQrImageUrl = result.url; break;
+        }
+        return acc;
+      }, {
+        idCardFrontImageUrl: null as string | null,
+        idCardBackImageUrl: null as string | null,
+        selfieImageUrl: null as string | null,
+        wechatQrImageUrl: null as string | null,
+      });
 
       // Prepare data for Firestore, ensuring no undefined values
       const profileToSave = {
@@ -191,10 +226,10 @@ export function RegisterTranslatorForm() {
         dailyRate: (data.dailyRate === '' || data.dailyRate === undefined) ? null : data.dailyRate as DailyRateRange,
         chinaPhoneNumber: (data.chinaPhoneNumber === '' || data.chinaPhoneNumber === undefined) ? null : data.chinaPhoneNumber,
         wechatId: (data.wechatId === '' || data.wechatId === undefined) ? null : data.wechatId,
-        idCardFrontImageUrl: idCardFrontImageUrl,
-        idCardBackImageUrl: idCardBackImageUrl,
-        selfieImageUrl: selfieImageUrl,
-        wechatQrImageUrl: wechatQrImageUrl,
+        idCardFrontImageUrl: imageUrls.idCardFrontImageUrl,
+        idCardBackImageUrl: imageUrls.idCardBackImageUrl,
+        selfieImageUrl: imageUrls.selfieImageUrl,
+        wechatQrImageUrl: imageUrls.wechatQrImageUrl,
       };
       
       const fullTranslatorProfile: Translator = {
@@ -220,11 +255,12 @@ export function RegisterTranslatorForm() {
 
     } catch (error) {
       console.error("Translator registration error:", error);
-      toast({ title: t('registrationFailedGeneral'), variant: "destructive" });
+      toast({ title: t('registrationFailedGeneral'), description: error instanceof Error ? error.message : undefined, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   if (authLoading) return <p className="text-center">{t('loading')}...</p>;
   if (!user && !authLoading) return <p className="text-center text-destructive">{t('mustBeLoggedInToRegister')}</p>;

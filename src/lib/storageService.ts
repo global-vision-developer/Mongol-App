@@ -1,10 +1,8 @@
-
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from './firebase'; // Assuming storage is exported from firebase.ts
+import { storage } from './firebase';
 
-const PROFILE_IMAGES_PATH = 'profileImages';
-const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
 export class FileUploadError extends Error {
   constructor(message: string) {
@@ -13,7 +11,13 @@ export class FileUploadError extends Error {
   }
 }
 
-export const uploadProfileImage = async (userId: string, file: File): Promise<string> => {
+/**
+ * A generic function to upload a file to Firebase Storage.
+ * @param file The file to upload.
+ * @param path The full path in Firebase Storage where the file will be stored.
+ * @returns The public download URL of the uploaded file.
+ */
+const uploadFile = async (file: File, path: string): Promise<string> => {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     throw new FileUploadError('invalidFileType');
   }
@@ -21,17 +25,45 @@ export const uploadProfileImage = async (userId: string, file: File): Promise<st
     throw new FileUploadError('fileTooLarge');
   }
 
-  // Using a consistent name like `profile_${userId}` and potentially appending a timestamp for cache-busting if needed,
-  // or simply overwriting. For simplicity, appending timestamp to avoid complex delete logic for now.
-  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_'); // Sanitize file name
-  const imageRef = ref(storage, `${PROFILE_IMAGES_PATH}/${userId}/profile_${Date.now()}_${sanitizedFileName}`);
+  const storageRef = ref(storage, path);
   
   try {
-    const snapshot = await uploadBytes(imageRef, file);
+    const snapshot = await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(snapshot.ref);
     return downloadURL;
   } catch (error) {
-    console.error("Error uploading profile image to Firebase Storage: ", error);
+    console.error(`Error uploading file to ${path}:`, error);
     throw new FileUploadError('uploadFailed');
   }
 };
+
+/**
+ * Uploads a profile image for a specific user.
+ * @param userId The ID of the user.
+ * @param file The image file to upload.
+ * @returns The public download URL of the uploaded image.
+ */
+export const uploadProfileImage = async (userId: string, file: File): Promise<string> => {
+  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `profileImages/${userId}/profile_${Date.now()}_${sanitizedFileName}`;
+  return uploadFile(file, path);
+};
+
+
+/**
+ * A dictionary of image types for translator applications.
+ */
+export type AnketImageType = 'idCardFront' | 'idCardBack' | 'selfie' | 'wechatQr';
+
+/**
+ * Uploads an image for a translator's application anket.
+ * @param userId The ID of the user applying to be a translator.
+ * @param file The image file to upload.
+ * @param imageType The type of image being uploaded (e.g., 'idCardFront').
+ * @returns The public download URL of the uploaded image.
+ */
+export const uploadAnketImage = async (userId: string, file: File, imageType: AnketImageType): Promise<string> => {
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `anketImages/${userId}/${imageType}_${Date.now()}_${sanitizedFileName}`;
+    return uploadFile(file, path);
+}
