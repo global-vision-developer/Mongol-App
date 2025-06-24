@@ -97,7 +97,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
                 id: docSnap.id,
                 name: serviceName,
                 imageUrl: imageUrlToUse,
-                description: nestedData.taniltsuulga || nestedData.setgegdel || '',
+                description: nestedData.description || nestedData.taniltsuulga || nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
@@ -203,7 +203,7 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={item.imageUrl}
+              src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Factory')}`}
               alt={item.name || t('factoryDetailTitle')}
               layout="fill"
               objectFit="cover"

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -98,7 +97,7 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
                 id: docSnap.id,
                 name: serviceName,
                 imageUrl: imageUrlToUse,
-                description: nestedData.setgegdel || '',
+                description: nestedData.description || nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, // City ID
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
@@ -267,7 +266,7 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
             <Image
-              src={item.imageUrl}
+              src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Hotel')}`}
               alt={item.name || t('hotelDetailTitle')}
               layout="fill"
               objectFit="cover"

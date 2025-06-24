@@ -97,7 +97,7 @@ export default function MarketDetailClientPage({ params, itemType, itemData }: M
                 id: docSnap.id,
                 name: serviceName,
                 imageUrl: imageUrlToUse,
-                description: nestedData.setgegdel || '',
+                description: nestedData.description || nestedData.setgegdel || '',
                 location: nestedData.khot || undefined, 
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,

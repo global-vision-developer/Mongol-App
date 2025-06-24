@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -184,7 +183,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
                 totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
-                description: nestedData.setgegdel || nestedData.description || '',
+                description: nestedData.description || nestedData.setgegdel || '',
                 gender: mapHuisToGender(nestedData.huis),
                 itemType: entryData.categoryName as ItemType, 
                 registeredAt: registeredAtDate,
@@ -385,7 +384,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
           <CardContent className="p-4 md:p-6 space-y-6">
             {translator.description && (
                  <div className="space-y-2">
-                    <h3 className="text-md font-semibold text-foreground flex items-center"><Info className="h-5 w-5 mr-2 text-primary"/>{t('translatorDescription')}</h3>
+                    <h3 className="text-md font-semibold text-foreground flex items-center"><Info className="h-5 w-5 mr-2 text-primary"/>{t('descriptionLabel')}</h3>
                     <p className="text-sm text-muted-foreground whitespace-pre-line">{translator.description}</p>
                 </div>
             )}
