@@ -40,14 +40,23 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         const fetchedCities: City[] = snapshot.docs.map(doc => {
           const data = doc.data() as DocumentData;
+          const rawCityType = data.cityType as string | undefined;
+          let cityType: 'major' | 'other' | undefined;
+
+          if (rawCityType?.toLowerCase() === 'major') {
+            cityType = 'major';
+          } else if (rawCityType?.toLowerCase() === 'other') {
+            cityType = 'other';
+          }
+          
           return {
             id: doc.id,
-            value: doc.id, // Use Firestore document ID as the value
-            label: data.name, // Mongolian name (from Firestore 'name' field)
-            label_cn: data.nameCN, // Chinese name (from Firestore 'nameCN' field)
-            isMajor: data.cityType === 'Major',
+            value: doc.id,
+            label: data.name,
+            label_cn: data.nameCN,
+            isMajor: cityType === 'major', // Derived from the normalized cityType
             order: data.order,
-            cityType: data.cityType as 'major' | 'other',
+            cityType: cityType,
           } as City;
         });
 
