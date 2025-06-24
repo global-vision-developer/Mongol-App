@@ -25,6 +25,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 
+const VALID_ITEM_TYPES: ItemType[] = [
+  'service', 'translator', 'hotel', 'wechat', 'promo', 'market', 
+  'factory', 'hospital', 'embassy', 'flight', 'message', 'order', 'update', 'general'
+];
 
 // Helper function to map plural service group ID to singular ItemType
 const mapServiceGroupIdToItemType = (serviceGroupId: ServiceGroupId): ItemType => {
