@@ -106,6 +106,10 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
                 price: nestedData.price === undefined ? null : nestedData.price, // Used for inquiry fee, if any
                 itemType: 'hotel',
                 dataAiHint: nestedData.dataAiHint || "hotel item",
+                mongolianPhoneNumber: nestedData['mgl-number'] ? String(nestedData['mgl-number']) : null,
+                chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : null,
+                wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
+                wechatQrImageUrl: typeof nestedData['we-chat-img'] === 'string' ? nestedData['we-chat-img'] : null,
                 rooms: (nestedData.uruunuud || []).map((room: any) => ({
                   name: room.name || undefined,
                   description: room.description || t('noRoomDescription'),
@@ -176,6 +180,11 @@ export default function HotelDetailClientPage({ params, itemType, itemData }: Ho
           amount: item.price === undefined ? null : item.price, 
           imageUrl: item.imageUrl || null,
           dataAiHint: item.dataAiHint || "hotel building",
+          contactInfoRevealed: true,
+          mongolianPhoneNumber: item.mongolianPhoneNumber || null,
+          chinaPhoneNumber: item.chinaPhoneNumber || null,
+          wechatId: item.wechatId || null,
+          wechatQrImageUrl: item.wechatQrImageUrl || null,
         };
         transaction.set(newOrderRef, orderData);
         

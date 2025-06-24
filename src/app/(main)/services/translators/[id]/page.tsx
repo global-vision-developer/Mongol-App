@@ -60,12 +60,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           photoUrlToUse = photoPlaceholder;
         }
         
-        const rawWeChatQrUrl = nestedData.wechatQrImageUrl;
-        let processedWeChatQrUrl: string | undefined = undefined;
-        if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
-           const trimmedQrUrl = rawWeChatQrUrl.trim();
-           processedWeChatQrUrl = trimmedQrUrl;
-        }
+        const rawWeChatQrUrl = typeof nestedData['we-chat-img'] === 'string' ? nestedData['we-chat-img'] : (nestedData.wechatQrImageUrl || null);
         
         const nationalityValue = nestedData.nationality || nestedData.irgenshil; 
 
@@ -86,9 +81,10 @@ async function getItemData(id: string): Promise<Translator | null> {
           translationFields: nestedData.sector || null, // Store raw sector string
           canWorkInOtherCities: nestedData.wcities || null, 
           dailyRate: mapPriceToDailyRate(nestedData.price),
-          chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+          mongolianPhoneNumber: nestedData['mgl-number'] ? String(nestedData['mgl-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+          chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : null,
           wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
-          wechatQrImageUrl: processedWeChatQrUrl, 
+          wechatQrImageUrl: rawWeChatQrUrl, 
           city: nestedData.city || null, // City ID
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,

@@ -38,6 +38,10 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           price: nestedData.price === undefined ? null : nestedData.price,
           itemType: 'hotel' as ItemType,
           dataAiHint: nestedData.dataAiHint || "hotel item",
+          mongolianPhoneNumber: nestedData['mgl-number'] ? String(nestedData['mgl-number']) : null,
+          chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : null,
+          wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
+          wechatQrImageUrl: typeof nestedData['we-chat-img'] === 'string' ? nestedData['we-chat-img'] : null,
           rooms: (nestedData.uruunuud || []).map((room: any) => ({
             name: room.name || undefined,
             description: room.description || 'No description',

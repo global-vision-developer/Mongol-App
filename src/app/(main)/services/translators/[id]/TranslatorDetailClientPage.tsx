@@ -152,12 +152,8 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 photoUrlToUse = photoPlaceholder;
               }
               
-              const rawWeChatQrUrl = nestedData.wechatQrImageUrl; 
-              let finalWeChatQrUrl: string | undefined = undefined;
-              if (typeof rawWeChatQrUrl === 'string' && rawWeChatQrUrl.trim() !== '') {
-                  finalWeChatQrUrl = rawWeChatQrUrl.trim();
-              }
-
+              const rawWeChatQrUrl = typeof nestedData['we-chat-img'] === 'string' ? nestedData['we-chat-img'] : (nestedData.wechatQrImageUrl || null);
+              
               const nationalityValue = nestedData.nationality || nestedData.irgenshil;
 
               setTranslator({ 
@@ -177,9 +173,10 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
                 translationFields: nestedData.sector || null, // Store raw sector string
                 canWorkInOtherCities: nestedData.wcities || null,
                 dailyRate: mapPriceToDailyRate(nestedData.price),
-                chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+                mongolianPhoneNumber: nestedData['mgl-number'] ? String(nestedData['mgl-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+                chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : null,
                 wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
-                wechatQrImageUrl: finalWeChatQrUrl,
+                wechatQrImageUrl: rawWeChatQrUrl,
                 city: nestedData.city || null, 
                 averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
                 reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
@@ -239,6 +236,7 @@ export default function TranslatorDetailClientPage({ params, itemType, itemData 
           contactInfoRevealed: true,
           imageUrl: translator.photoUrl || null,
           dataAiHint: "translator portrait",
+          mongolianPhoneNumber: translator.mongolianPhoneNumber || null,
           chinaPhoneNumber: translator.chinaPhoneNumber || null,
           wechatId: translator.wechatId || null,
           wechatQrImageUrl: translator.wechatQrImageUrl || null,

@@ -92,70 +92,40 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
               <>
                 <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
                 
-                {order.mongolianPhoneNumber !== undefined && (
+                {order.mongolianPhoneNumber && (
                     <div className="flex items-center text-sm mb-1">
                         <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('mongolianPhoneNumberLabel')}: {order.mongolianPhoneNumber ?? t('n_a')}</span>
+                        <span>{t('mongolianPhoneNumberLabel')}: {order.mongolianPhoneNumber}</span>
                     </div>
                 )}
                 
-                {order.chinaPhoneNumber !== undefined && (
+                {order.chinaPhoneNumber && (
                     <div className="flex items-center text-sm mb-1">
                         <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber ?? t('n_a')}</span>
+                        <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber}</span>
                     </div>
                 )}
                 
-                {order.wechatId !== undefined && (
+                {order.wechatId && (
                     <div className="flex items-center text-sm mb-1">
                         <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('translatorContactWeChatLabel')}: {order.wechatId ?? t('n_a')}</span>
+                        <span>{t('translatorContactWeChatLabel')}: {order.wechatId}</span>
                     </div>
                 )}
 
-                {order.wechatQrImageUrl !== undefined && ( 
-                    order.wechatQrImageUrl ? (
-                    <div className="mt-1">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
-                        <Image
-                        src={order.wechatQrImageUrl}
-                        alt={t('translatorContactWeChatQrLabel')}
-                        width={100}
-                        height={100}
-                        className="rounded-md border bg-muted"
-                        data-ai-hint="qr code"
-                        unoptimized={qrImageShouldUnoptimize}
-                        />
-                    </div>
-                    ) : (
-                    <div className="mt-1">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}: {t('n_a')}</p>
-                    </div>
-                    )
-                )}
-                 {/* For translator type specifically, show N/A if any contact field is undefined but revealed */}
-                {order.serviceType === 'translator' && order.mongolianPhoneNumber === undefined && (
-                     <div className="flex items-center text-sm mb-1">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('mongolianPhoneNumberLabel')}: {t('n_a')}</span>
-                    </div>
-                )}
-                 {order.serviceType === 'translator' && order.chinaPhoneNumber === undefined && (
-                     <div className="flex items-center text-sm mb-1">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('translatorContactPhoneLabel')}: {t('n_a')}</span>
-                    </div>
-                )}
-                {order.serviceType === 'translator' && order.wechatId === undefined && (
-                     <div className="flex items-center text-sm mb-1">
-                        <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('translatorContactWeChatLabel')}: {t('n_a')}</span>
-                    </div>
-                )}
-                {order.serviceType === 'translator' && order.wechatQrImageUrl === undefined && (
-                    <div className="mt-1">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}: {t('n_a')}</p>
-                    </div>
+                {order.wechatQrImageUrl && (
+                  <div className="mt-1">
+                      <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
+                      <Image
+                      src={order.wechatQrImageUrl}
+                      alt={t('translatorContactWeChatQrLabel')}
+                      width={100}
+                      height={100}
+                      className="rounded-md border bg-muted"
+                      data-ai-hint="qr code"
+                      unoptimized={qrImageShouldUnoptimize}
+                      />
+                  </div>
                 )}
               </>
             )}
@@ -216,18 +186,7 @@ export default function OrdersPage() {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
         
-        let finalWechatQrImageUrl: string | null = null;
-        if (data.wechatQrImageUrl && typeof data.wechatQrImageUrl === 'string' && data.wechatQrImageUrl.trim() !== '') {
-          finalWechatQrImageUrl = data.wechatQrImageUrl.trim();
-        } else {
-            const rawWeChatImgArray = data['we-chat-img']; // Firestore field name
-            if (Array.isArray(rawWeChatImgArray) && rawWeChatImgArray.length > 0) {
-                const firstElement = rawWeChatImgArray[0];
-                if (typeof firstElement === 'object' && firstElement !== null && typeof firstElement.imageUrl === 'string' && firstElement.imageUrl.trim() !== '') {
-                    finalWechatQrImageUrl = firstElement.imageUrl.trim();
-                }
-            }
-        }
+        let finalWechatQrImageUrl: string | null = data.wechatQrImageUrl ?? (typeof data['we-chat-img'] === 'string' ? data['we-chat-img'] : null);
         
         let mainImageUrl: string | null = null;
         if (data.imageUrl && typeof data.imageUrl === 'string' && data.imageUrl.trim() !== '') {
@@ -244,11 +203,11 @@ export default function OrdersPage() {
           serviceName: data.serviceName || t('serviceUnnamed'),
           orderDate: data.orderDate as Timestamp, 
           status: data.status as AppOrder['status'], 
-          amount: data.amount, // Use as is, or null if undefined
+          amount: data.amount, 
           contactInfoRevealed: isContactInfoRevealed,
           imageUrl: mainImageUrl,
           dataAiHint: data.dataAiHint || null,
-          mongolianPhoneNumber: data.mongolianPhoneNumber ?? (data['phone-number'] ?? null),
+          mongolianPhoneNumber: data.mongolianPhoneNumber ?? (data['mgl-number'] ?? null),
           chinaPhoneNumber: data.chinaPhoneNumber ?? (data['china-number'] ?? null),        
           wechatId: data.wechatId ?? (data['we-chat-id'] ?? null),                          
           wechatQrImageUrl: finalWechatQrImageUrl,

@@ -82,6 +82,7 @@ export interface RecommendedItem {
   chineseExamTaken?: boolean | null;
   translationFields?: string | null;
   dailyRate?: DailyRateRange | null;
+  mongolianPhoneNumber?: string | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
   wechatQrImageUrl?: string;
@@ -202,6 +203,7 @@ export interface Translator {
   translationFields?: string | null; // Changed from TranslationField[]
   canWorkInOtherCities?: string | null; // Changed from string[]
   dailyRate?: DailyRateRange | null;
+  mongolianPhoneNumber?: string | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
   city?: string;
