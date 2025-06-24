@@ -1,8 +1,23 @@
-import { redirect } from 'next/navigation'
+'use client';
 
-// This server component permanently redirects to the /services page,
-// which is the main landing page for authenticated users.
-// This is the most efficient and build-friendly way to handle this redirect.
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+// This component is for the '/' route within the (main) layout.
+// Its primary purpose is to redirect to the actual main page, '/services',
+// for any user who lands here. This avoids showing a blank page at the root
+// of the authenticated section and resolves a build conflict on Vercel.
 export default function MainPage() {
-  redirect('/services')
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/services');
+  }, [router]);
+
+  // Render a loading state while redirecting
+  return (
+    <div className="flex h-screen items-center justify-center">
+      <p>Loading...</p>
+    </div>
+  );
 }
