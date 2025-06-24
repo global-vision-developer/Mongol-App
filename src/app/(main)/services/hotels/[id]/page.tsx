@@ -30,7 +30,7 @@ async function getItemData(id: string): Promise<RecommendedItem | null> {
           id: docSnap.id,
           name: serviceName,
           imageUrl: imageUrlToUse,
-          description: nestedData.setgegdel || '',
+          description: nestedData.description || nestedData.setgegdel || '',
           location: nestedData.city || undefined,
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,

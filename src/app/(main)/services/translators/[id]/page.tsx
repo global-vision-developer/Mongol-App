@@ -93,7 +93,7 @@ async function getItemData(id: string): Promise<Translator | null> {
           averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
           reviewCount: typeof nestedData.reviewCount === 'number' ? nestedData.reviewCount : 0,
           totalRatingSum: typeof nestedData.totalRatingSum === 'number' ? nestedData.totalRatingSum : 0,
-          description: nestedData.setgegdel || nestedData.description || '',
+          description: nestedData.description || nestedData.setgegdel || '',
           gender: mapHuisToGender(nestedData.huis),
           itemType: 'translator' as ItemType,
           registeredAt: registeredAtDate,

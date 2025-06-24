@@ -241,7 +241,7 @@ export default function EmbassyDetailClientPage({ params, itemType, itemData }: 
               <div className="space-y-4 pt-4 border-t">
                 <h3 className="text-xl font-semibold text-foreground flex items-center">
                   <PackageSearch className="h-6 w-6 mr-2 text-primary"/>
-                  {t('productShowcaseTitle') || "Дэлгэрэнгүй зурагууд"}
+                  {t('productShowcaseTitle')}
                 </h3>
                 <ScrollArea className="w-full whitespace-nowrap rounded-md">
                   <div className="flex space-x-4 pb-4">
@@ -261,7 +261,7 @@ export default function EmbassyDetailClientPage({ params, itemType, itemData }: 
                         <CardContent className="p-3">
                           {showcaseItem.name && <CardTitle className="text-sm font-semibold mb-1 line-clamp-1">{showcaseItem.name}</CardTitle>}
                           <CardDescription className="text-xs text-muted-foreground line-clamp-2">
-                            {showcaseItem.description || t('noProductDescription') || 'No description available.'}
+                            {showcaseItem.description || t('noProductDescription')}
                           </CardDescription>
                         </CardContent>
                       </Card>
