@@ -27,17 +27,6 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'Mongol',
   description: 'Your super app for all needs in China.',
-  // PWA specific metadata removed for debugging
-  // manifest: "/manifest.json",
-  // themeColor: "#3F51B5",
-  // appleWebApp: {
-  //   capable: true,
-  //   statusBarStyle: "default",
-  //   title: "Mongol",
-  // },
-  // formatDetection: {
-  //  telephone: false,
-  // },
 };
 
 export default function RootLayout({
@@ -47,14 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn(ptSans.variable, spaceGrotesk.variable)}>
-      <head>
-        {/* <link rel="manifest" href="/manifest.json" /> */}
-        {/* <meta name="theme-color" content="#3F51B5" /> */}
-        {/* <meta name="apple-mobile-web-app-capable" content="yes" /> */}
-        {/* <meta name="apple-mobile-web-app-status-bar-style" content="default" /> */}
-        {/* <meta name="apple-mobile-web-app-title" content="Mongol" /> */}
-        {/* <link rel="apple-touch-icon" href="/icons/icon-192x192.png" /> */}
-      </head>
+      <head />
       <body className="font-body antialiased">
         <AuthProvider>
           <LanguageProvider>

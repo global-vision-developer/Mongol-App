@@ -104,7 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, pass: string) => {
-    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
       if (!userCredential.user.emailVerified) {
@@ -114,7 +113,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
     } catch (error) {
-      setLoading(false); 
       throw error;
     }
   };
