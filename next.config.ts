@@ -9,9 +9,7 @@ import type { NextConfig } from 'next';
 // });
 
 const nextConfig: NextConfig = {
-  output: 'export', // Enable static export
   images: {
-    unoptimized: true, // Recommended for `output: 'export'`
     remotePatterns: [
       {
         protocol: 'https',
@@ -22,6 +20,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
         port: '',
         pathname: '/**',
       },
