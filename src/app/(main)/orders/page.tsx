@@ -35,7 +35,6 @@ interface OrderCardProps {
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
   const { t } = useTranslation();
-  const [showContactInfo, setShowContactInfo] = useState(false);
 
   const getStatusTextKey = (status: AppOrder['status']) => {
     switch (status) {
@@ -84,11 +83,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
         </div>
         {order.contactInfoRevealed && (
           <div className="mt-3 pt-3 border-t">
-            {!showContactInfo ? (
-              <Button onClick={() => setShowContactInfo(true)} size="sm" className="w-full mt-2">
-                {t('viewContactInfoButton')}
-              </Button>
-            ) : (
               <>
                 <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
                 
@@ -128,7 +122,6 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
                   </div>
                 )}
               </>
-            )}
           </div>
         )}
       </CardContent>
