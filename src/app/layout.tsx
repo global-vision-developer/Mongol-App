@@ -6,6 +6,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { PT_Sans, Space_Grotesk } from 'next/font/google';
 import { cn } from '@/lib/utils';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const ptSans = PT_Sans({
   subsets: ['latin', 'cyrillic'],
@@ -60,6 +62,8 @@ export default function RootLayout({
             <Toaster />
           </LanguageProvider>
         </AuthProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
