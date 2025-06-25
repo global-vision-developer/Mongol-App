@@ -1,22 +1,7 @@
 
-"use client";
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-// This page component now correctly redirects to /services 
-// from within the (main) layout group, preventing route conflicts.
 export default function MainPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/services');
-  }, [router]);
-
-  // Return a minimal loading state to avoid flashes of content.
-  return (
-    <div className="flex h-screen items-center justify-center bg-background">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
-    </div>
-  );
+  // This page is necessary to prevent Next.js from showing a 404 for the root of the (main) group,
+  // but it should not render anything as the root redirect is handled by `src/app/page.tsx`.
+  // Making it a server component that returns null solves the Vercel build issue.
+  return null;
 }

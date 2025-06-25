@@ -25,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { ProtectedPage } from '@/components/auth/ProtectedPage';
 
 const VALID_ITEM_TYPES: ItemType[] = [
   'service', 'translator', 'hotel', 'wechat', 'promo', 'market', 
@@ -49,7 +50,7 @@ const mapServiceGroupIdToItemType = (serviceGroupId: ServiceGroupId): ItemType =
   }
 };
 
-export default function SavedPage() {
+function SavedContent() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -60,13 +61,6 @@ export default function SavedPage() {
   
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedItemIdForDeletion, setSelectedItemIdForDeletion] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, authLoading, router]);
-
 
   const filterCategories = useMemo(() => {
     return SERVICE_GROUPS
@@ -191,23 +185,7 @@ export default function SavedPage() {
 
 
   if (authLoading || !user) {
-     return (
-        <div className="space-y-6">
-            <h1 className="text-2xl font-headline font-semibold text-center">{t('saved')}</h1>
-            <Skeleton className="h-10 w-full rounded-md my-4 px-1" /> {/* Filter buttons skeleton */}
-            <div className="space-y-1 px-1"> {/* space-y-1 for tighter list items */}
-                {[...Array(3)].map((_, i) => ( 
-                   <div key={`skeleton-saved-item-${i}`} className="p-3 flex items-center gap-4 border-b last:border-b-0"> {/* List item skeleton */}
-                      <Skeleton className="h-16 w-16 rounded-md shrink-0" />
-                      <div className="flex-1 space-y-2">
-                          <Skeleton className="h-4 w-3/4" />
-                          <Skeleton className="h-3 w-1/2" />
-                      </div>
-                    </div>
-                ))}
-            </div>
-        </div>
-     );
+     return null; // The ProtectedPage wrapper handles loading/auth state
   }
 
   return (
@@ -239,7 +217,19 @@ export default function SavedPage() {
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
       
-      {filteredSavedItems.length === 0 && !loadingItems ? (
+      {loadingItems ? (
+        <div className="space-y-1 px-1">
+            {[...Array(3)].map((_, i) => ( 
+                <div key={`skeleton-saved-item-${i}`} className="p-3 flex items-center gap-4 border-b last:border-b-0">
+                    <Skeleton className="h-16 w-16 rounded-md shrink-0" />
+                    <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                    </div>
+                </div>
+            ))}
+        </div>
+      ) : filteredSavedItems.length === 0 ? (
          <Card className="shadow-lg mx-1 md:mx-0">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -253,9 +243,6 @@ export default function SavedPage() {
         </Card>
       ) : (
         <div className="space-y-0 px-1 md:px-0"> 
-          {/* {activeFilter !== 'all' && ( // This title might be redundant if filter buttons are clear
-             <h2 className="text-lg font-semibold mt-4 mb-2 px-3">{t(filterCategories.find(fc => fc.id === activeFilter)?.titleKey || '')}</h2>
-          )} */}
           {filteredSavedItems.map(item => (
             <SavedItemCard key={item.id + (item.itemType || '')} item={item} onUnsaveRequest={handleUnsaveRequest}/>
           ))}
@@ -280,4 +267,13 @@ export default function SavedPage() {
       </AlertDialog>
     </div>
   );
+}
+
+
+export default function SavedPage() {
+    return (
+        <ProtectedPage>
+            <SavedContent />
+        </ProtectedPage>
+    );
 }

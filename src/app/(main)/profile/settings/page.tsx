@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, Circle } from 'lucide-react'; // Added Circle
+import { ProtectedPage } from '@/components/auth/ProtectedPage';
 
 interface PasswordRequirementItemProps {
   textKey?: string;
@@ -32,17 +33,11 @@ function PasswordRequirementItem({ textKey, textValue, met, customText }: Passwo
   );
 }
 
-export default function ProfileSettingsPage() {
+function ProfileSettingsContent() {
   const { t } = useTranslation();
   const { user, updateUserPassword, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, authLoading, router]);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -145,12 +140,7 @@ export default function ProfileSettingsPage() {
   };
   
   if (authLoading || !user) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="ml-4 text-muted-foreground">{t('loading')}</p>
-      </div>
-    );
+    return null; // The ProtectedPage wrapper handles loading/auth state
   }
 
   return (
@@ -226,4 +216,12 @@ export default function ProfileSettingsPage() {
       </form>
     </div>
   );
+}
+
+export default function ProfileSettingsPage() {
+    return (
+        <ProtectedPage>
+            <ProfileSettingsContent />
+        </ProtectedPage>
+    )
 }

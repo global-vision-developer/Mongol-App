@@ -14,13 +14,14 @@ import { useToast } from "@/hooks/use-toast";
 import type { UserProfile } from '@/types';
 import { uploadProfileImage, FileUploadError } from '@/lib/storageService'; // Import upload service
 import { cn } from '@/lib/utils';
+import { ProtectedPage } from '@/components/auth/ProtectedPage';
 
 const MAX_PROFILE_IMAGE_SIZE_MB = 2;
 const MAX_PROFILE_IMAGE_SIZE_BYTES = MAX_PROFILE_IMAGE_SIZE_MB * 1024 * 1024;
 const ALLOWED_PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { user, loading, logout, updatePhoneNumber, updateProfilePicture } = useAuth();
   const { t } = useTranslation();
   const router = useRouter();
@@ -33,13 +34,10 @@ export default function ProfilePage() {
 
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login');
-    }
     if (user && !isEditingPhoneNumber) {
       setNewPhoneNumber(user.phoneNumber || "");
     }
-  }, [user, loading, router, isEditingPhoneNumber]);
+  }, [user, isEditingPhoneNumber]);
 
   const getInitials = (name?: string | null) => {
     if (!name) return "U";
@@ -194,12 +192,7 @@ export default function ProfilePage() {
   ];
 
   if (loading || !user) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="ml-4 text-muted-foreground">{t('loading')}</p>
-      </div>
-    );
+    return null; // The ProtectedPage wrapper handles the loading state
   }
 
   return (
@@ -307,6 +300,15 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+export default function ProfilePage() {
+    return (
+        <ProtectedPage>
+            <ProfileContent />
+        </ProtectedPage>
+    );
+}
+
 
 const ConditionalLinkWrapper: React.FC<{href?: string; condition: boolean; className?: string; children: React.ReactNode}> = ({ href, condition, className, children }) => {
   if (condition && href) {

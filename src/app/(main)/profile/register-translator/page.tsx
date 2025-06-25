@@ -3,9 +3,10 @@
 
 import { RegisterTranslatorForm } from "@/components/auth/RegisterTranslatorForm";
 import { useTranslation } from "@/hooks/useTranslation";
+import { ProtectedPage } from "@/components/auth/ProtectedPage";
 
-export default function RegisterTranslatorPage() {
-  const { t } = useTranslation(); // For page title
+function RegisterTranslatorContent() {
+  const { t } = useTranslation(); 
 
   return (
       <div className="w-full max-w-2xl mx-auto py-8 px-4">
@@ -15,4 +16,12 @@ export default function RegisterTranslatorPage() {
         <RegisterTranslatorForm />
       </div>
   );
+}
+
+export default function RegisterTranslatorPage() {
+    return (
+        <ProtectedPage>
+            <RegisterTranslatorContent />
+        </ProtectedPage>
+    )
 }

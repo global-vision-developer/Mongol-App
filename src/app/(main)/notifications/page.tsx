@@ -25,8 +25,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
+import { ProtectedPage } from '@/components/auth/ProtectedPage';
 
-export default function NotificationsPage() {
+function NotificationsContent() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -38,13 +39,6 @@ export default function NotificationsPage() {
 
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedNotificationIdForDeletion, setSelectedNotificationIdForDeletion] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, authLoading, router]);
-
 
   useEffect(() => {
     if (authLoading) {
@@ -321,4 +315,12 @@ export default function NotificationsPage() {
       )}
     </div>
   );
+}
+
+export default function NotificationsPage() {
+  return (
+    <ProtectedPage>
+      <NotificationsContent />
+    </ProtectedPage>
+  )
 }

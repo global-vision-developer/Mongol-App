@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { ProtectedPage } from '@/components/auth/ProtectedPage';
 
 
 interface OrderCardProps {
@@ -157,7 +158,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
 };
 
 
-export default function OrdersPage() {
+function OrdersContent() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -168,12 +169,6 @@ export default function OrdersPage() {
 
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedOrderIdForDeletion, setSelectedOrderIdForDeletion] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/auth/login');
-    }
-  }, [user, authLoading, router]);
 
   const tabCategories: { value: ItemType | 'flights'; labelKey: string, icon: React.ElementType }[] = [
     { value: "flights", labelKey: "flights", icon: Plane },
@@ -284,33 +279,6 @@ export default function OrdersPage() {
     </div>
   );
 
-  if (authLoading || !user) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-headline font-semibold text-center">{t('orders')}</h1>
-        <Skeleton className="h-10 w-full" />
-        <div className="grid gap-4 md:grid-cols-2 mt-4">
-          {[...Array(2)].map((_, i) => (
-            <Card key={`skeleton-order-${i}`} className="shadow-md">
-              <CardHeader className="flex flex-row items-start gap-3 space-y-0 p-4">
-                <Skeleton className="h-16 w-16 rounded-md" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-full" />
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0 space-y-1">
-                <Skeleton className="h-3 w-1/2" />
-                <Skeleton className="h-3 w-1/4" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-headline font-semibold text-center">{t('orders')}</h1>
@@ -375,4 +343,12 @@ export default function OrdersPage() {
       </AlertDialog>
     </div>
   );
+}
+
+export default function OrdersPage() {
+    return (
+        <ProtectedPage>
+            <OrdersContent />
+        </ProtectedPage>
+    );
 }
