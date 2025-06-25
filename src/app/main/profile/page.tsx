@@ -14,14 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import type { UserProfile } from '@/types';
 import { uploadProfileImage, FileUploadError } from '@/lib/storageService'; // Import upload service
 import { cn } from '@/lib/utils';
-import { ProtectedPage } from '@/components/auth/ProtectedPage';
 
 const MAX_PROFILE_IMAGE_SIZE_MB = 2;
 const MAX_PROFILE_IMAGE_SIZE_BYTES = MAX_PROFILE_IMAGE_SIZE_MB * 1024 * 1024;
 const ALLOWED_PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
 
 
-function ProfileContent() {
+export default function ProfilePage() {
   const { user, loading, logout, updatePhoneNumber, updateProfilePicture } = useAuth();
   const { t } = useTranslation();
   const router = useRouter();
@@ -34,6 +33,7 @@ function ProfileContent() {
 
 
   useEffect(() => {
+    // Auth guard is now in the layout
     if (user && !isEditingPhoneNumber) {
       setNewPhoneNumber(user.phoneNumber || "");
     }
@@ -128,7 +128,7 @@ function ProfileContent() {
       key: 'personalInfo',
       labelKey: 'personalInfo',
       icon: BadgeInfo,
-      href: '/profile/personal-info',
+      href: '/main/profile/personal-info',
     },
     {
       key: 'email',
@@ -169,30 +169,36 @@ function ProfileContent() {
       key: 'changePassword',
       labelKey: 'changePassword',
       icon: KeyRound,
-      href: '/profile/settings',
+      href: '/main/profile/settings',
     },
     {
       key: 'purchaseHistory',
       labelKey: 'purchaseHistory',
       icon: History,
-      href: '/orders',
+      href: '/main/orders',
     },
     {
       key: 'registerAsTranslator',
       labelKey: 'registerAsTranslator',
       icon: UserPlus,
-      href: '/profile/register-translator',
+      href: '/main/profile/register-translator',
     },
     {
       key: 'helpSupport',
       labelKey: 'helpSupport',
       icon: HelpCircle,
-      href: '/profile/help-support',
+      href: '/main/profile/help-support',
     },
   ];
 
   if (loading || !user) {
-    return null; // The ProtectedPage wrapper handles the loading state
+    // This state is now handled by the central layout, but this is a good fallback.
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="ml-4 text-muted-foreground">{t('loading')}</p>
+      </div>
+    );
   }
 
   return (
@@ -300,15 +306,6 @@ function ProfileContent() {
     </div>
   );
 }
-
-export default function ProfilePage() {
-    return (
-        <ProtectedPage>
-            <ProfileContent />
-        </ProtectedPage>
-    );
-}
-
 
 const ConditionalLinkWrapper: React.FC<{href?: string; condition: boolean; className?: string; children: React.ReactNode}> = ({ href, condition, className, children }) => {
   if (condition && href) {

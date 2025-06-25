@@ -18,14 +18,14 @@ export const AIRPORTS: Airport[] = [
 
 
 export const SERVICE_GROUPS: ServiceGroup[] = [
-  { id: 'flights', titleKey: 'flights', icon: Plane, href: '/app/services/flights' },
-  { id: 'hotels', titleKey: 'hotels', icon: BedDouble, href: '/app/services/hotels' },
-  { id: 'translators', titleKey: 'translators', icon: Users, href: '/app/services/translators '},
-  { id: 'wechat', titleKey: 'wechat', icon: Smartphone, href: '/app/services/wechat' },
-  { id: 'markets', titleKey: 'markets', icon: ShoppingCart, href: '/app/services/markets' },
-  { id: 'factories', titleKey: 'factories', icon: FactoryIcon, href: '/app/services/factories' },
-  { id: 'hospitals', titleKey: 'hospitals', icon: HospitalIcon, href: '/app/services/hospitals' },
-  { id: 'embassies', titleKey: 'embassies', icon: Landmark, href: '/app/services/embassies' },
+  { id: 'flights', titleKey: 'flights', icon: Plane, href: '/services/flights' },
+  { id: 'hotels', titleKey: 'hotels', icon: BedDouble, href: '/services/hotels' },
+  { id: 'translators', titleKey: 'translators', icon: Users, href: '/services/translators '},
+  { id: 'wechat', titleKey: 'wechat', icon: Smartphone, href: '/services/wechat' },
+  { id: 'markets', titleKey: 'markets', icon: ShoppingCart, href: '/services/markets' },
+  { id: 'factories', titleKey: 'factories', icon: FactoryIcon, href: '/services/factories' },
+  { id: 'hospitals', titleKey: 'hospitals', icon: HospitalIcon, href: '/services/hospitals' },
+  { id: 'embassies', titleKey: 'embassies', icon: Landmark, href: '/services/embassies' },
 ];
 
 

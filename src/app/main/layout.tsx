@@ -1,6 +1,7 @@
+
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { CityProvider } from "@/contexts/CityContext";
@@ -8,13 +9,22 @@ import { SearchProvider } from "@/contexts/SearchContext";
 import React, { useEffect, useRef } from "react";
 import AppInit from "@/components/AppInit";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
-
-// This part of the component contains the view logic that depends on the pathname.
-// By isolating it, we prevent the providers above from re-mounting on navigation.
-const MainView = ({ children }: { children: React.ReactNode }) => {
+// This is the protected view for the entire /main/** route segment.
+// It checks for authentication and shows a loading state.
+const ProtectedAppView = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [user, loading, router]);
 
   // This effect re-triggers the CSS animation on page navigation
   // by removing and re-adding the animation class.
@@ -22,11 +32,18 @@ const MainView = ({ children }: { children: React.ReactNode }) => {
     const mainEl = mainRef.current;
     if (mainEl) {
       mainEl.classList.remove('animate-page-slide-in-right');
-      // Trigger a reflow to ensure the class removal is processed
-      void mainEl.offsetWidth;
+      void mainEl.offsetWidth; // Trigger a reflow
       mainEl.classList.add('animate-page-slide-in-right');
     }
   }, [pathname]);
+
+  if (loading || !user) {
+    return (
+       <div className="flex h-screen items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col" style={{ overflowX: 'hidden' }}>
@@ -45,8 +62,8 @@ const MainView = ({ children }: { children: React.ReactNode }) => {
 };
 
 
-// This is the main export for the layout. It sets up the context providers
-// that should persist across navigation within the (main) route group.
+// This is the main layout for the authenticated section of the app.
+// It sets up context providers and the protection wrapper.
 export default function MainLayout({
   children,
 }: {
@@ -56,7 +73,7 @@ export default function MainLayout({
       <CityProvider>
         <SearchProvider>
           <AppInit />
-          <MainView>{children}</MainView>
+          <ProtectedAppView>{children}</ProtectedAppView>
         </SearchProvider>
       </CityProvider>
   );

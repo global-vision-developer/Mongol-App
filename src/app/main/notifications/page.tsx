@@ -25,9 +25,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
-import { ProtectedPage } from '@/components/auth/ProtectedPage';
 
-function NotificationsContent() {
+export default function NotificationsPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -41,6 +40,8 @@ function NotificationsContent() {
   const [selectedNotificationIdForDeletion, setSelectedNotificationIdForDeletion] = useState<string | null>(null);
 
   useEffect(() => {
+    // Auth guard is now in the layout, this can be simplified or removed.
+    // However, keeping it provides an extra layer of safety during transitions.
     if (authLoading) {
       setLoadingUserNotifications(true);
       setLoadingGlobalNotifications(true);
@@ -175,9 +176,9 @@ function NotificationsContent() {
     return dateB - dateA; // Sort descending
   });
 
-  const isLoading = authLoading || loadingUserNotifications || loadingGlobalNotifications;
+  const isLoading = loadingUserNotifications || loadingGlobalNotifications;
 
-  if (isLoading || !user) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-headline font-semibold text-center">{t('notifications')}</h1>
@@ -315,12 +316,4 @@ function NotificationsContent() {
       )}
     </div>
   );
-}
-
-export default function NotificationsPage() {
-  return (
-    <ProtectedPage>
-      <NotificationsContent />
-    </ProtectedPage>
-  )
 }

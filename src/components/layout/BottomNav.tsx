@@ -9,10 +9,10 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: "/services", labelKey: "home", Icon: Home },
-  { href: "/orders", labelKey: "orders", Icon: ShoppingBag },
-  { href: "/saved", labelKey: "saved", Icon: Heart },
-  { href: "/notifications", labelKey: "notifications", Icon: Bell },
-  { href: "/profile", labelKey: "user", Icon: UserCircle },
+  { href: "/main/orders", labelKey: "orders", Icon: ShoppingBag },
+  { href: "/main/saved", labelKey: "saved", Icon: Heart },
+  { href: "/main/notifications", labelKey: "notifications", Icon: Bell },
+  { href: "/main/profile", labelKey: "user", Icon: UserCircle },
 ];
 
 export function BottomNav() {

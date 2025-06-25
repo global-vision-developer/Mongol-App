@@ -74,7 +74,7 @@ export function UserMenu({ user }: UserMenuProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="flex items-center gap-2">
+          <Link href="/main/profile" className="flex items-center gap-2">
             <UserCircle className="h-4 w-4" />
             <span>{t('profile')}</span>
           </Link>
