@@ -1,30 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
 /**
- * This page is a workaround for a Next.js build issue on Vercel.
- * Because a `page.tsx` file exists at the root (`src/app/page.tsx`),
- * having another one inside a route group (`src/app/(main)/page.tsx`)
- * that also maps to the root path can cause build conflicts.
- * 
- * This component's only job is to immediately redirect any traffic
- * that might land here to the actual home page (`/services`), ensuring
- * a smooth user experience and a successful Vercel deployment.
+ * This page is intentionally left minimal and returns null.
+ * The primary routing logic for the root path ("/") is handled by `src/app/page.tsx`,
+ * which redirects users based on their authentication status.
+ *
+ * This file exists to satisfy the Next.js routing structure within the (main) group,
+ * but its role is passive. By returning null, it avoids rendering anything and
+ * prevents build conflicts on platforms like Vercel that can arise from having
+ * two page components handling the same root path.
  */
 export default function MainPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/services');
-  }, [router]);
-
-  // Render a minimal loading state while the redirect happens instantly.
-  // This avoids a blank screen and is visually insignificant.
-  return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <p>Loading...</p>
-    </div>
-  );
+  // Returning null makes this component render nothing, which is the desired behavior
+  // as the redirect is handled by the root page.tsx.
+  return null;
 }
