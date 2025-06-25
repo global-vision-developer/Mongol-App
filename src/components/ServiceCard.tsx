@@ -113,7 +113,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
   let detailPageLink: string | undefined = undefined;
 
   if (item.id) {
-    const basePath = '/app/services'; // Use the new /app base path
+    const basePath = '/services';
     switch (item.itemType) {
       case 'translator':
         detailPageLink = `${basePath}/translators/${item.id}`;

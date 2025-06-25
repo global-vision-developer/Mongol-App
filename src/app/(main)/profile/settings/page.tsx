@@ -34,9 +34,15 @@ function PasswordRequirementItem({ textKey, textValue, met, customText }: Passwo
 
 export default function ProfileSettingsPage() {
   const { t } = useTranslation();
-  const { updateUserPassword, loading: authLoading } = useAuth();
+  const { user, updateUserPassword, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, authLoading, router]);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -137,6 +143,15 @@ export default function ProfileSettingsPage() {
       setIsUpdatingPassword(false);
     }
   };
+  
+  if (authLoading || !user) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="ml-4 text-muted-foreground">{t('loading')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-md mx-auto pb-10">
@@ -212,5 +227,3 @@ export default function ProfileSettingsPage() {
     </div>
   );
 }
-
-    

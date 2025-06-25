@@ -8,11 +8,11 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: "/app/services", labelKey: "home", Icon: Home },
-  { href: "/app/orders", labelKey: "orders", Icon: ShoppingBag },
-  { href: "/app/saved", labelKey: "saved", Icon: Heart },
-  { href: "/app/notifications", labelKey: "notifications", Icon: Bell },
-  { href: "/app/profile", labelKey: "user", Icon: UserCircle },
+  { href: "/services", labelKey: "home", Icon: Home },
+  { href: "/orders", labelKey: "orders", Icon: ShoppingBag },
+  { href: "/saved", labelKey: "saved", Icon: Heart },
+  { href: "/notifications", labelKey: "notifications", Icon: Bell },
+  { href: "/profile", labelKey: "user", Icon: UserCircle },
 ];
 
 export function BottomNav() {
@@ -24,7 +24,7 @@ export function BottomNav() {
       <div className="container mx-auto flex h-16 max-w-md items-center justify-around">
         {navItems.map(({ href, labelKey, Icon }) => {
           // Check if the current path starts with the nav item's href
-          // This handles nested routes correctly (e.g., /app/profile/settings is active for /app/profile)
+          // This handles nested routes correctly (e.g., /profile/settings is active for /profile)
           const isActive = pathname.startsWith(href);
           
           return (
