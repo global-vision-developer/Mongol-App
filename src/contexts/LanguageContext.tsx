@@ -1,3 +1,4 @@
+
 "use client";
 import type { Language } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -60,6 +61,7 @@ const translations: Record<Language, Record<string, string>> = {
     searchPlaceholder: "Хайх",
     serviceTypes: "Үйлчилгээний төрөл",
     viewDetails: "Дэлгэрэнгүй",
+    hideDetails: "Нуух",
     addToFavorites: "Хадгалах",
     removeFromFavorites: "Хадгалсан зүйлсээс устгах",
     fetchErrorGeneric: "Өгөгдөл татахад алдаа гарлаа.",
@@ -415,6 +417,7 @@ const translations: Record<Language, Record<string, string>> = {
     orderDeletedSuccessDesc: "Захиалга устгагдлаа.",
     orderDeletionErrorGeneric: "Захиалга устгахад алдаа гарлаа.",
     orderDeletionErrorFirebase: "Firestore-оос захиалга устгахад алдаа гарлаа.",
+    contactInfoPending: "Холбоо барих мэдээлэл хүлээгдэж байна",
     // Notification Deletion
     deleteNotification: "Мэдэгдэл устгах",
     confirmDeletionTitle: "Устгахдаа итгэлтэй байна уу?",
@@ -523,6 +526,7 @@ const translations: Record<Language, Record<string, string>> = {
     searchPlaceholder: "搜索 (例如: 酒店, 翻译)",
     serviceTypes: "服务类型",
     viewDetails: "查看详情",
+    hideDetails: "隐藏详情",
     addToFavorites: "添加到收藏",
     removeFromFavorites: "从收藏中删除",
     fetchErrorGeneric: "获取数据时出错。",
@@ -878,6 +882,7 @@ const translations: Record<Language, Record<string, string>> = {
     orderDeletedSuccessDesc: "订单已成功删除。",
     orderDeletionErrorGeneric: "删除订单时出错。",
     orderDeletionErrorFirebase: "从 Firestore 删除订单时出错。",
+    contactInfoPending: "联系方式待处理",
     // Notification Deletion
     deleteNotification: "删除通知",
     confirmDeletionTitle: "确认删除吗？",

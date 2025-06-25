@@ -35,6 +35,7 @@ interface OrderCardProps {
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
   const { t } = useTranslation();
+  const [detailsVisible, setDetailsVisible] = useState(false);
 
   const getStatusTextKey = (status: AppOrder['status']) => {
     switch (status) {
@@ -81,60 +82,74 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
           <p>{t('status')}: <span className="font-medium text-foreground">{t(getStatusTextKey(order.status))}</span></p>
           {order.amount != null && <p>{t('orderAmount')}: <span className="font-medium text-foreground">{order.amount}</span></p>}
         </div>
-        {order.contactInfoRevealed && (
+        
+        {detailsVisible && (
           <div className="mt-3 pt-3 border-t">
-              <>
-                <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
-                
-                {order.mongolianPhoneNumber && (
-                    <div className="flex items-center text-sm mb-1">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('mongolianPhoneNumberLabel')}: {order.mongolianPhoneNumber}</span>
-                    </div>
-                )}
-                
-                {order.chinaPhoneNumber && (
-                    <div className="flex items-center text-sm mb-1">
-                        <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('translatorContactPhoneLabel')}: {order.chinaPhoneNumber}</span>
-                    </div>
-                )}
-                
-                {order.wechatId && (
-                    <div className="flex items-center text-sm mb-1">
-                        <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <span>{t('translatorContactWeChatLabel')}: {order.wechatId}</span>
-                    </div>
-                )}
-
-                {order.wechatQrImageUrl && (
-                  <div className="mt-1">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
-                      <Image
-                      src={order.wechatQrImageUrl}
-                      alt={t('translatorContactWeChatQrLabel')}
-                      width={100}
-                      height={100}
-                      className="rounded-md border bg-muted"
-                      data-ai-hint="qr code"
-                      unoptimized={qrImageShouldUnoptimize}
-                      />
+              <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
+              
+              {order.mongolianPhoneNumber && (
+                  <div className="flex items-center text-sm mb-1">
+                      <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{t('mongolianPhoneNumberLabel')}: {String(order.mongolianPhoneNumber)}</span>
                   </div>
-                )}
-              </>
+              )}
+              
+              {order.chinaPhoneNumber && (
+                  <div className="flex items-center text-sm mb-1">
+                      <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{t('translatorContactPhoneLabel')}: {String(order.chinaPhoneNumber)}</span>
+                  </div>
+              )}
+              
+              {order.wechatId && (
+                  <div className="flex items-center text-sm mb-1">
+                      <MessageCircle className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <span>{t('translatorContactWeChatLabel')}: {String(order.wechatId)}</span>
+                  </div>
+              )}
+
+              {order.wechatQrImageUrl && (
+                <div className="mt-1">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">{t('translatorContactWeChatQrLabel')}:</p>
+                    <Image
+                    src={order.wechatQrImageUrl}
+                    alt={t('translatorContactWeChatQrLabel')}
+                    width={100}
+                    height={100}
+                    className="rounded-md border bg-muted"
+                    data-ai-hint="qr code"
+                    unoptimized={qrImageShouldUnoptimize}
+                    />
+                </div>
+              )}
           </div>
         )}
       </CardContent>
-      <CardFooter className="p-4 pt-0 border-t flex justify-end">
-         <Button
-            variant="ghost"
-            size="icon"
-            className="text-destructive hover:text-destructive/80 h-8 w-8"
-            onClick={() => onDeleteRequest(order.id)}
-            aria-label={t('deleteNotification')}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+      <CardFooter className="p-4 pt-0 border-t flex justify-between items-center">
+         <div>
+            {!order.contactInfoRevealed && <p className="text-xs text-muted-foreground">{t('contactInfoPending')}</p>}
+         </div>
+         <div className="flex items-center gap-2">
+            {order.contactInfoRevealed && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-2.5"
+                onClick={() => setDetailsVisible(!detailsVisible)}
+              >
+                {detailsVisible ? t('hideDetails') : t('viewDetails')}
+              </Button>
+            )}
+            <Button
+                variant="ghost"
+                size="icon"
+                className="text-destructive hover:text-destructive/80 h-8 w-8"
+                onClick={() => onDeleteRequest(order.id)}
+                aria-label={t('deleteOrderTitle')}
+            >
+                <Trash2 className="h-4 w-4" />
+            </Button>
+         </div>
       </CardFooter>
     </Card>
   );
@@ -179,13 +194,6 @@ export default function OrdersPage() {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
         
-        let finalWechatQrImageUrl: string | null = data.wechatQrImageUrl ?? (typeof data['we-chat-img'] === 'string' ? data['we-chat-img'] : null);
-        
-        let mainImageUrl: string | null = null;
-        if (data.imageUrl && typeof data.imageUrl === 'string' && data.imageUrl.trim() !== '') {
-          mainImageUrl = data.imageUrl.trim();
-        }
-
         const isContactInfoRevealed = data.contactInfoRevealed === true || data.status === 'contact_revealed' || data.status === 'confirmed' || data.status === 'completed';
         
         return {
@@ -198,12 +206,12 @@ export default function OrdersPage() {
           status: data.status as AppOrder['status'], 
           amount: data.amount, 
           contactInfoRevealed: isContactInfoRevealed,
-          imageUrl: mainImageUrl,
+          imageUrl: data.imageUrl || null,
           dataAiHint: data.dataAiHint || null,
-          mongolianPhoneNumber: data.mongolianPhoneNumber ?? (data['mgl-number'] ?? null),
-          chinaPhoneNumber: data.chinaPhoneNumber ?? (data['china-number'] ?? null),        
-          wechatId: data.wechatId ?? (data['we-chat-id'] ?? null),                          
-          wechatQrImageUrl: finalWechatQrImageUrl,
+          mongolianPhoneNumber: data.mongolianPhoneNumber,
+          chinaPhoneNumber: data.chinaPhoneNumber,        
+          wechatId: data.wechatId,                          
+          wechatQrImageUrl: data.wechatQrImageUrl,
         } as AppOrder;
       });
       setOrders(fetchedOrders);
@@ -361,5 +369,3 @@ export default function OrdersPage() {
     </div>
   );
 }
-
-    
