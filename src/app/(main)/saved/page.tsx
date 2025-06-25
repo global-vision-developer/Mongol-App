@@ -4,6 +4,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, Trash2 } from 'lucide-react'; 
 import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp, doc, deleteDoc } from 'firebase/firestore';
@@ -51,6 +52,7 @@ const mapServiceGroupIdToItemType = (serviceGroupId: ServiceGroupId): ItemType =
 export default function SavedPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [savedItems, setSavedItems] = useState<SavedPageItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
@@ -58,6 +60,12 @@ export default function SavedPage() {
   
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedItemIdForDeletion, setSelectedItemIdForDeletion] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, authLoading, router]);
 
 
   const filterCategories = useMemo(() => {
@@ -182,7 +190,7 @@ export default function SavedPage() {
   };
 
 
-  if (authLoading || (!user && !authLoading) || (user && loadingItems && filteredSavedItems.length === 0)) {
+  if (authLoading || !user) {
      return (
         <div className="space-y-6">
             <h1 className="text-2xl font-headline font-semibold text-center">{t('saved')}</h1>

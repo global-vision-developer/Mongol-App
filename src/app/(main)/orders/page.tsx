@@ -1,6 +1,7 @@
 
 "use client";
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -159,6 +160,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
 export default function OrdersPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -167,6 +169,11 @@ export default function OrdersPage() {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedOrderIdForDeletion, setSelectedOrderIdForDeletion] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, authLoading, router]);
 
   const tabCategories: { value: ItemType | 'flights'; labelKey: string, icon: React.ElementType }[] = [
     { value: "flights", labelKey: "flights", icon: Plane },
@@ -277,7 +284,7 @@ export default function OrdersPage() {
     </div>
   );
 
-  if (authLoading || (!user && !authLoading)) {
+  if (authLoading || !user) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-headline font-semibold text-center">{t('orders')}</h1>

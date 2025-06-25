@@ -7,6 +7,7 @@ import type { NotificationItem as NotificationItemType } from '@/types';
 import { format } from 'date-fns';
 import { Bell, Trash2, Phone, MessageCircle } from 'lucide-react'; // Added Phone, MessageCircle
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot, DocumentData, Timestamp, deleteDoc, doc } from 'firebase/firestore';
@@ -28,6 +29,7 @@ import { cn } from '@/lib/utils';
 export default function NotificationsPage() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const [userNotifications, setUserNotifications] = useState<NotificationItemType[]>([]);
   const [globalNotifications, setGlobalNotifications] = useState<NotificationItemType[]>([]);
@@ -36,6 +38,12 @@ export default function NotificationsPage() {
 
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedNotificationIdForDeletion, setSelectedNotificationIdForDeletion] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/auth/login');
+    }
+  }, [user, authLoading, router]);
 
 
   useEffect(() => {
@@ -175,7 +183,7 @@ export default function NotificationsPage() {
 
   const isLoading = authLoading || loadingUserNotifications || loadingGlobalNotifications;
 
-  if (isLoading && combinedNotifications.length === 0) {
+  if (isLoading || !user) {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-headline font-semibold text-center">{t('notifications')}</h1>
