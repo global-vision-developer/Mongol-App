@@ -6,15 +6,13 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Star, Heart, MapPin } from "lucide-react";
-import type { RecommendedItem, SavedDocData } from '@/types'; // Added SavedDocData
-import React, { useState, useEffect, useCallback } from 'react';
+import type { RecommendedItem } from '@/types';
+import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
-import { doc, setDoc, deleteDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast";
-import { useCity } from '@/contexts/CityContext'; // Import useCity
+import { useCity } from '@/contexts/CityContext';
 import { useRouter } from 'next/navigation';
 
 interface ServiceCardProps {
@@ -23,45 +21,20 @@ interface ServiceCardProps {
 }
 
 function ServiceCardComponent({ item, className }: ServiceCardProps) {
-  const { user } = useAuth();
+  const { user, isItemFavorite, addFavorite, removeFavorite } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const { t, language } = useTranslation();
-  const { availableCities } = useCity(); // Get available cities from context
+  const { availableCities } = useCity(); 
   
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isProcessingFavorite, setIsProcessingFavorite] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  const cityId = item.location; // item.location is the city ID
-  const cityObject = cityId ? availableCities.find(c => c.value === cityId) : null;
-  const displayCityName = cityObject ? (language === 'cn' && cityObject.label_cn ? cityObject.label_cn : cityObject.label) : null;
-
-  const checkFavoriteStatus = useCallback(async () => {
-    if (!user || !item.id || !isMounted) return;
-    setIsProcessingFavorite(true);
-    try {
-      const favDocRef = doc(db, "users", user.uid, "savedItems", item.id);
-      const docSnap = await getDoc(favDocRef);
-      setIsFavorite(docSnap.exists());
-    } catch (error) {
-      console.error("Error checking favorite status:", error);
-    } finally {
-      setIsProcessingFavorite(false);
-    }
-  }, [user, item.id, isMounted]);
+  const isFavorite = user ? isItemFavorite(item.id) : false;
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (isMounted && user && item.id) {
-      checkFavoriteStatus();
-    } else if (!user) {
-      setIsFavorite(false); 
-    }
-  }, [user, item.id, checkFavoriteStatus, isMounted]);
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -78,31 +51,13 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
     }
 
     setIsProcessingFavorite(true);
-    const favDocRef = doc(db, "users", user.uid, "savedItems", item.id);
-
+    
     try {
       if (isFavorite) {
-        await deleteDoc(favDocRef);
-        setIsFavorite(false);
+        await removeFavorite(item.id);
         toast({ title: t('itemRemovedFromSaved') });
       } else {
-        const { id, ...itemDataFromItem } = item;
-        const cleanedItemData: { [key: string]: any } = {};
-        for (const key in itemDataFromItem) {
-          if (Object.prototype.hasOwnProperty.call(itemDataFromItem, key)) {
-            const value = (itemDataFromItem as any)[key];
-            cleanedItemData[key] = value === undefined ? null : value;
-          }
-        }
-        
-        const firestoreData: Partial<SavedDocData> = {
-          ...cleanedItemData,
-          originalItemId: id, 
-          savedAt: serverTimestamp(),
-        };
-
-        await setDoc(favDocRef, firestoreData);
-        setIsFavorite(true);
+        await addFavorite(item);
         toast({ title: t('itemSaved') });
       }
     } catch (error) {
@@ -112,6 +67,10 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
       setIsProcessingFavorite(false);
     }
   };
+
+  const cityId = item.location;
+  const cityObject = cityId ? availableCities.find(c => c.value === cityId) : null;
+  const displayCityName = cityObject ? (language === 'cn' && cityObject.label_cn ? cityObject.label_cn : cityObject.label) : null;
 
   let detailPageLink: string | undefined = undefined;
 
@@ -161,7 +120,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
         </div>
-        {isMounted && (
+        {isMounted && user && (
           <Button
             size="icon"
             variant="ghost"

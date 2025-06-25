@@ -15,27 +15,15 @@ import {
   updatePassword as firebaseUpdatePassword,
   sendEmailVerification,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc, DocumentData, serverTimestamp, onSnapshot } from "firebase/firestore";
-import type { UserProfile } from "@/types";
-
-interface AuthContextType {
-  user: UserProfile | null;
-  loading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
-  register: (email: string, pass: string, name: string) => Promise<void>;
-  logout: () => Promise<void>;
-  updatePhoneNumber: (phoneNumber: string) => Promise<void>;
-  updateUserPassword: (currentPass: string, newPass: string) => Promise<void>;
-  updatePersonalInformation: (data: Partial<Pick<UserProfile, 'firstName' | 'lastName' | 'dateOfBirth' | 'gender' | 'homeAddress'>>) => Promise<void>;
-  updateProfilePicture: (photoURL: string) => Promise<void>;
-  sendVerificationEmailForUnverifiedUser: (email: string, pass: string) => Promise<void>;
-}
+import { doc, getDoc, setDoc, updateDoc, DocumentData, serverTimestamp, onSnapshot, collection, deleteDoc } from "firebase/firestore";
+import type { UserProfile, RecommendedItem, AuthContextType } from "@/types";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [savedItemIds, setSavedItemIds] = useState(new Set<string>());
 
   const formatUser = (firebaseUser: User, firestoreData?: DocumentData): UserProfile => ({
     uid: firebaseUser.uid,
@@ -53,17 +41,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let unsubscribeUserDoc: (() => void) | null = null;
+    let unsubscribeSavedItems: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (unsubscribeUserDoc) {
-        unsubscribeUserDoc();
-        unsubscribeUserDoc = null;
-      }
+      if (unsubscribeUserDoc) unsubscribeUserDoc();
+      if (unsubscribeSavedItems) unsubscribeSavedItems();
+      unsubscribeUserDoc = null;
+      unsubscribeSavedItems = null;
 
       if (firebaseUser) {
         if (firebaseUser.emailVerified) {
           const userDocRef = doc(db, "users", firebaseUser.uid);
-
           unsubscribeUserDoc = onSnapshot(userDocRef, (docSnap) => {
             if (docSnap.exists()) {
               setUser(formatUser(firebaseUser, docSnap.data()));
@@ -81,162 +69,152 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               });
             }
           }, (error) => {
-            console.error("Error with onSnapshot listener:", error);
+            console.error("Error with user onSnapshot listener:", error);
             setUser(null);
             signOut(auth);
           });
 
+          // Set up listener for saved items
+          const savedItemsColRef = collection(db, "users", firebaseUser.uid, "savedItems");
+          unsubscribeSavedItems = onSnapshot(savedItemsColRef, (snapshot) => {
+            const ids = new Set<string>();
+            snapshot.forEach((doc) => {
+              ids.add(doc.id);
+            });
+            setSavedItemIds(ids);
+          }, (error) => {
+            console.error("Error listening to saved items:", error);
+            setSavedItemIds(new Set());
+          });
+
         } else {
           setUser(null);
+          setSavedItemIds(new Set());
         }
       } else {
         setUser(null);
+        setSavedItemIds(new Set());
       }
       setLoading(false);
     });
 
     return () => {
       unsubscribeAuth();
-      if (unsubscribeUserDoc) {
-        unsubscribeUserDoc();
-      }
+      if (unsubscribeUserDoc) unsubscribeUserDoc();
+      if (unsubscribeSavedItems) unsubscribeSavedItems();
     };
   }, []);
 
   const login = async (email: string, pass: string) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      if (!userCredential.user.emailVerified) {
-        await signOut(auth); // Sign them out
-        const error = new Error("Email not verified.");
-        (error as any).code = 'auth/email-not-verified'; // Custom code for the form to catch
-        throw error;
-      }
-    } catch (error) {
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    if (!userCredential.user.emailVerified) {
+      await signOut(auth);
+      const error = new Error("Email not verified.");
+      (error as any).code = 'auth/email-not-verified';
       throw error;
     }
   };
   
   const sendVerificationEmailForUnverifiedUser = async (email: string, pass: string) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      if (userCredential.user) {
-        await sendEmailVerification(userCredential.user);
-      }
-      await signOut(auth); // Sign out immediately after sending
-    } catch (error) {
-      console.error("Error during resend verification flow:", error);
-      throw error; // Re-throw to be handled by the calling component
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    if (userCredential.user) {
+      await sendEmailVerification(userCredential.user);
     }
+    await signOut(auth);
   };
 
-
   const register = async (email: string, pass: string, name: string) => {
-    setLoading(true);
-    try {
-      const result = await createUserWithEmailAndPassword(auth, email, pass);
-      await updateProfile(result.user, { displayName: name });
-      
-      const userDocRef = doc(db, "users", result.user.uid);
-      await setDoc(userDocRef, {
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: name,
-        photoURL: result.user.photoURL,
-        createdAt: serverTimestamp(),
-        points: 0 // Initialize points
-      });
-
-      await sendEmailVerification(result.user);
-      await signOut(auth);
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+    const result = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(result.user, { displayName: name });
+    const userDocRef = doc(db, "users", result.user.uid);
+    await setDoc(userDocRef, {
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: name,
+      photoURL: result.user.photoURL,
+      createdAt: serverTimestamp(),
+      points: 0
+    });
+    await sendEmailVerification(result.user);
+    await signOut(auth);
   };
 
   const logout = async () => {
-    setLoading(true);
-    try {
-      await signOut(auth);
-      setUser(null); 
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false); 
-    }
+    await signOut(auth);
+    setUser(null);
   };
 
   const updatePhoneNumber = async (phoneNumber: string) => {
     if (!user) throw new Error("User not logged in");
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await updateDoc(userDocRef, { phoneNumber, updatedAt: serverTimestamp() });
-    } catch (error) {
-      console.error("Error updating phone number:", error);
-      throw error;
-    }
+    const userDocRef = doc(db, "users", user.uid);
+    await updateDoc(userDocRef, { phoneNumber, updatedAt: serverTimestamp() });
   };
 
   const updateUserPassword = async (currentPass: string, newPass: string) => {
     if (!auth.currentUser) throw new Error("User not logged in.");
-    setLoading(true);
-    try {
-      const firebaseUser = auth.currentUser;
-      if (!firebaseUser.email) throw new Error("User email is not available.");
-
-      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPass);
-      await reauthenticateWithCredential(firebaseUser, credential);
-      await firebaseUpdatePassword(firebaseUser, newPass);
-    } catch (error: any) {
-      console.error("Password update error in AuthContext:", error);
-      throw error; 
-    } finally {
-      setLoading(false);
-    }
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser.email) throw new Error("User email is not available.");
+    const credential = EmailAuthProvider.credential(firebaseUser.email, currentPass);
+    await reauthenticateWithCredential(firebaseUser, credential);
+    await firebaseUpdatePassword(firebaseUser, newPass);
   };
 
   const updatePersonalInformation = async (data: Partial<Pick<UserProfile, 'firstName' | 'lastName' | 'dateOfBirth' | 'gender' | 'homeAddress'>>) => {
     if (!user || !auth.currentUser) throw new Error("User not logged in");
-    try {
-      const firebaseUser = auth.currentUser;
-      const displayName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
-
-      if (displayName && displayName !== firebaseUser.displayName) {
-        await updateProfile(firebaseUser, { displayName });
-      }
-
-      const userDocRef = doc(db, "users", user.uid);
-      const updateData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
-      
-      await updateDoc(userDocRef, {
-        ...updateData,
-        displayName: displayName || user.displayName,
-        updatedAt: serverTimestamp()
-      });
-    } catch (error) {
-      console.error("Personal info update error:", error);
-      throw error;
+    const firebaseUser = auth.currentUser;
+    const displayName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+    if (displayName && displayName !== firebaseUser.displayName) {
+      await updateProfile(firebaseUser, { displayName });
     }
+    const userDocRef = doc(db, "users", user.uid);
+    const updateData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+    await updateDoc(userDocRef, {
+      ...updateData,
+      displayName: displayName || user.displayName,
+      updatedAt: serverTimestamp()
+    });
   };
 
   const updateProfilePicture = async (photoURL: string) => {
     if (!auth.currentUser) throw new Error("User not logged in.");
-    try {
-      const firebaseUser = auth.currentUser;
-      await updateProfile(firebaseUser, { photoURL });
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      await updateDoc(userDocRef, { photoURL, updatedAt: serverTimestamp() });
-    } catch (error) {
-      console.error("Error updating profile picture:", error);
-      throw error;
-    }
+    const firebaseUser = auth.currentUser;
+    await updateProfile(firebaseUser, { photoURL });
+    const userDocRef = doc(db, "users", firebaseUser.uid);
+    await updateDoc(userDocRef, { photoURL, updatedAt: serverTimestamp() });
   };
 
+  const isItemFavorite = (itemId: string): boolean => {
+    return savedItemIds.has(itemId);
+  };
+
+  const addFavorite = async (item: RecommendedItem) => {
+    if (!user || !item.id) throw new Error("User not logged in or item ID is missing.");
+    const favDocRef = doc(db, "users", user.uid, "savedItems", item.id);
+    const { id, ...itemDataFromItem } = item;
+    const cleanedItemData: { [key: string]: any } = {};
+    for (const key in itemDataFromItem) {
+      if (Object.prototype.hasOwnProperty.call(itemDataFromItem, key)) {
+        const value = (itemDataFromItem as any)[key];
+        cleanedItemData[key] = value === undefined ? null : value;
+      }
+    }
+    const firestoreData = { ...cleanedItemData, originalItemId: id, savedAt: serverTimestamp() };
+    await setDoc(favDocRef, firestoreData);
+  };
+
+  const removeFavorite = async (itemId: string) => {
+    if (!user) throw new Error("User not logged in.");
+    const favDocRef = doc(db, "users", user.uid, "savedItems", itemId);
+    await deleteDoc(favDocRef);
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updatePhoneNumber, updateUserPassword, updatePersonalInformation, updateProfilePicture, sendVerificationEmailForUnverifiedUser }}>
+    <AuthContext.Provider value={{
+      user, loading, login, register, logout, updatePhoneNumber,
+      updateUserPassword, updatePersonalInformation, updateProfilePicture,
+      sendVerificationEmailForUnverifiedUser, savedItemIds, isItemFavorite,
+      addFavorite, removeFavorite
+    }}>
       {children}
     </AuthContext.Provider>
   );

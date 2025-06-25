@@ -15,7 +15,7 @@ export interface City {
 }
 
 export interface Airport {
-  value: string;
+  value:string;
   label: string;
   city: string;
   iata: string;
@@ -65,7 +65,7 @@ export interface RecommendedItem {
   writingLevel?: LanguageLevel | null;
   hasWorkedBefore?: boolean;
   possibleFields?: string[];
-  availableCities?: string[] | string;
+  availableCities?: string | null;
   price?: number | string | null;
   averageRating?: number | null;
   reviewCount?: number;
@@ -85,7 +85,7 @@ export interface RecommendedItem {
   mongolianPhoneNumber?: string | null;
   chinaPhoneNumber?: string | null;
   wechatId?: string | null;
-  wechatQrImageUrl?: string;
+  wechatQrImageUrl?: string | null;
   rooms?: Array<{
     description: string;
     imageUrl: string;
@@ -133,6 +133,22 @@ export interface Order {
   wechatQrImageUrl?: string | null | undefined;
 }
 
+export interface AuthContextType {
+  user: UserProfile | null;
+  loading: boolean;
+  login: (email: string, pass: string) => Promise<void>;
+  register: (email: string, pass: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updatePhoneNumber: (phoneNumber: string) => Promise<void>;
+  updateUserPassword: (currentPass: string, newPass: string) => Promise<void>;
+  updatePersonalInformation: (data: Partial<Pick<UserProfile, 'firstName' | 'lastName' | 'dateOfBirth' | 'gender' | 'homeAddress'>>) => Promise<void>;
+  updateProfilePicture: (photoURL: string) => Promise<void>;
+  sendVerificationEmailForUnverifiedUser: (email: string, pass: string) => Promise<void>;
+  savedItemIds: Set<string>;
+  isItemFavorite: (itemId: string) => boolean;
+  addFavorite: (item: RecommendedItem) => Promise<void>;
+  removeFavorite: (itemId: string) => Promise<void>;
+}
 
 export interface SavedDocData extends RecommendedItem {
   savedAt: Timestamp | any;
@@ -200,8 +216,8 @@ export interface Translator {
   speakingLevel?: LanguageLevel | null;
   writingLevel?: LanguageLevel | null;
   workedAsTranslator?: boolean | null;
-  translationFields?: string | null; // Changed from TranslationField[]
-  canWorkInOtherCities?: string | null; // Changed from string[]
+  translationFields?: string | null; 
+  canWorkInOtherCities?: string | null; 
   dailyRate?: DailyRateRange | null;
   mongolianPhoneNumber?: string | null;
   chinaPhoneNumber?: string | null;
