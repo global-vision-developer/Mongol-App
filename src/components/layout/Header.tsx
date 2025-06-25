@@ -84,7 +84,9 @@ export function Header() {
                 ) : user ? (
                   <UserMenu user={user} />
                 ) : (
-                  null // Or login button if needed
+                  <Button asChild size="sm" variant="outline">
+                    <Link href="/auth/login">{t('login')}</Link>
+                  </Button>
                 )
               )}
             </div>

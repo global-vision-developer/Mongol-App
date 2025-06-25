@@ -20,7 +20,7 @@ export const AIRPORTS: Airport[] = [
 export const SERVICE_GROUPS: ServiceGroup[] = [
   { id: 'flights', titleKey: 'flights', icon: Plane, href: '/services/flights' },
   { id: 'hotels', titleKey: 'hotels', icon: BedDouble, href: '/services/hotels' },
-  { id: 'translators', titleKey: 'translators', icon: Users, href: '/services/translators '},
+  { id: 'translators', titleKey: 'translators', icon: Users, href: '/services/translators'},
   { id: 'wechat', titleKey: 'wechat', icon: Smartphone, href: '/services/wechat' },
   { id: 'markets', titleKey: 'markets', icon: ShoppingCart, href: '/services/markets' },
   { id: 'factories', titleKey: 'factories', icon: FactoryIcon, href: '/services/factories' },
@@ -60,11 +60,11 @@ export const WECHAT_PLACEHOLDER_ITEMS: RecommendedItem[] = [
 ];
 
 export const NAV_ITEMS = [
-  { href: "/", labelKey: "home", icon: Landmark }, 
-  { href: "/orders", labelKey: "orders", icon: ShoppingCart },
-  { href: "/saved", labelKey: "saved", icon: Users }, 
-  { href: "/notifications", labelKey: "notifications", icon: Plane }, 
-  { href: "/profile", labelKey: "user", icon: Users } 
+  { href: "/services", labelKey: "home", icon: Landmark }, 
+  { href: "/main/orders", labelKey: "orders", icon: ShoppingCart },
+  { href: "/main/saved", labelKey: "saved", icon: Users }, 
+  { href: "/main/notifications", labelKey: "notifications", icon: Plane }, 
+  { href: "/main/profile", labelKey: "user", icon: Users } 
 ];
 
 export const TranslationFields: TranslationField[] = [

@@ -15,6 +15,7 @@ import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast";
 import { useCity } from '@/contexts/CityContext'; // Import useCity
+import { useRouter } from 'next/navigation';
 
 interface ServiceCardProps {
   item: RecommendedItem;
@@ -23,6 +24,7 @@ interface ServiceCardProps {
 
 function ServiceCardComponent({ item, className }: ServiceCardProps) {
   const { user } = useAuth();
+  const router = useRouter();
   const { toast } = useToast();
   const { t, language } = useTranslation();
   const { availableCities } = useCity(); // Get available cities from context
@@ -67,6 +69,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
 
     if (!user) {
       toast({ title: t('loginToProceed'), description: t('loginToSave'), variant: "destructive" });
+      router.push('/auth/login');
       return;
     }
     if (!item || !item.id) {
