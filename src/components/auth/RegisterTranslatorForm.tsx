@@ -155,7 +155,7 @@ export function RegisterTranslatorForm() {
   };
 
 
-  const onSubmit = async (data: CombinedFormData) => {
+  const onSubmit = async () => {
     if (step === 1) {
       const isValid = await trigger();
       if (isValid) {
@@ -163,6 +163,8 @@ export function RegisterTranslatorForm() {
       }
       return;
     }
+
+    const allFormData = getValues();
 
     if (!user) {
       toast({ title: t('mustBeLoggedInToRegister'), variant: 'destructive' });
@@ -173,24 +175,24 @@ export function RegisterTranslatorForm() {
     try {
       const uploadTasks: Promise<{ type: AnketImageType; url: string }>[] = [];
 
-      if (data.idCardFrontImage) {
+      if (allFormData.idCardFrontImage) {
         uploadTasks.push(
-          uploadAnketImage(user.uid, data.idCardFrontImage, 'idCardFront').then((url) => ({ type: 'idCardFront', url }))
+          uploadAnketImage(user.uid, allFormData.idCardFrontImage, 'idCardFront').then((url) => ({ type: 'idCardFront', url }))
         );
       }
-      if (data.idCardBackImage) {
+      if (allFormData.idCardBackImage) {
         uploadTasks.push(
-          uploadAnketImage(user.uid, data.idCardBackImage, 'idCardBack').then((url) => ({ type: 'idCardBack', url }))
+          uploadAnketImage(user.uid, allFormData.idCardBackImage, 'idCardBack').then((url) => ({ type: 'idCardBack', url }))
         );
       }
-      if (data.selfieImage) {
+      if (allFormData.selfieImage) {
         uploadTasks.push(
-          uploadAnketImage(user.uid, data.selfieImage, 'selfie').then((url) => ({ type: 'selfie', url }))
+          uploadAnketImage(user.uid, allFormData.selfieImage, 'selfie').then((url) => ({ type: 'selfie', url }))
         );
       }
-      if (data.wechatQrImage) {
+      if (allFormData.wechatQrImage) {
         uploadTasks.push(
-          uploadAnketImage(user.uid, data.wechatQrImage, 'wechatQr').then((url) => ({ type: 'wechatQr', url }))
+          uploadAnketImage(user.uid, allFormData.wechatQrImage, 'wechatQr').then((url) => ({ type: 'wechatQr', url }))
         );
       }
 
@@ -213,19 +215,19 @@ export function RegisterTranslatorForm() {
 
       // Prepare data for Firestore, ensuring no undefined values
       const profileToSave = {
-        nationality: (data.nationality === '' || data.nationality === undefined) ? null : data.nationality as Nationality,
-        inChinaNow: data.inChinaNow === undefined ? null : data.inChinaNow,
-        yearsInChina: data.inChinaNow === false ? (data.yearsInChina === undefined ? null : data.yearsInChina) : null,
-        currentCityInChina: data.inChinaNow === true ? ((data.currentCityInChina === '' || data.currentCityInChina === undefined) ? null : data.currentCityInChina) : null,
-        chineseExamTaken: data.chineseExamTaken === undefined ? null : data.chineseExamTaken,
-        speakingLevel: (data.speakingLevel === '' || data.speakingLevel === undefined) ? null : data.speakingLevel as LanguageLevel,
-        writingLevel: (data.writingLevel === '' || data.writingLevel === undefined) ? null : data.writingLevel as LanguageLevel,
-        workedAsTranslator: data.workedAsTranslator === undefined ? null : data.workedAsTranslator,
-        translationFields: data.translationFields || [],
-        canWorkInOtherCities: data.canWorkInOtherCities || [],
-        dailyRate: (data.dailyRate === '' || data.dailyRate === undefined) ? null : data.dailyRate as DailyRateRange,
-        chinaPhoneNumber: (data.chinaPhoneNumber === '' || data.chinaPhoneNumber === undefined) ? null : data.chinaPhoneNumber,
-        wechatId: (data.wechatId === '' || data.wechatId === undefined) ? null : data.wechatId,
+        nationality: (allFormData.nationality === '' || allFormData.nationality === undefined) ? null : allFormData.nationality as Nationality,
+        inChinaNow: allFormData.inChinaNow === undefined ? null : allFormData.inChinaNow,
+        yearsInChina: allFormData.inChinaNow === false ? (allFormData.yearsInChina === undefined ? null : allFormData.yearsInChina) : null,
+        currentCityInChina: allFormData.inChinaNow === true ? ((allFormData.currentCityInChina === '' || allFormData.currentCityInChina === undefined) ? null : allFormData.currentCityInChina) : null,
+        chineseExamTaken: allFormData.chineseExamTaken === undefined ? null : allFormData.chineseExamTaken,
+        speakingLevel: (allFormData.speakingLevel === '' || allFormData.speakingLevel === undefined) ? null : allFormData.speakingLevel as LanguageLevel,
+        writingLevel: (allFormData.writingLevel === '' || allFormData.writingLevel === undefined) ? null : allFormData.writingLevel as LanguageLevel,
+        workedAsTranslator: allFormData.workedAsTranslator === undefined ? null : allFormData.workedAsTranslator,
+        translationFields: allFormData.translationFields || [],
+        canWorkInOtherCities: allFormData.canWorkInOtherCities || [],
+        dailyRate: (allFormData.dailyRate === '' || allFormData.dailyRate === undefined) ? null : allFormData.dailyRate as DailyRateRange,
+        chinaPhoneNumber: (allFormData.chinaPhoneNumber === '' || allFormData.chinaPhoneNumber === undefined) ? null : allFormData.chinaPhoneNumber,
+        wechatId: (allFormData.wechatId === '' || allFormData.wechatId === undefined) ? null : allFormData.wechatId,
         idCardFrontImageUrl: imageUrls.idCardFrontImageUrl,
         idCardBackImageUrl: imageUrls.idCardBackImageUrl,
         selfieImageUrl: imageUrls.selfieImageUrl,
