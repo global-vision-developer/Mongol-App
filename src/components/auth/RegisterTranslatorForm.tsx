@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "@/hooks/useTranslation";
 import type { Translator, Nationality, LanguageLevel, DailyRateRange, TranslationField, ItemType } from "@/types";
 import { TranslationFields as GlobalTranslationFields } from "@/lib/constants"; 
-import { AlertCircle, CheckCircle2, FileImage, ArrowLeft } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileImage, ArrowLeft, Loader2 } from "lucide-react";
 import { useCity } from "@/contexts/CityContext";
 import { uploadAnketImage, type AnketImageType } from '@/lib/storageService';
 
@@ -276,7 +276,7 @@ export function RegisterTranslatorForm() {
           <CardDescription>{t('applicationSubmittedSuccessDescription')}</CardDescription>
         </CardHeader>
         <CardFooter>
-          <Button className="w-full" onClick={() => router.push('/profile')}>{t('backToProfileButton')}</Button>
+          <Button className="w-full" onClick={() => router.push('/main/profile')}>{t('backToProfileButton')}</Button>
         </CardFooter>
       </Card>
     );
@@ -628,7 +628,14 @@ export function RegisterTranslatorForm() {
           {step === 2 && (
             <>
               <Button type="submit" className="w-full" disabled={isSubmitting || authLoading}>
-                {isSubmitting ? t('loading') : t('submitApplicationButton')}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('loading')}
+                  </>
+                ) : (
+                  t('submitApplicationButton')
+                )}
               </Button>
               <Button type="button" variant="outline" className="w-full" onClick={() => setStep(1)} disabled={isSubmitting}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> {t('previousStepButton')}

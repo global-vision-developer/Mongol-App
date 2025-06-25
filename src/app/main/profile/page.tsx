@@ -225,8 +225,9 @@ export default function ProfilePage() {
             disabled={isUploadingImage}
           />
           {isUploadingImage ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
-              <Loader2 className="h-8 w-8 text-white animate-spin" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-full text-white">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <p className="text-xs mt-1">{t('uploading')}</p>
             </div>
           ) : (
             <div 

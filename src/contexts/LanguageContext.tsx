@@ -367,7 +367,7 @@ const translations: Record<Language, Record<string, string>> = {
     contactInfoPaymentPlaceholder: "Төлбөр төлсний дараа холбоо барих мэдээлэл харагдана.",
     paymentModalTitle: "Төлбөр хийх",
     paymentModalDescription: "{{rate}} юанийн төлбөр хийснээр орчуулагчийн холбоо барих мэдээллийг авах боломжтой.",
-    paymentModalDescriptionNoRate: "Орчуулагчийн холбоо барих мэдээллийг авахад үйлчилгээний хураамж төлнө.",
+    paymentModalDescriptionNoRate: "Орчуулагчийн холбоо барих мэдээллийг авахад үйлчилгээний хураамжтай.",
     payButton: "Төлөх",
     orderCreatedSuccess: "Захиалга амжилттай үүслээ!",
     contactInfoAvailableInOrders: "Холбоо барих мэдээлэл таны захиалга болон мэдэгдэл хэсэгт харагдах болно.",
@@ -467,6 +467,7 @@ const translations: Record<Language, Record<string, string>> = {
     genderOther: "Бусад",
     noSearchResultsPlaceholder: "Хайлтын үр дүн олдсонгүй.",
     // Profile Picture Update
+    uploading: "Байршуулж байна...",
     changeProfilePictureAria: "Профайл зураг солих",
     profilePictureUpdateSuccess: "Профайл зураг амжилттай шинэчлэгдлээ.",
     profilePictureUpdateError: "Профайл зураг шинэчлэхэд алдаа гарлаа.",
@@ -932,6 +933,7 @@ const translations: Record<Language, Record<string, string>> = {
     genderOther: "其他",
     noSearchResultsPlaceholder: "未找到搜索结果。",
     // Profile Picture Update
+    uploading: "上传中...",
     changeProfilePictureAria: "更改个人资料图片",
     profilePictureUpdateSuccess: "个人资料图片更新成功。",
     profilePictureUpdateError: "更新个人资料图片时出错。",
