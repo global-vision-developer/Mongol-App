@@ -3,61 +3,77 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Users can only read and write to their own profile data.
+    
+    // Users can only read and write to their own profile.
+    // New user documents can be created if the document ID matches the user's UID.
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow read, update: if request.auth != null && request.auth.uid == userId;
       allow create: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can only manage their own subcollections like notifications and savedItems.
-    match /users/{userId}/{collection}/{docId} {
-        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    // Users can only manage their own notifications.
+    match /users/{userId}/notifications/{notificationId} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Orders can be created by any authenticated user for themselves.
-    // They can only be read or deleted by the user who created them.
+    // Users can only manage their own saved items.
+    match /users/{userId}/savedItems/{itemId} {
+      allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Anyone can read global notifications, but no one can write them from the client.
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if false; // Should be managed by admin/server
+    }
+
+    // Orders can only be read/deleted by the user who created them.
+    // A user can create an order only for themselves.
     match /orders/{orderId} {
-      allow read, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read, delete: if request.auth != null && get(/databases/$(database)/documents/orders/$(orderId)).data.userId == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if false; // Disallow client updates for security.
     }
 
-    // Ankets (translator applications) can only be written by the applicant.
-    match /ankets/{userId} {
-      allow write: if request.auth != null && request.auth.uid == userId;
-      // Reading ankets should probably be restricted to admins.
-      allow read: if false; 
-    }
-
-    // Public collections that anyone can read. Writing is disabled from the client.
+    // Public entries (services, hotels, etc.) can be read by anyone.
+    // No one can write to them from the client side.
     match /entries/{entryId} {
       allow read: if true;
-      // Allow authenticated users to update review-related fields.
-      // This is a simplified rule. A more secure approach would be a Cloud Function.
-      allow update: if request.auth != null;
-    }
-    match /cities/{cityId} {
-      allow read: if true;
-      allow write: if false; // Only from server/admin
-    }
-    match /banners/{bannerId} {
-      allow read: if true;
-      allow write: if false; // Only from server/admin
-    }
-    match /help_items/{helpId} {
-      allow read: if true;
-      allow write: if false; // Only from server/admin
-    }
-    match /notifications/{notificationId} { // Global notifications
-      allow read: if true;
-      allow write: if false; // Only from server/admin
+      allow create, update, delete: if false; // Should be managed by admin/server
     }
 
     // Reviews can be read by anyone.
-    // Users can only create or update their own review.
+    // An authenticated user can create or update their own review (doc ID must be user's UID).
     match /entries/{entryId}/reviews/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId
+                          && request.resource.data.rating >= 1 && request.resource.data.rating <= 10;
+      allow delete: if false; // Users cannot delete reviews.
+    }
+    
+    // Cities list is public. No client-side writes.
+    match /cities/{cityId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Banners are public. No client-side writes.
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Translator application "ankets" can only be created/updated by the user themselves.
+    // Only the user (and admins, via server rules) can read their own application.
+    match /ankets/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Help items (FAQs) are public. No client-side writes.
+    match /help_items/{itemId} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
