@@ -49,7 +49,7 @@ async function getItemData(id: string): Promise<Translator | null> {
                                   ? registeredAtRaw.toDate()
                                   : (registeredAtRaw && typeof registeredAtRaw === 'string' ? new Date(registeredAtRaw) : undefined);
         
-        const rawPhotoUrlInput = nestedData['cover-image'] || nestedData.photoUrl;
+        const rawPhotoUrlInput = nestedData['cover-image'];
         const serviceName = nestedData.name || 'Translator'; 
         const photoPlaceholder = `https://placehold.co/600x400.png?text=${encodeURIComponent(serviceName.charAt(0))}`;
         let photoUrlToUse: string;
@@ -60,9 +60,9 @@ async function getItemData(id: string): Promise<Translator | null> {
           photoUrlToUse = photoPlaceholder;
         }
         
-        const rawWeChatQrUrl = typeof nestedData['we-chat-img'] === 'string' ? nestedData['we-chat-img'] : (nestedData.wechatQrImageUrl || null);
+        const rawWeChatQrUrl = typeof nestedData['we-chat-img'] === 'string' ? nestedData['we-chat-img'] : null;
         
-        const nationalityValue = nestedData.nationality || nestedData.irgenshil; 
+        const nationalityValue = nestedData.irgenshil; 
 
         return {
           id: docSnap.id,
@@ -70,18 +70,18 @@ async function getItemData(id: string): Promise<Translator | null> {
           name: serviceName,
           photoUrl: photoUrlToUse,
           nationality: nationalityValue as Nationality || null,
-          inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null), 
-          yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null), 
+          inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : null,
+          yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : null,
           currentCityInChina: nestedData.city || null, // City ID
           chineseExamTaken: !!nestedData.exam,
           chineseExamDetails: nestedData.exam || null,
-          speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
-          writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
+          speakingLevel: mapLanguageLevel(nestedData.speak),
+          writingLevel: mapLanguageLevel(nestedData.write),
           workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
-          translationFields: nestedData.sector || null, // Store raw sector string
+          translationFields: nestedData.sector || null,
           canWorkInOtherCities: nestedData.wcities || null, 
           dailyRate: mapPriceToDailyRate(nestedData.price),
-          mongolianPhoneNumber: nestedData['mgl-number'] ? String(nestedData['mgl-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+          mongolianPhoneNumber: nestedData['mgl-number'] ? String(nestedData['mgl-number']) : null,
           chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : null,
           wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
           wechatQrImageUrl: rawWeChatQrUrl, 

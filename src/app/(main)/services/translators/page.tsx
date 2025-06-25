@@ -88,7 +88,7 @@ export default function TranslatorsPage() {
                 return null;
             }
 
-            const rawImageUrl = nestedData['cover-image'] || nestedData.photoUrl; 
+            const rawImageUrl = nestedData['cover-image']; 
             let finalImageUrl: string | undefined = undefined;
              if (rawImageUrl && typeof rawImageUrl === 'string' && rawImageUrl.trim() !== '' && !rawImageUrl.startsWith("data:image/gif;base64") && !rawImageUrl.includes('lh3.googleusercontent.com')) {
                 finalImageUrl = rawImageUrl.trim();
@@ -100,19 +100,19 @@ export default function TranslatorsPage() {
               uid: nestedData.uid || doc.id, 
               name: nestedData.name || t('serviceUnnamed'),
               photoUrl: finalImageUrl,
-              nationality: (nestedData.nationality || nestedData.irgenshil) as Nationality || null,
-              inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : (nestedData.experience === true ? true : null),
-              yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : (typeof nestedData['jil'] === 'number' ? nestedData['jil'] : null),
+              nationality: nestedData.irgenshil as Nationality || null,
+              inChinaNow: typeof nestedData.inChinaNow === 'boolean' ? nestedData.inChinaNow : null,
+              yearsInChina: typeof nestedData.yearsInChina === 'number' ? nestedData.yearsInChina : null,
               currentCityInChina: nestedData.city || null,
               chineseExamTaken: !!nestedData.exam,
               chineseExamDetails: nestedData.exam || null,
-              speakingLevel: mapLanguageLevel(nestedData['yarianii-tuwshin']),
-              writingLevel: mapLanguageLevel(nestedData['bichgiin-tuwshin']),
+              speakingLevel: mapLanguageLevel(nestedData.speak),
+              writingLevel: mapLanguageLevel(nestedData.write),
               workedAsTranslator: typeof nestedData.experience === 'boolean' ? nestedData.experience : null,
-              translationFields: nestedData.sector || null, // Store raw sector string
-              canWorkInOtherCities: null, // Based on wcities complexity
+              translationFields: nestedData.sector || null, 
+              canWorkInOtherCities: nestedData.wcities || null, 
               dailyRate: mapPriceToDailyRate(nestedData.price),
-              chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : (nestedData['phone-number'] ? String(nestedData['phone-number']) : null),
+              chinaPhoneNumber: nestedData['china-number'] ? String(nestedData['china-number']) : null,
               wechatId: nestedData['we-chat-id'] ? String(nestedData['we-chat-id']) : null,
               city: nestedData.city || null, 
               averageRating: typeof nestedData.unelgee === 'number' ? nestedData.unelgee : null,
