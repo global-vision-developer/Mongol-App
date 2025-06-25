@@ -9,6 +9,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useCity } from '@/contexts/CityContext';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
+import { ImageWithLoader } from './ui/ImageWithLoader';
 
 // Helper function to get detail page link
 const getDetailPageLink = (item: SavedPageItem): string => {
@@ -69,13 +70,12 @@ export const SavedItemCard: React.FC<SavedItemCardProps> = ({ item, onUnsaveRequ
   return (
     <div className="group relative flex items-center gap-4 border-b p-3 last:border-b-0 hover:bg-muted/50 transition-colors rounded-lg">
       <Link href={detailPageLink} className="flex flex-1 items-center gap-4 min-w-0">
-        <div className="relative h-16 w-16 shrink-0">
-           <Image
+        <div className="relative h-16 w-16 shrink-0 rounded-md overflow-hidden">
+           <ImageWithLoader
             src={item.imageUrl || placeholderImage}
             alt={item.name || t('serviceUnnamed')}
-            width={64}
-            height={64}
-            className="rounded-md object-cover bg-muted"
+            fill
+            className="object-cover"
             data-ai-hint={item.dataAiHint || `${item.itemType || 'item'} image`}
             unoptimized={imageShouldUnoptimize}
           />

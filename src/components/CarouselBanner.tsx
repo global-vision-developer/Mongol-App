@@ -10,6 +10,7 @@ import { collection, query, where, orderBy, getDocs, Timestamp, type DocumentDat
 import { db } from '@/lib/firebase';
 import type { CarouselBannerItem } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ImageWithLoader } from './ui/ImageWithLoader';
 
 export function CarouselBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -83,31 +84,27 @@ export function CarouselBanner() {
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
             {bannerItems.map((item, idx) => (
-              <div key={item.id} className="w-full flex-shrink-0">
+              <div key={item.id} className="w-full flex-shrink-0 h-48 md:h-64 lg:h-80">
                 {item.link ? (
                   <Link href={item.link} target="_blank" rel="noopener noreferrer">
-                    <Image
+                    <ImageWithLoader
                       src={item.imageUrl}
                       alt={item.altText || `Banner ${idx + 1}`}
-                      width={1200}
-                      height={400}
-                      className="w-full h-48 md:h-64 lg:h-80 object-cover"
+                      fill
+                      className="object-cover"
                       priority={idx === 0}
-                      fetchPriority={idx === 0 ? "high" : undefined}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       data-ai-hint={item.dataAiHint || "promotional banner"}
                       unoptimized={item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com')}
                     />
                   </Link>
                 ) : (
-                  <Image
+                  <ImageWithLoader
                     src={item.imageUrl}
                     alt={item.altText || `Banner ${idx + 1}`}
-                    width={1200}
-                    height={400}
-                    className="w-full h-48 md:h-64 lg:h-80 object-cover"
+                    fill
+                    className="object-cover"
                     priority={idx === 0}
-                    fetchPriority={idx === 0 ? "high" : undefined}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     data-ai-hint={item.dataAiHint || "promotional banner"}
                     unoptimized={item.imageUrl?.startsWith('data:') || item.imageUrl?.includes('lh3.googleusercontent.com')}
@@ -153,4 +150,3 @@ export function CarouselBanner() {
     </Card>
   );
 }
-

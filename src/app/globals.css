@@ -135,3 +135,33 @@
 .animate-page-slide-in-bottom {
   animation: slideInFromBottom 0.4s ease-out forwards;
 }
+
+/* Shimmer Animation */
+@layer utilities {
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  .animate-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .animate-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      hsla(0, 0%, 100%, 0) 0,
+      hsla(0, 0%, 100%, 0.1) 20%,
+      hsla(0, 0%, 100%, 0.3) 60%,
+      hsla(0, 0%, 100%, 0)
+    );
+    animation: shimmer 1.5s infinite;
+  }
+}

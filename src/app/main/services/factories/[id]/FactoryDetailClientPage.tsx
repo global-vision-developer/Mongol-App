@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceReviewForm } from "@/components/ServiceReviewForm";
 import { useCity } from "@/contexts/CityContext"; // Import useCity
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Import ScrollArea and ScrollBar
+import { ImageWithLoader } from "@/components/ui/ImageWithLoader";
 
 const DetailItem: React.FC<{ labelKey: string; value?: string | string[] | null | number; icon?: React.ElementType; }> = ({ labelKey, value, icon: Icon }) => {
   const { t } = useTranslation();
@@ -201,12 +202,11 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
       <div className="container mx-auto py-2 md:py-6 px-2">
         <Card className="overflow-hidden shadow-xl mb-6">
           <CardHeader className="p-0 relative aspect-[16/10] md:aspect-[16/7]">
-            <Image
+            <ImageWithLoader
               src={item.imageUrl || `https://placehold.co/600x400.png?text=${encodeURIComponent(item.name || 'Factory')}`}
               alt={item.name || t('factoryDetailTitle')}
-              layout="fill"
-              objectFit="cover"
-              className="bg-muted"
+              fill
+              className="object-cover"
               data-ai-hint={item.dataAiHint || "factory exterior machinery"}
               unoptimized={mainImageShouldUnoptimize}
             />
@@ -247,12 +247,11 @@ export default function FactoryDetailClientPage({ params, itemType, itemData }: 
                     {item.showcaseItems.map((showcaseItem, index) => (
                       <Card key={index} className="overflow-hidden shadow-md hover:shadow-lg transition-shadow w-[280px] flex-shrink-0">
                         <div className="relative aspect-video"> {/* Changed to aspect-video for better horizontal display */}
-                          <Image
+                          <ImageWithLoader
                             src={showcaseItem.imageUrl || `https://placehold.co/400x225.png?text=${encodeURIComponent(showcaseItem.name || showcaseItem.description || t('productUnnamed') || 'Product')}`}
                             alt={showcaseItem.name || showcaseItem.description || t('productImageAlt') || 'Product image'}
-                            layout="fill"
-                            objectFit="cover"
-                            className="bg-muted"
+                            fill
+                            className="object-cover"
                             data-ai-hint={showcaseItem.dataAiHint || (showcaseItem.name ? showcaseItem.name.substring(0,15) : (showcaseItem.description ? showcaseItem.description.substring(0,15) : "showcase product"))}
                             unoptimized={showcaseItem.imageUrl?.startsWith('data:') || showcaseItem.imageUrl?.includes('lh3.googleusercontent.com') || showcaseItem.imageUrl?.includes('placehold.co')}
                           />

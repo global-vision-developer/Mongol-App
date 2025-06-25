@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useMemo, useRef } from 'react'; // Added useRef
-import { UserCircle, Mail, LogOut, KeyRound, History, UserPlus, HelpCircle, Gift, ChevronRight, Phone, Edit3, Save, X, BadgeInfo, Camera, Loader2 } from 'lucide-react'; // Added Camera, Loader2
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { UserCircle, Mail, LogOut, KeyRound, History, UserPlus, HelpCircle, Gift, ChevronRight, Phone, Edit3, Save, X, BadgeInfo, Camera, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile } from '@/types';
-import { uploadProfileImage, FileUploadError } from '@/lib/storageService'; // Import upload service
+import { uploadProfileImage, FileUploadError } from '@/lib/storageService';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const MAX_PROFILE_IMAGE_SIZE_MB = 2;
 const MAX_PROFILE_IMAGE_SIZE_BYTES = MAX_PROFILE_IMAGE_SIZE_MB * 1024 * 1024;
@@ -29,11 +30,11 @@ export default function ProfilePage() {
   const [isEditingPhoneNumber, setIsEditingPhoneNumber] = useState(false);
   const [newPhoneNumber, setNewPhoneNumber] = useState(user?.phoneNumber || "");
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isAvatarLoading, setIsAvatarLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
 
   useEffect(() => {
-    // Auth guard is now in the layout
     if (user && !isEditingPhoneNumber) {
       setNewPhoneNumber(user.phoneNumber || "");
     }
@@ -85,6 +86,7 @@ export default function ProfilePage() {
     }
 
     setIsUploadingImage(true);
+    setIsAvatarLoading(true);
     try {
       const downloadURL = await uploadProfileImage(user.uid, file);
       await updateProfilePicture(downloadURL);
@@ -99,6 +101,7 @@ export default function ProfilePage() {
       toast({ title: t('error'), description: errorDesc, variant: "destructive" });
     } finally {
       setIsUploadingImage(false);
+      // setIsAvatarLoading(false) is handled by onLoadingStatusChange
       if(fileInputRef.current) { 
         fileInputRef.current.value = "";
       }
@@ -209,13 +212,20 @@ export default function ProfilePage() {
           <Avatar 
             className={cn(
               "w-24 h-24 text-3xl border-2 border-primary cursor-pointer transition-opacity duration-300",
-              isUploadingImage && "opacity-50"
+              (isUploadingImage || isAvatarLoading) && "opacity-50"
             )}
             onClick={handleAvatarClick}
           >
-            <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? "User"} />
+            <AvatarImage
+              src={user.photoURL ?? undefined}
+              alt={user.displayName ?? "User"}
+              onLoadingStatusChange={(status) => {
+                if (status !== 'loading') setIsAvatarLoading(false);
+              }}
+            />
             <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
           </Avatar>
+           {isAvatarLoading && <Skeleton className="absolute inset-0 rounded-full" />}
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -225,21 +235,23 @@ export default function ProfilePage() {
             disabled={isUploadingImage}
           />
           {isUploadingImage ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-full text-white">
+             <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 rounded-full text-white">
               <Loader2 className="h-8 w-8 animate-spin" />
               <p className="text-xs mt-1">{t('uploading')}</p>
             </div>
           ) : (
-            <div 
-              className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
-              onClick={handleAvatarClick}
-              role="button"
-              aria-label={t('changeProfilePictureAria')}
-              tabIndex={0}
-              onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') handleAvatarClick();}}
-            >
-              <Camera className="h-8 w-8 text-white" />
-            </div>
+            !isAvatarLoading && (
+              <div 
+                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                onClick={handleAvatarClick}
+                role="button"
+                aria-label={t('changeProfilePictureAria')}
+                tabIndex={0}
+                onKeyDown={(e) => { if(e.key === 'Enter' || e.key === ' ') handleAvatarClick();}}
+              >
+                <Camera className="h-8 w-8 text-white" />
+              </div>
+            )
           )}
         </div>
         <p className="text-lg font-medium text-foreground">{user.email}</p>

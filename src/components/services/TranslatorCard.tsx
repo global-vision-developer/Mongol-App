@@ -11,6 +11,7 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useCity } from '@/contexts/CityContext'; // Import useCity
+import { ImageWithLoader } from '../ui/ImageWithLoader';
 
 interface TranslatorCardProps {
   item: Translator;
@@ -51,7 +52,7 @@ function TranslatorCardComponent({ item, className }: TranslatorCardProps) {
     <Link href={`/services/translators/${item.id}`} className="block group h-full">
       <Card className={cn("flex flex-col overflow-hidden shadow-lg rounded-lg h-full group-hover:-translate-y-1.5 group-hover:shadow-2xl transition-all duration-300 ease-out", className)}>
         <div className="relative aspect-[3/4] w-full">
-          <Image
+          <ImageWithLoader
             src={imageUrlToDisplay}
             alt={item.name || t('serviceUnnamed')}
             fill

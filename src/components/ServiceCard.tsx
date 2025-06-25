@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/hooks/use-toast";
 import { useCity } from '@/contexts/CityContext';
 import { useRouter } from 'next/navigation';
+import { ImageWithLoader } from './ui/ImageWithLoader';
 
 interface ServiceCardProps {
   item: RecommendedItem;
@@ -110,7 +111,7 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
     <Card className={cn("flex flex-col overflow-hidden shadow-lg rounded-lg h-full group-hover:-translate-y-1.5 group-hover:shadow-2xl transition-all duration-300 ease-out", className)}>
       <CardHeader className="p-0 relative">
         <div className="relative aspect-[3/4] w-full">
-            <Image
+            <ImageWithLoader
                 src={imageUrlToDisplay}
                 alt={item.name || t('serviceImageDefaultAlt')}
                 fill
