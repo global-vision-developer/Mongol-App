@@ -67,7 +67,7 @@ export function Header() {
 
             {/* Absolute centered title */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <Link href="/services" className="inline-flex items-center" aria-label="Home page">
+              <Link href="/app/services" className="inline-flex items-center" aria-label="Home page">
                 <span className="font-headline text-xl font-semibold text-primary">Mongol</span>
               </Link>
             </div>

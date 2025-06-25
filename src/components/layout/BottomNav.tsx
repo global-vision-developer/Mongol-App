@@ -8,11 +8,11 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: "/services", labelKey: "home", Icon: Home }, // Changed href to /services
-  { href: "/orders", labelKey: "orders", Icon: ShoppingBag },
-  { href: "/saved", labelKey: "saved", Icon: Heart },
-  { href: "/notifications", labelKey: "notifications", Icon: Bell },
-  { href: "/profile", labelKey: "user", Icon: UserCircle },
+  { href: "/app/services", labelKey: "home", Icon: Home },
+  { href: "/app/orders", labelKey: "orders", Icon: ShoppingBag },
+  { href: "/app/saved", labelKey: "saved", Icon: Heart },
+  { href: "/app/notifications", labelKey: "notifications", Icon: Bell },
+  { href: "/app/profile", labelKey: "user", Icon: UserCircle },
 ];
 
 export function BottomNav() {
@@ -23,9 +23,10 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
       <div className="container mx-auto flex h-16 max-w-md items-center justify-around">
         {navItems.map(({ href, labelKey, Icon }) => {
-          // For the "Home" button, consider both / and /services as active to handle potential variations
-          // However, with consistent linking to /services, simple equality should be fine.
-          const isActive = pathname === href || (href === "/services" && pathname === "/");
+          // Check if the current path starts with the nav item's href
+          // This handles nested routes correctly (e.g., /app/profile/settings is active for /app/profile)
+          const isActive = pathname.startsWith(href);
+          
           return (
             <Link
               key={href}

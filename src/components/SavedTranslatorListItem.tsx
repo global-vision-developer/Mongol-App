@@ -12,27 +12,27 @@ import { cn } from '@/lib/utils';
 
 // Helper function to get detail page link
 const getDetailPageLink = (item: SavedPageItem): string => {
+  const basePath = '/app'; // Use the new /app base path
   switch (item.itemType) {
     case 'translator':
-      return `/services/translators/${item.id}`;
+      return `${basePath}/services/translators/${item.id}`;
     case 'hotel':
-      return `/services/hotels/${item.id}`;
+      return `${basePath}/services/hotels/${item.id}`;
     case 'market':
-      return `/services/markets/${item.id}`;
+      return `${basePath}/services/markets/${item.id}`;
     case 'factory':
-      return `/services/factories/${item.id}`;
+      return `${basePath}/services/factories/${item.id}`;
     case 'hospital':
-      return `/services/hospitals/${item.id}`;
+      return `${basePath}/services/hospitals/${item.id}`;
     case 'embassy':
-      return `/services/embassies/${item.id}`;
+      return `${basePath}/services/embassies/${item.id}`;
     case 'wechat':
-      return `/services/wechat/${item.id}`;
+      return `${basePath}/services/wechat/${item.id}`;
     case 'service': // Generic service
     case 'promo':   // Promo items might have a direct link or no detail page
-      return item.link || `/services`; // Fallback to a generic page or item's own link if available
+      return item.link || `${basePath}/services`; // Fallback to a generic page or item's own link if available
     default:
-      // console.warn(`Unknown itemType for detail link: ${item.itemType}`);
-      return `/services`; // A generic fallback
+      return `${basePath}/services`; // A generic fallback
   }
 };
 

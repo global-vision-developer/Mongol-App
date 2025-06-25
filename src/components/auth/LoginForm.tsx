@@ -53,7 +53,7 @@ export function LoginForm() {
     try {
       await login(email, password);
       toast({ title: t("login"), description: t("welcome") });
-      router.push("/services"); 
+      router.push("/app/services"); 
     } catch (error) {
       let errorMessage = t("authErrorGenericLogin");
       const firebaseError = error as FirebaseError;

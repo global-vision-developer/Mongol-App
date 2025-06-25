@@ -113,27 +113,28 @@ function ServiceCardComponent({ item, className }: ServiceCardProps) {
   let detailPageLink: string | undefined = undefined;
 
   if (item.id) {
+    const basePath = '/app/services'; // Use the new /app base path
     switch (item.itemType) {
       case 'translator':
-        detailPageLink = `/services/translators/${item.id}`;
+        detailPageLink = `${basePath}/translators/${item.id}`;
         break;
       case 'hotel':
-        detailPageLink = `/services/hotels/${item.id}`;
+        detailPageLink = `${basePath}/hotels/${item.id}`;
         break;
       case 'market':
-        detailPageLink = `/services/markets/${item.id}`;
+        detailPageLink = `${basePath}/markets/${item.id}`;
         break;
       case 'factory':
-        detailPageLink = `/services/factories/${item.id}`;
+        detailPageLink = `${basePath}/factories/${item.id}`;
         break;
       case 'hospital':
-        detailPageLink = `/services/hospitals/${item.id}`;
+        detailPageLink = `${basePath}/hospitals/${item.id}`;
         break;
       case 'embassy':
-        detailPageLink = `/services/embassies/${item.id}`;
+        detailPageLink = `${basePath}/embassies/${item.id}`;
         break;
       case 'wechat':
-        detailPageLink = `/services/wechat/${item.id}`;
+        detailPageLink = `${basePath}/wechat/${item.id}`;
         break;
     }
   }

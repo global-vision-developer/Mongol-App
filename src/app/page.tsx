@@ -12,7 +12,7 @@ export default function RootPage() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        router.replace('/services'); // Redirect to /services for logged-in users
+        router.replace('/app/services'); // Redirect to the authenticated app section
       } else {
         router.replace('/auth/login');
       }
@@ -20,8 +20,8 @@ export default function RootPage() {
   }, [user, loading, router]);
 
   return (
-    <div className="flex h-screen items-center justify-center">
-      <p>Loading...</p> {/* Or a spinner component */}
+    <div className="flex h-screen items-center justify-center bg-background">
+      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
     </div>
   );
 }
