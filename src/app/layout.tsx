@@ -26,7 +26,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Mongol',
+  title: 'Altan Zam',
   description: 'Your super app for all needs in China.',
 };
 

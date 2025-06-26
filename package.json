@@ -11,8 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "capacitor:sync": "npm run build && npx cap sync",
-    "capacitor:copy": "npm run build && npx cap copy",
+    "capacitor:sync": "CAPACITOR_BUILD=true npm run build && npx cap sync",
+    "capacitor:copy": "CAPACITOR_BUILD=true npm run build && npx cap copy",
     "capacitor:open:android": "npx cap open android",
     "capacitor:open:ios": "npx cap open ios"
   },
