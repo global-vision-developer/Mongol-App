@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'mn.altanzam.app',
-  appName: 'Altan Zam',
+  appId: 'mn.mongol.app',
+  appName: 'Mongol',
   webDir: 'out',
   bundledWebRuntime: false,
 };
