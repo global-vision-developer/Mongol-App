@@ -272,3 +272,12 @@ export interface FAQItem {
   updatedAt?: Timestamp;
   order?: number;
 }
+
+export interface AppVersion {
+  version: string;
+  isForceUpdate: boolean;
+  updateMessage: {
+    mn: string;
+    cn: string;
+  };
+}

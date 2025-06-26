@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { VersionCheck } from '@/components/VersionCheck';
 
 const ptSans = PT_Sans({
   subsets: ['latin', 'cyrillic'],
@@ -42,6 +43,7 @@ export default function RootLayout({
           <LanguageProvider>
             {children}
             <Toaster />
+            <VersionCheck />
           </LanguageProvider>
         </AuthProvider>
         <Analytics />

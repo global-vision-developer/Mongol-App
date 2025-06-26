@@ -477,6 +477,11 @@ const translations: Record<Language, Record<string, string>> = {
     // City Selection Sheet
     majorCitiesTitle: "Том хотууд",
     otherCitiesTitle: "Бусад хотууд",
+    // Version Check
+    updateAvailableTitle: "Шинэ хувилбар гарлаа",
+    newVersionAvailableDesc: "Аппликейшний шинэ хувилбар гарлаа. Та аппаа шинэчилнэ үү.",
+    updateNowButton: "Одоо шинэчлэх",
+    updateLaterButton: "Дараа",
 
   },
   cn: {
@@ -943,6 +948,11 @@ const translations: Record<Language, Record<string, string>> = {
     // City Selection Sheet
     majorCitiesTitle: "主要城市",
     otherCitiesTitle: "其他城市",
+    // Version Check
+    updateAvailableTitle: "发现新版本",
+    newVersionAvailableDesc: "应用程序有新版本可用。请更新您的应用程序。",
+    updateNowButton: "立即更新",
+    updateLaterButton: "稍后",
   }
 };
 

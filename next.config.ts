@@ -1,14 +1,10 @@
 
 import type { NextConfig } from 'next';
 
-// const withPWA = require("@ducanh2912/next-pwa").default({
-//   dest: "public",
-//   register: true,
-//   skipWaiting: true,
-//   disable: process.env.NODE_ENV === "development",
-// });
-
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_APP_VERSION: process.env.npm_package_version,
+  },
   images: {
     remotePatterns: [
       {
@@ -39,5 +35,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-// export default withPWA(nextConfig);
-export default nextConfig; // Exporting config directly without PWA wrapper
+export default nextConfig;
