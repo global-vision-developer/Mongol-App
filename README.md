@@ -10,19 +10,20 @@
 2.  [Үндсэн Функцууд](#үндсэн-функцууд-core-features)
 3.  [Төслийг Ажиллуулах](#төслийг-ажиллуулах-getting-started)
 4.  [Төслийн Бүтэц](#төслийн-бүтэц-project-structure)
+5.  [src/ Директорийн гүнзгийрүүлсэн тайлбар](#src-директорийн-гүнзгийрүүлсэн-тайлбар)
     -    [`src/app/` - Хуудас ба Замчлал](#srcapp---хуудас-ба-замчлал-routing)
     -    [`src/components/` - Дахин Ашиглагдах Компонентууд](#srccomponents---дахин-ашиглагдах-компонентууд)
     -    [`src/contexts/` - Төлөв Удирдах Context](#srccontexts---төлөв-удирдах-context-global-state)
     -    [`src/hooks/` - Custom Hooks](#srchooks---custom-hooks)
     -    [`src/lib/` - Туслах функц ба Тохиргоо](#srclib---туслах-функц-ба-тохиргоо)
     -    [`src/types/` - TypeScript Төрлүүд](#srctypes---typescript-төрлүүд)
-5.  [Мобайл Хувилбар (Capacitor)](#мобайл-хувилбар-capacitor)
+6.  [Мобайл Хувилбар (Capacitor)](#мобайл-хувилбар-capacitor)
     -    [Үндсэн тохиргоо](#үндсэн-тохиргоо)
     -    [Мобайл хувилбар үүсгэх заавар](#мобайл-хувилбар-үүсгэх-заавар)
     -    [Firebase & Push Notification тохиргоо](#firebase--push-notification-тохиргоо-мобайл-дээр)
-6.  [Firebase & Аюулгүй Байдал](#firebase--аюулгүй-байдал)
+7.  [Firebase & Аюулгүй Байдал](#firebase--аюулгүй-байдал)
     -    [`firestore.rules`](#firestorerules)
-7.  [Төслийн бусад файлууд](#төслийн-бусад-файлууд)
+8.  [Төслийн бусад файлууд](#төслийн-бусад-файлууд)
 
 ---
 
@@ -140,15 +141,45 @@ mongol-app/
 └── README.md
 ```
 
+---
+
+## `src/` Директорийн гүнзгийрүүлсэн тайлбар
+
+Энэ бол төслийн үндсэн код байрлах гол хавтас юм. Доторх хавтас бүр тодорхой үүрэгтэй.
+
 ### `src/app/` - Хуудас ба Замчлал (Routing)
 
 Энэ хавтас нь Next.js App Router-ийн зарчмын дагуу аппын бүх хуудас, замчлалыг тодорхойлно. Хавтасны нэр нь URL-ийн зам болдог.
 
--   **`layout.tsx`**: Хамгийн дээд түвшний (root) layout. Бүх хуудсыг бүрхэж, аппын үндсэн фонт, `AuthProvider`, `LanguageProvider` зэрэг глобал context-уудыг агуулна. Мөн Vercel-ийн `Analytics`, `SpeedInsights`, `Toaster` (мэдэгдэл), `VersionCheck` зэрэг апп даяарх компонентуудыг энд тодорхойлно.
+#### **Гол файлууд:**
+-   **`layout.tsx` (Root Layout)**: Бүх хуудсыг бүрхэж, аппын үндсэн суурийг тавьдаг хамгийн чухал файл.
+    -   **Үүрэг:** HTML-ийн үндсэн тааг (`<html>`, `<body>`), фонтын тохиргоо, апп даяар ашиглагдах `AuthProvider`, `LanguageProvider` зэрэг глобал context-үүдийг агуулна. Мөн Vercel-ийн `Analytics`, `SpeedInsights`, `Toaster` (мэдэгдэл), `VersionCheck` зэрэг апп даяарх компонентуудыг энд тодорхойлно.
+    ```tsx
+    // src/app/layout.tsx
+    export default function RootLayout({ children }: { children: React.ReactNode; }) {
+      return (
+        <html lang="en">
+          <body>
+            <AuthProvider>
+              <LanguageProvider>
+                {children}
+                <Toaster />
+                <VersionCheck />
+              </LanguageProvider>
+            </AuthProvider>
+            <Analytics />
+            <SpeedInsights />
+          </body>
+        </html>
+      );
+    }
+    ```
 
 -   **`globals.css`**: Аппын ерөнхий загвар. Tailwind CSS-ийн үндсэн layer-ууд болон ShadCN UI-ийн өнгөний тохиргоог (CSS variables) агуулдаг.
 
 -   **`page.tsx`**: Аппын үндсэн нэвтрэх цэг (`/`). Хэрэглэгчийг шууд `/services` хуудас руу шилжүүлдэг (redirect).
+
+#### **Замчлалын Группүүд:**
 
 -   **`/(auth)/`**: Нэвтрэх, бүртгүүлэх зэрэг хэрэглэгчийн баталгаажуулалттай холбоотой хуудсуудын групп. Хаалттай хавтас `()` нь URL-д нөлөөлөхгүй, зөвхөн зохион байгуулалтын зорилготой.
     -   `layout.tsx`: Энэ группийн хуудсуудад зориулсан тусдаа загвар. Логотой, голлуулсан байрлалтай layout.
@@ -183,6 +214,22 @@ mongol-app/
 Апп-ын өөр өөр хэсгүүдэд төлөв (state)-ийг дамжуулах, удирдах зорилготой React Context-үүдийг агуулна.
 
 -   **`AuthContext.tsx`**: Хэрэглэгчийн нэвтрэлтийн төлөв (`user`, `loading`), хадгалсан зүйлсийн ID (`savedItemIds`), болон холбогдох функцуудыг (`login`, `register`, `logout`, `addFavorite`) апп даяар дамжуулна. `useAuth` hook-оор дамжуулан ашиглана.
+    -   **Гол Логик:** `onAuthStateChanged` listener ашиглан хэрэглэгчийн нэвтрэлтийн төлвийг бодит цагт хянаж, `user` state-ийг шинэчилдэг. Энэ нь апп-ыг аюулгүй, найдвартай болгодог.
+    ```tsx
+    // src/contexts/AuthContext.tsx
+    useEffect(() => {
+      const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser && firebaseUser.emailVerified) {
+          // ... хэрэглэгчийн мэдээллийг Firestore-оос татах
+          setUser(formattedUser);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      });
+      return () => unsubscribeAuth();
+    }, []);
+    ```
 -   **`CityContext.tsx`**: Сонгогдсон хотын төлөв, боломжит хотуудын жагсаалтыг удирдах context. `useCity` hook-оор дамжуулан ашиглана.
 -   **`LanguageContext.tsx`**: Аппын хэлний сонголт (`mn` эсвэл `cn`), орчуулгын функц `t()`-г удирдах context. `useLanguage` hook-оор дамжуулан ашиглана.
 -   **`SearchContext.tsx`**: Хайлтын талбарын утгыг глобал төлөвт хадгалах context. `useSearch` hook-оор дамжуулан ашиглана.
@@ -280,5 +327,7 @@ Firestore өгөгдлийн сангийн аюулгүй байдлын дүр
 -   **`tsconfig.json`**: TypeScript-ийн тохиргоо.
 -   **`package.json`**: Төслийн хамаарлууд (dependencies) болон script-үүдийг тодорхойлно.
 -   **`README.md`**: Энэхүү баримт бичиг.
+
+    
 
     
