@@ -1,5 +1,7 @@
 
-// lib/firebase.ts
+// Энэ файл нь Firebase-ийн бүх үйлчилгээг эхлүүлж, тохируулан,
+// апп-ын бусад хэсэгт ашиглах боломжтой болгож экспортлох үүрэгтэй.
+
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getAnalytics, isSupported as isAnalyticsSupported, type Analytics } from 'firebase/analytics';
@@ -13,6 +15,7 @@ import {
 } from 'firebase/messaging';
 import { getStorage, type Storage } from 'firebase/storage';
 
+// Firebase төслийн тохиргоо (энэ мэдээллийг Firebase console-оос авна).
 const firebaseConfig = {
   apiKey: "AIzaSyC8fm6JfwUqtr_YBpg01hxo6JKAQQ8kgPc",
   authDomain: "mbad-c532e.firebaseapp.com",
@@ -23,14 +26,17 @@ const firebaseConfig = {
   measurementId: "G-EHLS0LGKEM"
 };
 
+// Firebase апп-ыг эхлүүлэх.
 const app: FirebaseApp = initializeApp(firebaseConfig);
 console.log("Firebase App initialized");
 
+// Firebase-ийн гол үйлчилгээнүүдийг эхлүүлэх.
 const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 const storage: Storage = getStorage(app);
 console.log("Auth, Firestore, and Storage initialized");
 
+// Firebase Analytics-ийг зөвхөн хөтөч дээр ажиллаж байвал эхлүүлэх.
 let analytics: Analytics | undefined;
 if (typeof window !== 'undefined') {
   isAnalyticsSupported().then((supported) => {
@@ -47,6 +53,8 @@ if (typeof window !== 'undefined') {
   console.log("Not in a browser environment, Firebase Analytics not initialized.");
 }
 
+// Firebase Cloud Messaging (FCM) үйлчилгээг аюулгүйгээр эхлүүлэх singleton pattern.
+// Энэ нь хөтөч дэмжих эсэхийг шалгасны дараа зөвхөн нэг удаа эхлүүлнэ.
 let messagingSingleton: Messaging | null = null;
 let messagingPromise: Promise<Messaging | null> | null = null;
 
@@ -69,24 +77,25 @@ const getInitializedMessaging = (): Promise<Messaging | null> => {
                     resolve(messagingSingleton);
                 } else {
                     console.log("Firebase.ts: Firebase Messaging is not supported by isMessagingSupported().");
-                    messagingSingleton = null; // Ensure it's null if not supported
+                    messagingSingleton = null; 
                     resolve(null);
                 }
             } catch (err) {
                 console.error('Firebase.ts: Failed to initialize Firebase Messaging SDK:', err);
-                messagingSingleton = null; // Ensure it's null on error
+                messagingSingleton = null; 
                 resolve(null);
             }
         } else {
             console.log("Firebase.ts: Not in a browser environment, Firebase Messaging not initialized.");
-            messagingSingleton = null; // Ensure it's null
+            messagingSingleton = null; 
             resolve(null);
         }
     });
     return messagingPromise;
 };
 
-
+// Хэрэглэгчийн төхөөрөмжийн FCM token-г авах функц.
+// Энэ token нь тухайн төхөөрөмж рүү push notification илгээхэд ашиглагдана.
 export const requestForToken = async (): Promise<string | null> => {
   const messaging = await getInitializedMessaging();
   if (!messaging) {
@@ -94,6 +103,7 @@ export const requestForToken = async (): Promise<string | null> => {
     return null;
   }
 
+  // Firebase console > Project settings > Cloud Messaging > Web configuration-оос авах VAPID key.
   const vapidKeyFromServer = "BKm-UFW7sk0sV3T_B1zwflA9LIsX2HaUwLQMgzG_7QrEC6pah0MN5ki8sWqDm4PLnfXtFoS7RNBHhMSyzSpOq_4";
   console.log("Attempting to get FCM token with VAPID key:", vapidKeyFromServer);
 
@@ -118,6 +128,7 @@ export const requestForToken = async (): Promise<string | null> => {
   }
 };
 
+// Апп нээлттэй байх үед (foreground) push notification хүлээж авах listener-г тохируулах функц.
 export const setupOnMessageListener = async (callback: (payload: any) => void): Promise<(() => void) | null> => {
   const messaging = await getInitializedMessaging();
   if (!messaging) {
@@ -136,6 +147,5 @@ export const setupOnMessageListener = async (callback: (payload: any) => void): 
   }
 };
 
+// Эхлүүлсэн үйлчилгээнүүдийг экспортлох
 export { app, auth, db, analytics, storage };
-// Removed direct export of 'messagingInstance as messaging'
-// AppInit.tsx will use the async setupOnMessageListener and requestForToken.

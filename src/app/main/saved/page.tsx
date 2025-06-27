@@ -26,15 +26,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 
+// Firestore-д хадгалагдсан байж болох ItemType-уудын зөвшөөрөгдсөн жагсаалт
 const VALID_ITEM_TYPES: ItemType[] = [
   'service', 'translator', 'hotel', 'wechat', 'promo', 'market', 
   'factory', 'hospital', 'embassy', 'flight', 'message', 'order', 'update', 'general'
 ];
 
-// Helper function to map plural service group ID to singular ItemType
+// Service group ID-г (жишээ нь, 'hotels') ганц тооны ItemType ('hotel') руу хөрвүүлэх туслах функц
 const mapServiceGroupIdToItemType = (serviceGroupId: ServiceGroupId): ItemType => {
   switch (serviceGroupId) {
-    case 'flights': return 'flight'; // Though flights might not be typically saved items
+    case 'flights': return 'flight';
     case 'hotels': return 'hotel';
     case 'translators': return 'translator';
     case 'wechat': return 'wechat';
@@ -43,8 +44,6 @@ const mapServiceGroupIdToItemType = (serviceGroupId: ServiceGroupId): ItemType =
     case 'hospitals': return 'hospital';
     case 'embassies': return 'embassy';
     default: 
-      // This case should ideally not be reached if ServiceGroupId is exhaustive
-      // and all cases are handled. We'll assert ItemType for safety.
       return serviceGroupId as ItemType; 
   }
 };
@@ -58,18 +57,21 @@ export default function SavedPage() {
   const [loadingItems, setLoadingItems] = useState(true);
   const [activeFilter, setActiveFilter] = useState<SavedItemCategoryFilter>('all');
   
+  // Устгах үйлдлийг баталгаажуулах alert dialog-ийн төлөвүүд
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedItemIdForDeletion, setSelectedItemIdForDeletion] = useState<string | null>(null);
 
+  // Шүүлтүүрийн категориудыг SERVICE_GROUPS-оос үүсгэх
   const filterCategories = useMemo(() => {
     return SERVICE_GROUPS
-      .filter(sg => sg.id !== 'flights') // Exclude flights from saved item categories if not applicable
+      .filter(sg => sg.id !== 'flights') // Нислэгийг хадгалдаггүй тул хасах
       .map(sg => ({
         id: mapServiceGroupIdToItemType(sg.id), 
         titleKey: sg.titleKey,
       }));
-  }, []); // Removed t from dependencies as titleKey is used later for translation
+  }, []);
 
+  // Хэрэглэгчийн хадгалсан зүйлсийг Firestore-оос татах useEffect
   useEffect(() => {
     if (authLoading) {
       setLoadingItems(true);
@@ -85,12 +87,14 @@ export default function SavedPage() {
     const savedItemsCol = collection(db, "users", user.uid, "savedItems");
     const q = query(savedItemsCol, orderBy("savedAt", "desc"));
 
+    // onSnapshot ашиглан бодит цагт өөрчлөлтийг сонсох
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items: SavedPageItem[] = snapshot.docs
         .map(doc => {
           const data = doc.data() as DocumentData;
           const itemType = data.itemType as ItemType;
 
+          // Хүчингүй itemType-тай бол алгасах
           if (!itemType || !VALID_ITEM_TYPES.includes(itemType)) {
             console.warn(`Saved item ${doc.id} has missing or invalid itemType: ${itemType}. Skipping.`);
             return null;
@@ -101,6 +105,7 @@ export default function SavedPage() {
           else if (data.sex === 'Эм' || data.gender === 'female') gender = 'female';
           else if (data.gender === 'other') gender = 'other';
 
+          // Өгөгдлийг цэвэрлэж, зөвхөн шаардлагатай талбаруудыг авах
           const cleanedData: Partial<SavedPageItem> = {};
           const recommendedItemKeys: (keyof SavedPageItem)[] = [
             'name', 'imageUrl', 'description', 'gender', 'city', 'testLevel', 
@@ -124,7 +129,7 @@ export default function SavedPage() {
             id: data.originalItemId || doc.id, 
             ...cleanedData,
             name: data.name || t('serviceUnnamed'),
-            itemType: itemType, // This itemType is crucial for filtering
+            itemType: itemType, // Энэ itemType шүүлтүүрт чухал
           } as SavedPageItem;
         })
         .filter((item): item is SavedPageItem => item !== null); 
@@ -136,10 +141,11 @@ export default function SavedPage() {
       setLoadingItems(false);
     });
 
-    return () => unsubscribe(); 
+    return () => unsubscribe(); // Компонент unmount болоход listener-г цэвэрлэх
 
   }, [user, authLoading, t]);
 
+  // Сонгогдсон шүүлтүүрийн дагуу хадгалсан зүйлсийг шүүх
   const filteredSavedItems = useMemo(() => {
     if (activeFilter === 'all') {
       return savedItems;
@@ -147,11 +153,13 @@ export default function SavedPage() {
     return savedItems.filter(item => item.itemType === activeFilter);
   }, [savedItems, activeFilter]);
 
+  // Устгах хүсэлтийг эхлүүлэх
   const handleUnsaveRequest = (itemId: string) => {
     setSelectedItemIdForDeletion(itemId);
     setIsAlertOpen(true);
   };
 
+  // Устгах үйлдлийг баталгаажуулж, Firestore-оос устгах
   const handleUnsaveConfirm = async () => {
     if (!user || !selectedItemIdForDeletion) {
       toast({
@@ -183,14 +191,15 @@ export default function SavedPage() {
   };
 
 
+  // Ачааллаж байх үед skeleton UI харуулах
   if (authLoading) {
      return (
         <div className="space-y-6">
             <h1 className="text-2xl font-headline font-semibold text-center">{t('saved')}</h1>
-            <Skeleton className="h-10 w-full rounded-md my-4 px-1" /> {/* Filter buttons skeleton */}
-            <div className="space-y-1 px-1"> {/* space-y-1 for tighter list items */}
+            <Skeleton className="h-10 w-full rounded-md my-4 px-1" />
+            <div className="space-y-1 px-1">
                 {[...Array(3)].map((_, i) => ( 
-                   <div key={`skeleton-saved-item-${i}`} className="p-3 flex items-center gap-4 border-b last:border-b-0"> {/* List item skeleton */}
+                   <div key={`skeleton-saved-item-${i}`} className="p-3 flex items-center gap-4 border-b last:border-b-0">
                       <Skeleton className="h-16 w-16 rounded-md shrink-0" />
                       <div className="flex-1 space-y-2">
                           <Skeleton className="h-4 w-3/4" />
@@ -209,6 +218,7 @@ export default function SavedPage() {
         {t('saved')}
       </h1>
 
+      {/* Категориор шүүх хэсэг */}
       <ScrollArea className="w-full whitespace-nowrap px-1 md:px-0">
         <div className="flex space-x-2 pb-2">
           <Button
@@ -232,6 +242,7 @@ export default function SavedPage() {
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
       
+      {/* Хадгалсан зүйлсийн жагсаалт эсвэл хоосон төлөв */}
       {filteredSavedItems.length === 0 && !loadingItems ? (
          <Card className="shadow-lg mx-1 md:mx-0">
           <CardHeader>
@@ -246,15 +257,13 @@ export default function SavedPage() {
         </Card>
       ) : (
         <div className="space-y-0 px-1 md:px-0"> 
-          {/* {activeFilter !== 'all' && ( // This title might be redundant if filter buttons are clear
-             <h2 className="text-lg font-semibold mt-4 mb-2 px-3">{t(filterCategories.find(fc => fc.id === activeFilter)?.titleKey || '')}</h2>
-          )} */}
           {filteredSavedItems.map(item => (
             <SavedItemCard key={item.id + (item.itemType || '')} item={item} onUnsaveRequest={handleUnsaveRequest}/>
           ))}
         </div>
       )}
 
+      {/* Устгах үйлдлийг баталгаажуулах цонх */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

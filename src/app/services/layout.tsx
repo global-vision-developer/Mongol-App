@@ -10,6 +10,8 @@ import React, { useEffect, useRef } from "react";
 import AppInit from "@/components/AppInit";
 import { cn } from "@/lib/utils";
 
+// Энэ бол /services зам доорх бүх нийтийн хуудсуудад хамаарах layout.
+// Энэ нь хэрэглэгч нэвтэрсэн эсэхээс үл хамааран харагдах UI-г тодорхойлно.
 export default function ServicesLayout({
   children,
 }: {
@@ -18,20 +20,23 @@ export default function ServicesLayout({
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
 
-  // This effect re-triggers the CSS animation on page navigation
-  // by removing and re-adding the animation class.
+  // Энэ эффект нь хуудас солигдох бүрд CSS анимацийг дахин эхлүүлэх үүрэгтэй.
+  // Ингэснээр хуудас солигдох бүрд слайд-анимаци ажиллана.
   useEffect(() => {
     const mainEl = mainRef.current;
     if (mainEl) {
       mainEl.classList.remove('animate-page-slide-in-right');
-      void mainEl.offsetWidth; // Trigger a reflow
+      void mainEl.offsetWidth; // DOM-г дахин уншиж, reflow хийх трик
       mainEl.classList.add('animate-page-slide-in-right');
     }
   }, [pathname]);
 
   return (
+    // Шаардлагатай Context Provider-уудыг тохируулах.
+    // Эдгээр context-үүд нь зөвхөн /services доторх хуудсуудад хамааралтай.
     <CityProvider>
       <SearchProvider>
+        {/* Firebase Cloud Messaging-г эхлүүлэх компонент */}
         <AppInit />
         <div className="flex min-h-screen flex-col" style={{ overflowX: 'hidden' }}>
           <Header />

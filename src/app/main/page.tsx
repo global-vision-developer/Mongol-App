@@ -1,7 +1,8 @@
 
 export default function MainPage() {
-  // This page is necessary to prevent Next.js from showing a 404 for the root of the (main) group,
-  // but it should not render anything as the root redirect is handled by `src/app/page.tsx`.
-  // Making it a server component that returns null solves the Vercel build issue.
+  // Энэ хуудас нь Next.js-ийн (main) групп-ийн үндсэн замд 404 алдаа гарахаас сэргийлдэг.
+  // Гэхдээ ямар нэгэн зүйл рендер хийх шаардлагагүй, учир нь үндсэн хуудасны шилжүүлэлтийг
+  // `src/app/page.tsx` файл хариуцдаг.
+  // Энийг null буцаадаг server component болгосноор Vercel build-ийн асуудал шийдэгддэг.
   return null;
 }

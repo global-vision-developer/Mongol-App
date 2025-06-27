@@ -4,6 +4,7 @@
 import type React from 'react';
 import { createContext, useContext, useState } from 'react';
 
+// SearchContext-ийн төрлийг тодорхойлох
 interface SearchContextType {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
@@ -11,6 +12,7 @@ interface SearchContextType {
 
 const SearchContext = createContext<SearchContextType | undefined>(undefined);
 
+// Апп даяар хайлтын утгыг (searchTerm) хадгалах, дамжуулах Provider компонент.
 export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -21,6 +23,7 @@ export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   );
 };
 
+// `useSearch` hook нь context-ийг хялбар ашиглах боломжийг олгоно.
 export const useSearch = (): SearchContextType => {
   const context = useContext(SearchContext);
   if (!context) {

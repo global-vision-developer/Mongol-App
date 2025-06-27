@@ -34,10 +34,12 @@ interface OrderCardProps {
   onDeleteRequest: (orderId: string) => void;
 }
 
+// Захиалга бүрийг харуулах картын компонент
 const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
   const { t } = useTranslation();
   const [detailsVisible, setDetailsVisible] = useState(false);
 
+  // Захиалгын статусыг орчуулах функц
   const getStatusTextKey = (status: AppOrder['status']) => {
     switch (status) {
       case 'pending_confirmation': return 'orderStatusPendingConfirmation';
@@ -50,6 +52,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
     }
   };
 
+  // Vercel-ийн Image Optimization-г шаардлагагүй тохиолдолд (жишээ нь, data URI) ашиглахгүй байх
   const qrImageShouldUnoptimize = order.wechatQrImageUrl?.startsWith('data:') || order.wechatQrImageUrl?.includes('lh3.googleusercontent.com');
   const itemImageShouldUnoptimize = order.imageUrl?.startsWith('data:') || order.imageUrl?.includes('lh3.googleusercontent.com');
 
@@ -84,6 +87,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onDeleteRequest }) => {
           {order.amount != null && <p>{t('orderAmount')}: <span className="font-medium text-foreground">{order.amount}</span></p>}
         </div>
         
+        {/* Хэрэглэгч дэлгэрэнгүйг харах товч дарсан бол холбоо барих мэдээллийг харуулах */}
         {detailsVisible && (
           <div className="mt-3 pt-3 border-t">
               <h4 className="text-sm font-semibold text-foreground mb-1.5">{t('contactInformation')}</h4>
@@ -162,13 +166,16 @@ export default function OrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  // Төлөвүүдийг тодорхойлох
   const [orders, setOrders] = useState<AppOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [activeTab, setActiveTab] = useState<ItemType | 'flights'>("flights");
 
+  // Устгах үйлдлийг баталгаажуулах alert dialog-ийн төлөвүүд
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedOrderIdForDeletion, setSelectedOrderIdForDeletion] = useState<string | null>(null);
 
+  // Табуудын мэдээлэл
   const tabCategories: { value: ItemType | 'flights'; labelKey: string, icon: React.ElementType }[] = [
     { value: "flights", labelKey: "flights", icon: Plane },
     { value: "hotel", labelKey: "hotels", icon: BedDouble },
@@ -176,6 +183,7 @@ export default function OrdersPage() {
     { value: "wechat", labelKey: "wechatOrdersTab", icon: Smartphone },
   ];
 
+  // Хэрэглэгчийн захиалгуудыг Firestore-оос татах useEffect
   useEffect(() => {
     if (authLoading) {
       setLoadingOrders(true);
@@ -191,10 +199,12 @@ export default function OrdersPage() {
     const ordersColRef = collection(db, "orders");
     const q = query(ordersColRef, where("userId", "==", user.uid), orderBy("orderDate", "desc"));
 
+    // onSnapshot ашиглан бодит цагт өөрчлөлтийг сонсох
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedOrders: AppOrder[] = snapshot.docs.map(doc => {
         const data = doc.data() as DocumentData;
         
+        // Холбоо барих мэдээлэл нээгдсэн эсэхийг шалгах
         const isContactInfoRevealed = data.contactInfoRevealed === true || data.status === 'contact_revealed' || data.status === 'confirmed' || data.status === 'completed';
         
         return {
@@ -222,14 +232,16 @@ export default function OrdersPage() {
       setLoadingOrders(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Компонент unmount болоход listener-г цэвэрлэх
   }, [user, authLoading, t]);
 
+  // Устгах хүсэлт эхлүүлэх
   const handleDeleteRequest = (orderId: string) => {
     setSelectedOrderIdForDeletion(orderId);
     setIsAlertOpen(true);
   };
 
+  // Захиалгыг устгах функц
   const handleDeleteOrder = async () => {
     if (!user || !selectedOrderIdForDeletion) {
       toast({
@@ -260,12 +272,13 @@ export default function OrdersPage() {
     }
   };
 
-
+  // Сонгогдсон таб-д харгалзах захиалгуудыг шүүх
   const filteredOrders = orders.filter(order => {
     if (activeTab === 'flights') return order.serviceType === 'flight';
     return order.serviceType === activeTab;
   });
 
+  // Захиалга байхгүй үед харуулах UI
   const renderEmptyState = (categoryLabelKey: string) => (
     <div className="flex flex-col items-center justify-center text-center py-12">
       <div className="bg-muted rounded-full p-6 mb-6">
@@ -278,6 +291,7 @@ export default function OrdersPage() {
     </div>
   );
 
+  // Хэрэглэгч нэвтрэх үед эсвэл мэдээлэл ачааллаж байхад харуулах skeleton UI
   if (authLoading || !user) {
     return (
       <div className="space-y-6">

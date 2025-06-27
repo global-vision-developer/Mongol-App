@@ -8,19 +8,23 @@ import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/fi
 import type { NotificationItem, ItemType } from '@/types';
 import { useTranslation } from '@/hooks/useTranslation';
 
+// Энэ компонент нь апп ачаалахад нэг удаа ажиллах чухал тохиргоог хийдэг.
+// Гол үүрэг нь Firebase Cloud Messaging (FCM) буюу Push Notification-ийг эхлүүлэх юм.
 export default function AppInit() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { t } = useTranslation();
 
-  // This ref tracks if the setup has been performed for the current user's session
+  // Энэ ref нь тухайн хэрэглэгчийн session-д FCM тохиргоог нэг л удаа хийсэн эсэхийг хянах зорилготой.
+  // Ингэснээр хуудас солигдох бүрд дахин дахин ажиллахаас сэргийлнэ.
   const setupCompletedForUser = useRef<string | null>(null);
 
   useEffect(() => {
-    // This function will be called by the message listener
+    // Апп нээлттэй байх үед (foreground) notification ирэхэд энэ функц ажиллана.
     const handleIncomingMessage = async (payload: any) => {
       const currentUserId = auth.currentUser?.uid;
 
+      // Notification-оос мэдээллийг задлах
       let toastTitle: string;
       let toastDescription: string;
       let fStoreTitleKey: string = 'unknownNotificationTitle';
@@ -61,11 +65,13 @@ export default function AppInit() {
         toastDescription = t(fStoreDescriptionKey);
       }
 
+      // Хэрэглэгчид toast мэдэгдэл харуулах
       toast({
         title: toastTitle,
         description: toastDescription,
       });
 
+      // Нэвтэрсэн хэрэглэгчийн мэдэгдлийг Firestore-д хадгалах
       if (!currentUserId) return;
 
       if (payload) {
@@ -91,22 +97,24 @@ export default function AppInit() {
       }
     };
 
-    // Main logic for FCM setup
+    // FCM-ийг эхлүүлэх үндсэн логик
     const initializeFcm = async () => {
-      // Exit if no user or if setup has already been completed for this user in this session
+      // Хэрэглэгч нэвтрээгүй эсвэл тохиргоо хийгдсэн бол дахин ажиллуулахгүй
       if (!user || setupCompletedForUser.current === user.uid) {
         return;
       }
-      // Mark setup as in-progress for this user to prevent re-runs
+      // Тохиргоог хийж эхэлсэн гэж тэмдэглэх
       setupCompletedForUser.current = user.uid;
       console.log(`AppInit: Running one-time FCM setup for user ${user.uid}.`);
 
       try {
+        // Notification-ийн зөвшөөрөл асуух
         const permission = await Notification.requestPermission();
         if (permission === 'granted') {
+          // FCM token авах
           const fcmToken = await requestForToken();
           
-          // CRITICAL FIX: Only update Firestore if the token is new or has changed.
+          // Хэрэв шинэ token авсан эсвэл token өөрчлөгдсөн бол Firestore-д хадгалах
           if (fcmToken && fcmToken !== user.fcmToken) {
             console.log("AppInit: New FCM token found, updating Firestore.");
             const userDocRef = doc(db, "users", user.uid);
@@ -123,28 +131,29 @@ export default function AppInit() {
 
     initializeFcm();
 
-    // Setup foreground listener, it returns an unsubscribe function.
+    // Foreground listener-г тохируулах, энэ нь unsubscribe функц буцаана.
     let unsubscribe: (() => void) | null = null;
     const setupListener = async () => {
-        if(user) { // Only set up listener if user is logged in
+        if(user) { // Зөвхөн нэвтэрсэн хэрэглэгчид listener-г тохируулах
             unsubscribe = await setupOnMessageListener(handleIncomingMessage);
         }
     };
     setupListener();
 
-    // Cleanup function for the useEffect hook
+    // useEffect-ийн цэвэрлэх функц
     return () => {
       if (unsubscribe) {
         console.log("AppInit: Cleaning up foreground message listener.");
         unsubscribe();
       }
-      // When the user logs out (user object becomes null), we reset the ref
-      // so that the setup can run again for the next user who logs in.
+      // Хэрэглэгч гарахад (user object null болоход) ref-г цэвэрлэх.
+      // Ингэснээр дараагийн хэрэглэгч нэвтрэхэд тохиргоо дахин хийгдэх боломжтой болно.
       if (!user) {
         setupCompletedForUser.current = null;
       }
     };
-  }, [user, t, toast]); // Dependency array is correct.
+  }, [user, t, toast]); // Dependency array-г зөв тохируулсан.
 
+  // Энэ компонент нь UI рендер хийхгүй.
   return null;
 }

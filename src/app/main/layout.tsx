@@ -12,31 +12,36 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// This is the protected view for the entire /main/** route segment.
-// It checks for authentication and shows a loading state.
+// /main/** хавтас доторх бүх хуудсанд хамаарах хамгаалалттай хэсэг.
+// Энэ компонент нь хэрэглэгч нэвтэрсэн эсэхийг шалгаж, шаардлагатай бол ачааллах (loading) дэлгэц харуулна.
 const ProtectedAppView = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const mainRef = useRef<HTMLElement>(null);
 
+  // Хэрэглэгчийн нэвтрэлтийн төлвийг шалгах useEffect.
+  // Хэрэв ачааллаж дууссан (loading=false) ба хэрэглэгч нэвтрээгүй (user=null) бол
+  // /auth/login хуудас руу шилжүүлнэ.
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/auth/login');
     }
   }, [user, loading, router]);
 
-  // This effect re-triggers the CSS animation on page navigation
-  // by removing and re-adding the animation class.
+  // Энэ эффект нь хуудас солигдох бүрд CSS анимацийг дахин эхлүүлэх үүрэгтэй.
+  // Ингэснээр хуудас солигдох бүрд слайд-анимаци ажиллана.
   useEffect(() => {
     const mainEl = mainRef.current;
     if (mainEl) {
       mainEl.classList.remove('animate-page-slide-in-right');
-      void mainEl.offsetWidth; // Trigger a reflow
+      void mainEl.offsetWidth; // DOM-г дахин уншиж, reflow хийх трик
       mainEl.classList.add('animate-page-slide-in-right');
     }
   }, [pathname]);
 
+  // Хэрэв хэрэглэгчийн мэдээлэл ачааллагдаж байгаа эсвэл хэрэглэгч нэвтрээгүй бол
+  // эргэлдэх ачааллах дүрс харуулна.
   if (loading || !user) {
     return (
        <div className="flex h-screen items-center justify-center bg-background">
@@ -45,6 +50,7 @@ const ProtectedAppView = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
+  // Хэрэглэгч нэвтэрсэн бол үндсэн апп-ын бүтцийг харуулна.
   return (
     <div className="flex min-h-screen flex-col" style={{ overflowX: 'hidden' }}>
       <Header />
@@ -62,8 +68,8 @@ const ProtectedAppView = ({ children }: { children: React.ReactNode }) => {
 };
 
 
-// This is the main layout for the authenticated section of the app.
-// It sets up context providers and the protection wrapper.
+// Энэ бол апп-ын хамгаалалттай хэсгийн үндсэн layout.
+// Энэ нь шаардлагатай Context Provider-уудыг тохируулж, хуудасны хамгаалалтыг хариуцдаг.
 export default function MainLayout({
   children,
 }: {

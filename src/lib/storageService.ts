@@ -1,9 +1,16 @@
+
+// Энэ файл нь Firebase Storage-тай ажиллах функцуудыг агуулдаг.
+// Файл байршуулах, файлын хэмжээ/төрөл шалгах зэрэг логикийг энд төвлөрүүлсэн.
+
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from './firebase';
 
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+// Файлын зөвшөөрөгдөх дээд хэмжээ (5MB)
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+// Зөвшөөрөгдсөн зургийн файлын төрлүүд
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
+// Файл байршуулах үед гарах алдааг тодорхойлох custom error class.
 export class FileUploadError extends Error {
   constructor(message: string) {
     super(message);
@@ -12,15 +19,17 @@ export class FileUploadError extends Error {
 }
 
 /**
- * A generic function to upload a file to Firebase Storage.
- * @param file The file to upload.
- * @param path The full path in Firebase Storage where the file will be stored.
- * @returns The public download URL of the uploaded file.
+ * Firebase Storage руу файл байршуулах ерөнхий функц.
+ * @param file Байршуулах файл.
+ * @param path Firebase Storage доторх хадгалах зам.
+ * @returns Байршуулсан файлын олон нийтэд нээлттэй URL.
  */
 const uploadFile = async (file: File, path: string): Promise<string> => {
+  // Файлын төрөл зөвшөөрөгдсөн эсэхийг шалгах
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     throw new FileUploadError('invalidFileType');
   }
+  // Файлын хэмжээ хэтэрсэн эсэхийг шалгах
   if (file.size > MAX_FILE_SIZE_BYTES) {
     throw new FileUploadError('fileTooLarge');
   }
@@ -38,10 +47,10 @@ const uploadFile = async (file: File, path: string): Promise<string> => {
 };
 
 /**
- * Uploads a profile image for a specific user.
- * @param userId The ID of the user.
- * @param file The image file to upload.
- * @returns The public download URL of the uploaded image.
+ * Хэрэглэгчийн профайл зургийг байршуулах функц.
+ * @param userId Хэрэглэгчийн ID.
+ * @param file Байршуулах зураг.
+ * @returns Байршуулсан зургийн URL.
  */
 export const uploadProfileImage = async (userId: string, file: File): Promise<string> => {
   const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -51,16 +60,16 @@ export const uploadProfileImage = async (userId: string, file: File): Promise<st
 
 
 /**
- * A dictionary of image types for translator applications.
+ * Орчуулагчийн анкетын зургийн төрлүүд.
  */
 export type AnketImageType = 'idCardFront' | 'idCardBack' | 'selfie' | 'wechatQr';
 
 /**
- * Uploads an image for a translator's application anket.
- * @param userId The ID of the user applying to be a translator.
- * @param file The image file to upload.
- * @param imageType The type of image being uploaded (e.g., 'idCardFront').
- * @returns The public download URL of the uploaded image.
+ * Орчуулагчийн анкетын зургийг байршуулах функц.
+ * @param userId Хэрэглэгчийн ID.
+ * @param file Байршуулах зураг.
+ * @param imageType Зургийн төрөл (жишээ нь, 'idCardFront').
+ * @returns Байршуулсан зургийн URL.
  */
 export const uploadAnketImage = async (userId: string, file: File, imageType: AnketImageType): Promise<string> => {
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');

@@ -4,6 +4,8 @@ import { db } from "@/lib/firebase";
 import type { RecommendedItem, ItemType } from "@/types";
 import { ServicesPageClient } from './ServicesPageClient';
 
+// Firestore-ийн "entries" collection-д хадгалагдсан категорийн нэрийг (жишээ нь, "hotels")
+// апп дотор ашиглагдах ганц тооны төрөл рүү (жишээ нь, "hotel") хөрвүүлэх функц.
 const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
   const lowerCategoryName = categoryName?.toLowerCase();
   switch (lowerCategoryName) {
@@ -18,11 +20,13 @@ const mapCategoryToSingularItemType = (categoryName?: string): ItemType => {
   }
 };
 
+// Ангилал бүрээр Firestore-оос өгөгдөл татах ерөнхий функц.
 const fetchEntriesByCategory = async (
   categoryNameFilter: string,
   count: number,
 ): Promise<RecommendedItem[]> => {
   const entriesRef = collection(db, "entries");
+  // Ангиллын нэрээр шүүж, тооны хязгаар тавих query үүсгэх
   const queryConstraints = [
     where("categoryName", "==", categoryNameFilter),
     limit(count)
@@ -31,6 +35,7 @@ const fetchEntriesByCategory = async (
   const firestoreQuery: FirestoreQueryType<DocumentData> = query(entriesRef, ...queryConstraints);
   
   const snapshot = await getDocs(firestoreQuery);
+  // Татагдсан document бүрийг апп-д ашиглах RecommendedItem төрөл рүү хөрвүүлэх
   return snapshot.docs.map(doc => {
     const entryData = doc.data();
     const nestedData = entryData.data || {};
@@ -66,7 +71,9 @@ const fetchEntriesByCategory = async (
   });
 };
 
+// Нүүр хуудсыг харуулах Server Component.
 export default async function HomePage() {
+  // Бүх ангиллын мэдээллийг зэрэг татах (Promise.all ашиглан)
   const [
     translatorsData, hotelsData, marketsData, factoriesData,
     hospitalsData, embassiesData, wechatData,
@@ -80,6 +87,7 @@ export default async function HomePage() {
     fetchEntriesByCategory("wechat", 20),
   ]);
   
+  // Client талын компонент руу дамжуулах өгөгдлийг бэлтгэх
   const initialData = {
     allTranslators: translatorsData,
     allHotels: hotelsData,
@@ -90,5 +98,6 @@ export default async function HomePage() {
     allEmbassies: embassiesData,
   };
 
+  // Татагдсан өгөгдлийг Client Component руу дамжуулан рендер хийх
   return <ServicesPageClient initialData={initialData} />;
 }

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import type { NotificationItem as NotificationItemType } from '@/types';
 import { format } from 'date-fns';
-import { Bell, Trash2, Phone, MessageCircle } from 'lucide-react'; // Added Phone, MessageCircle
+import { Bell, Trash2, Phone, MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,33 +31,37 @@ export default function NotificationsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [userNotifications, setUserNotifications] = useState<NotificationItemType[]>([]);
-  const [globalNotifications, setGlobalNotifications] = useState<NotificationItemType[]>([]);
+  // Төлөвүүдийг тодорхойлох
+  const [userNotifications, setUserNotifications] = useState<NotificationItemType[]>([]); // Хэрэглэгчийн хувийн мэдэгдэл
+  const [globalNotifications, setGlobalNotifications] = useState<NotificationItemType[]>([]); // Бүх хэрэглэгчид харагдах мэдэгдэл
   const [loadingUserNotifications, setLoadingUserNotifications] = useState(true);
   const [loadingGlobalNotifications, setLoadingGlobalNotifications] = useState(true);
 
+  // Мэдэгдэл устгах үеийн төлөвүүд
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedNotificationIdForDeletion, setSelectedNotificationIdForDeletion] = useState<string | null>(null);
 
+  // Компонент ачаалахад Firebase-ээс мэдэгдлүүдийг татах useEffect
   useEffect(() => {
-    // Auth guard is now in the layout, this can be simplified or removed.
-    // However, keeping it provides an extra layer of safety during transitions.
+    // Хэрэглэгчийн мэдээлэл ачааллаж байвал хүлээх
     if (authLoading) {
       setLoadingUserNotifications(true);
       setLoadingGlobalNotifications(true);
       return;
     }
 
-    // Fetch Global Notifications
+    // Глобал (бүх хэрэглэгчийн) мэдэгдлийг татах функц
     const fetchGlobalNotifications = async () => {
       setLoadingGlobalNotifications(true);
       try {
         const globalNotificationsColRef = collection(db, "notifications");
         const qGlobal = query(globalNotificationsColRef, orderBy("date", "desc"));
         
+        // onSnapshot ашиглан бодит цагт өөрчлөлтийг сонсох
         const unsubscribeGlobal = onSnapshot(qGlobal, (snapshot) => {
             const items: NotificationItemType[] = snapshot.docs.map(doc => {
             const data = doc.data() as DocumentData;
+            // Firestore-ийн Timestamp-г Date object болгох
             let dateValue: Date | Timestamp = data.date;
             if (data.date && typeof data.date.seconds === 'number' && typeof data.date.nanoseconds === 'number') {
                 dateValue = new Timestamp(data.date.seconds, data.date.nanoseconds);
@@ -73,7 +77,7 @@ export default function NotificationsPage() {
                 dataAiHint: data.dataAiHint,
                 link: data.link,
                 itemType: data.itemType || 'general',
-                isGlobal: true,
+                isGlobal: true, // Энэ нь глобал мэдэгдэл гэдгийг илтгэнэ
             } as NotificationItemType;
             });
             setGlobalNotifications(items);
@@ -92,7 +96,7 @@ export default function NotificationsPage() {
     
     const unsubGlobal = fetchGlobalNotifications();
 
-
+    // Хэрэглэгч нэвтрээгүй бол зөвхөн глобал мэдэгдлийг харуулаад буцах
     if (!user) {
       setUserNotifications([]);
       setLoadingUserNotifications(false);
@@ -101,7 +105,7 @@ export default function NotificationsPage() {
       };
     }
 
-    // Fetch User-Specific Notifications
+    // Хэрэглэгчийн хувийн мэдэгдлийг татах
     setLoadingUserNotifications(true);
     const userNotificationsColRef = collection(db, "users", user.uid, "notifications");
     const qUser = query(userNotificationsColRef, orderBy("date", "desc"));
@@ -124,7 +128,7 @@ export default function NotificationsPage() {
           dataAiHint: data.dataAiHint,
           link: data.link,
           itemType: data.itemType || 'general',
-          isGlobal: false,
+          isGlobal: false, // Энэ нь хувийн мэдэгдэл
         } as NotificationItemType;
       });
       setUserNotifications(items);
@@ -134,12 +138,14 @@ export default function NotificationsPage() {
       setLoadingUserNotifications(false);
     });
 
+    // Компонент unmount хийгдэхэд listener-уудыг цэвэрлэх
     return () => {
       unsubscribeUser();
       if (typeof unsubGlobal === 'function') unsubGlobal();
     };
   }, [user, authLoading]);
 
+  // Мэдэгдэл устгах функц
   const handleDeleteNotification = async () => {
     if (!user || !selectedNotificationIdForDeletion) {
       toast({
@@ -170,14 +176,16 @@ export default function NotificationsPage() {
     }
   };
 
+  // Глобал болон хувийн мэдэгдлийг нэгтгээд огноогоор нь эрэмбэлэх
   const combinedNotifications = [...globalNotifications, ...userNotifications].sort((a, b) => {
     const dateA = a.date instanceof Timestamp ? a.date.toMillis() : (a.date instanceof Date ? a.date.getTime() : 0);
     const dateB = b.date instanceof Timestamp ? b.date.toMillis() : (b.date instanceof Date ? b.date.getTime() : 0);
-    return dateB - dateA; // Sort descending
+    return dateB - dateA; // Буурах дарааллаар
   });
 
   const isLoading = loadingUserNotifications || loadingGlobalNotifications;
 
+  // Ачааллаж байх үед skeleton UI харуулах
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -208,6 +216,7 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-headline font-semibold text-center">{t('notifications')}</h1>
+      {/* Мэдэгдэл байхгүй бол харуулах хэсэг */}
       {combinedNotifications.length === 0 && !isLoading ? (
         <Card className="shadow-lg">
           <CardHeader>
@@ -221,10 +230,12 @@ export default function NotificationsPage() {
           </CardContent>
         </Card>
       ) : (
+        // Мэдэгдлийн жагсаалтыг харуулах
         <div className="space-y-4">
           {combinedNotifications.map((item) => (
             <Card 
               key={item.id + (item.isGlobal ? '-global' : '-user')} 
+              // Уншаагүй мэдэгдлийг ялгаж харуулах
               className={cn(
                 "shadow-md transition-all duration-300 ease-out hover:shadow-xl hover:-translate-y-1",
                 !item.isGlobal && item.read ? 'bg-card' : (!item.isGlobal && !item.read ? 'bg-primary/5 border-primary/20' : 'bg-card')
@@ -236,10 +247,10 @@ export default function NotificationsPage() {
                 )}
                 <div className="flex-1">
                   <CardTitle className="text-md font-semibold mb-1">{t(item.titleKey, item.descriptionPlaceholders)}</CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground"> {/* Removed line-clamp-2 to show full message */}
+                  <CardDescription className="text-sm text-muted-foreground">
                     {t(item.descriptionKey, item.descriptionPlaceholders)}
                   </CardDescription>
-                  {/* Display translator contact info if available in placeholders */}
+                  {/* Орчуулагчийн холбоо барих мэдээлэл байвал харуулах */}
                   {item.itemType === 'translator' && item.descriptionPlaceholders?.translatorPhoneNumber && (
                     <div className="mt-1.5 text-xs text-muted-foreground">
                       <div className="flex items-center">
@@ -257,6 +268,7 @@ export default function NotificationsPage() {
                      </div>
                    )}
                 </div>
+                {/* Уншаагүй бол цэнхэр цэг харуулах */}
                 {!item.isGlobal && !item.read && (
                    <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1 shrink-0" />
                 )}
@@ -271,6 +283,7 @@ export default function NotificationsPage() {
                         <a href={item.link} target="_blank" rel="noopener noreferrer">{t('viewDetails')}</a>
                     </Button>
                     )}
+                    {/* Глобал биш бол устгах товч харуулах */}
                     {!item.isGlobal && user && (
                         <AlertDialog open={isAlertOpen && selectedNotificationIdForDeletion === item.id} onOpenChange={(open) => {
                             if (!open) {

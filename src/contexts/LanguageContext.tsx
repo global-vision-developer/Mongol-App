@@ -3,15 +3,18 @@
 import type { Language } from '@/types';
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
+// LanguageContext-ийн төрлийг тодорхойлох
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
+  // t функц нь орчуулгын key, орлуулах утга, fallback текст авна.
   t: (key: string, replacements?: Record<string, string | number | null | undefined>, fallback?: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Simple translations store
+// Апп-ын бүх орчуулгыг агуулсан объект.
+// Шинэ орчуулга нэмэхдээ 'mn' болон 'cn' хэсэгт хоёуланд нь нэмнэ.
 const translations: Record<Language, Record<string, string>> = {
   mn: {
     bookNowButton: "Захиалах",
@@ -956,9 +959,11 @@ const translations: Record<Language, Record<string, string>> = {
   }
 };
 
+// Апп даяар хэлний төлвийг удирдах Provider компонент
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>('mn');
 
+  // Компонент анх ачаалахад localStorage-оос хэрэглэгчийн сонгосон хэлийг унших
   useEffect(() => {
     const savedLang = localStorage.getItem('appLanguage') as Language | null;
     if (savedLang && (savedLang === 'mn' || savedLang === 'cn')) {
@@ -966,13 +971,16 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  // Хэлийг солих, төлвийг шинэчлэх, localStorage-д хадгалах функц
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('appLanguage', lang);
   };
 
+  // Орчуулгын `t` функц. useCallback ашиглан performance-ийг сайжруулсан.
   const t = useCallback((key: string, replacements?: Record<string, string | number | null | undefined>, fallback?: string): string => {
     let translation = translations[language]?.[key] || translations['mn']?.[key] || fallback || key;
+    // {{placeholder}} гэсэн хэсгийг `replacements` объектын утгаар солих
     if (replacements) {
       Object.entries(replacements).forEach(([placeholder, value]) => {
         const valueStr = (value === null || value === undefined) ? '' : (typeof value === 'number' ? value.toString() : value);
@@ -989,6 +997,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
+// `useLanguage` hook нь context-ийг хялбар ашиглах боломжийг олгоно.
 export const useLanguage = (): LanguageContextType => {
   const context = useContext(LanguageContext);
   if (context === undefined) {

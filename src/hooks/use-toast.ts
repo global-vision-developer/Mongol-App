@@ -1,6 +1,9 @@
+
 "use client"
 
-// Inspired by react-hot-toast library
+// Энэхүү hook нь react-hot-toast сангаас сэдэвлэсэн бөгөөд
+// апп даяар "toast" мэдэгдэл харуулах зорилготой.
+
 import * as React from "react"
 
 import type {
@@ -8,9 +11,10 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 1 // Нэгэн зэрэг харуулах toast-ийн тоо
+const TOAST_REMOVE_DELAY = 1000000 // Toast-г санах ойгоос устгах хугацаа (маш урт)
 
+// Toast объектын төрөл
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
@@ -18,6 +22,7 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
+// Action төрлүүд
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
@@ -25,8 +30,8 @@ const actionTypes = {
   REMOVE_TOAST: "REMOVE_TOAST",
 } as const
 
+// Давтагдашгүй ID үүсгэгч
 let count = 0
-
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER
   return count.toString()
@@ -35,22 +40,10 @@ function genId() {
 type ActionType = typeof actionTypes
 
 type Action =
-  | {
-      type: ActionType["ADD_TOAST"]
-      toast: ToasterToast
-    }
-  | {
-      type: ActionType["UPDATE_TOAST"]
-      toast: Partial<ToasterToast>
-    }
-  | {
-      type: ActionType["DISMISS_TOAST"]
-      toastId?: ToasterToast["id"]
-    }
-  | {
-      type: ActionType["REMOVE_TOAST"]
-      toastId?: ToasterToast["id"]
-    }
+  | { type: ActionType["ADD_TOAST"]; toast: ToasterToast }
+  | { type: ActionType["UPDATE_TOAST"]; toast: Partial<ToasterToast> }
+  | { type: ActionType["DISMISS_TOAST"]; toastId?: ToasterToast["id"] }
+  | { type: ActionType["REMOVE_TOAST"]; toastId?: ToasterToast["id"] }
 
 interface State {
   toasts: ToasterToast[]
@@ -58,11 +51,11 @@ interface State {
 
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
+// Toast-г хаасны дараа тодорхой хугацааны дараа санах ойгоос устгах функц
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return
   }
-
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
     dispatch({
@@ -70,10 +63,10 @@ const addToRemoveQueue = (toastId: string) => {
       toastId: toastId,
     })
   }, TOAST_REMOVE_DELAY)
-
   toastTimeouts.set(toastId, timeout)
 }
 
+// Төлвийг удирдах Reducer функц
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -92,9 +85,6 @@ export const reducer = (state: State, action: Action): State => {
 
     case "DISMISS_TOAST": {
       const { toastId } = action
-
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -102,25 +92,18 @@ export const reducer = (state: State, action: Action): State => {
           addToRemoveQueue(toast.id)
         })
       }
-
       return {
         ...state,
         toasts: state.toasts.map((t) =>
           t.id === toastId || toastId === undefined
-            ? {
-                ...t,
-                open: false,
-              }
+            ? { ...t, open: false }
             : t
         ),
       }
     }
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
-        return {
-          ...state,
-          toasts: [],
-        }
+        return { ...state, toasts: [] }
       }
       return {
         ...state,
@@ -133,6 +116,7 @@ const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
+// Action-г dispatch хийж, бүх listener-үүдэд мэдэгдэх функц
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
   listeners.forEach((listener) => {
@@ -142,14 +126,12 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
+// Toast үүсгэх гол функц
 function toast({ ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
-    dispatch({
-      type: "UPDATE_TOAST",
-      toast: { ...props, id },
-    })
+    dispatch({ type: "UPDATE_TOAST", toast: { ...props, id } })
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
   dispatch({
@@ -164,13 +146,10 @@ function toast({ ...props }: Toast) {
     },
   })
 
-  return {
-    id: id,
-    dismiss,
-    update,
-  }
+  return { id, dismiss, update }
 }
 
+// `useToast` hook нь компонент дотроос toast-г удирдах боломжийг олгоно.
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 

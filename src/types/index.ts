@@ -1,9 +1,15 @@
 
+// Энэ файл нь апп-ын бүх хэсэгт ашиглагдах TypeScript-ийн custom төрлүүдийг
+// нэг дор тодорхойлсон файл юм. Энэ нь кодын уншигдах байдал,
+// засварлахад хялбар байдлыг хангаж, төрлийн алдаанаас сэргийлдэг.
+
 import type { LucideIcon } from 'lucide-react';
 import type { Timestamp } from 'firebase/firestore';
 
+// Апп-ын хэлний төрөл
 export type Language = 'mn' | 'cn';
 
+// Хотын мэдээллийн төрөл
 export interface City {
   value: string;
   label: string;
@@ -14,6 +20,7 @@ export interface City {
   id?: string;
 }
 
+// Нисэх онгоцны буудлын мэдээллийн төрөл
 export interface Airport {
   value:string;
   label: string;
@@ -22,9 +29,10 @@ export interface Airport {
   searchTerms: string;
 }
 
-
+// Үйлчилгээний группийн ID төрөл
 export type ServiceGroupId = 'flights' | 'hotels' | 'translators' | 'wechat' | 'markets' | 'factories' | 'hospitals' | 'embassies';
 
+// Үйлчилгээний группийн бүтцийн төрөл
 export interface ServiceGroup {
   id: ServiceGroupId;
   titleKey: string;
@@ -32,6 +40,7 @@ export interface ServiceGroup {
   href: string;
 }
 
+// Нүүр хуудасны баннер зургийн төрөл
 export interface CarouselBannerItem {
   id: string;
   imageUrl: string;
@@ -43,8 +52,10 @@ export interface CarouselBannerItem {
   description?: string;
 }
 
+// Апп-ын ерөнхий item-ийн төрөл
 export type ItemType = 'service' | 'translator' | 'hotel' | 'wechat' | 'promo' | 'market' | 'factory' | 'hospital' | 'embassy' | 'flight' | 'message' | 'order' | 'update' | 'general';
 
+// Дэлгэрэнгүй хуудсанд харагдах зургийн слайдын төрөл
 export interface ShowcaseItem {
   description: string;
   imageUrl: string;
@@ -53,6 +64,7 @@ export interface ShowcaseItem {
   [key: string]: any;
 }
 
+// Санал болгох үйлчилгээ, барааны ерөнхий бүтцийн төрөл
 export interface RecommendedItem {
   id: string;
   name: string;
@@ -98,6 +110,7 @@ export interface RecommendedItem {
   link?: string;
 }
 
+// Хэрэглэгчийн профайлын бүтцийн төрөл
 export interface UserProfile {
   uid: string;
   email?: string | null;
@@ -109,11 +122,12 @@ export interface UserProfile {
   dateOfBirth?: string | null;
   gender?: 'male' | 'female' | 'other' | null;
   homeAddress?: string | null;
-  fcmToken?: string | null; // Changed from fcmTokens: string[]
+  fcmToken?: string | null;
   lastTokenUpdate?: Timestamp;
   points?: number;
 }
 
+// Захиалгын мэдээллийн төрөл
 export interface Order {
   id: string;
   userId: string;
@@ -133,6 +147,7 @@ export interface Order {
   wechatQrImageUrl?: string | null | undefined;
 }
 
+// AuthContext-ийн төрөл
 export interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
@@ -150,11 +165,12 @@ export interface AuthContextType {
   removeFavorite: (itemId: string) => Promise<void>;
 }
 
+// Хадгалсан зүйлийн документ-ийн төрөл (Firestore)
 export interface SavedDocData extends RecommendedItem {
   savedAt: Timestamp | any;
 }
 
-
+// Мэдэгдлийн мэдээллийн төрөл
 export interface NotificationItem {
   id: string;
   titleKey: string;
@@ -169,6 +185,7 @@ export interface NotificationItem {
   isGlobal?: boolean;
 }
 
+// Эмнэлгийн ангиллын төрөл
 export interface HospitalCategory {
   id: string;
   titleKey: string;
@@ -179,6 +196,7 @@ export interface HospitalCategory {
   isSpecial?: boolean;
 }
 
+// Элчин сайдын яамны ангиллын төрөл
 export interface EmbassyCategoryItem {
   id: string;
   titleKey: string;
@@ -187,6 +205,7 @@ export interface EmbassyCategoryItem {
   href: string;
 }
 
+// WeChat үйлчилгээний ангиллын төрөл
 export interface WeChatCategoryItem {
   id: string;
   titleKey: string;
@@ -196,12 +215,13 @@ export interface WeChatCategoryItem {
   href: string;
 }
 
+// Орчуулагчтай холбоотой төрлүүд
 export type Nationality = 'mongolian' | 'chinese' | 'inner_mongolian' | '';
 export type LanguageLevel = 'good' | 'intermediate' | 'basic' | '';
 export type DailyRateRange = '100-200' | '200-300' | '300-400' | '400-500' | '500+' | '';
 export type TranslationField = 'tourism' | 'medical' | 'equipment' | 'exhibition' | 'official_documents' | 'official_speech' | 'machinery';
 
-
+// Орчуулагчийн дэлгэрэнгүй мэдээллийн төрөл
 export interface Translator {
   id: string;
   uid: string;
@@ -210,7 +230,7 @@ export interface Translator {
   nationality?: Nationality | null;
   inChinaNow?: boolean | null;
   yearsInChina?: number | null;
-  currentCityInChina?: string | null; // City ID
+  currentCityInChina?: string | null;
   chineseExamTaken?: boolean | null;
   chineseExamDetails?: string | null;
   speakingLevel?: LanguageLevel | null;
@@ -240,12 +260,12 @@ export interface Translator {
   dataAiHint?: string;
 }
 
-
+// Хадгалсан хуудасны item-ийн төрөл
 export interface SavedPageItem extends RecommendedItem {
   savedAt: Timestamp | any;
-
 }
 
+// Сэтгэгдлийн мэдээллийн төрөл
 export interface Review {
   id: string;
   itemId: string;
@@ -259,8 +279,10 @@ export interface Review {
   updatedAt?: Timestamp | any;
 }
 
+// Хадгалсан хуудасны шүүлтүүрийн төрөл
 export type SavedItemCategoryFilter = ItemType | 'all';
 
+// Түгээмэл асуулт, хариултын төрөл
 export interface FAQItem {
   id: string;
   question: string;
@@ -273,6 +295,7 @@ export interface FAQItem {
   order?: number;
 }
 
+// Апп-ын хувилбарын мэдээллийн төрөл
 export interface AppVersion {
   version: string;
   isForceUpdate: boolean;

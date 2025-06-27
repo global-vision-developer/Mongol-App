@@ -1,7 +1,12 @@
 
+// Энэ файл нь апп-д ашиглагдах тогтмол өгөгдлүүдийг агуулдаг.
+// Жишээлбэл, үйлчилгээний ангиллууд, нисэх онгоцны буудлуудын жагсаалт гэх мэт.
+// Нэг газар төвлөрүүлснээр удирдахад хялбар болдог.
+
 import type { ServiceGroup, HospitalCategory, EmbassyCategoryItem, WeChatCategoryItem, RecommendedItem, Airport, TranslationField } from '@/types';
 import { Plane, BedDouble, Users, Smartphone, ShoppingCart, FactoryIcon, HospitalIcon, Landmark, Grid3x3, BusFront, CarTaxiFront, Copy } from 'lucide-react';
 
+// Апп-д ашиглагдах нисэх онгоцны буудлуудын жагсаалт
 export const AIRPORTS: Airport[] = [
   { value: "UBN", label: "Ulaanbaatar / Улаанбаатар (UBN)", city: "Улаанбаатар", iata: "UBN", searchTerms: "Ulaanbaatar Улаанбаатар UBN ULN CIN" },
   { value: "ERL", label: "Ereen / Эрээн хот (ERL)", city: "Эрээн хот", iata: "ERL", searchTerms: "Ereen Эрээн хот ERL" },
@@ -16,7 +21,7 @@ export const AIRPORTS: Airport[] = [
   { value: "YIW", label: "Yiwu / Ивү (YIW)", city: "Ивү", iata: "YIW", searchTerms: "Yiwu Ивү YIW" },
 ];
 
-
+// Үндсэн нүүр хуудсанд харагдах үйлчилгээний гол ангиллууд
 export const SERVICE_GROUPS: ServiceGroup[] = [
   { id: 'flights', titleKey: 'flights', icon: Plane, href: '/services/flights' },
   { id: 'hotels', titleKey: 'hotels', icon: BedDouble, href: '/services/hotels' },
@@ -28,7 +33,7 @@ export const SERVICE_GROUPS: ServiceGroup[] = [
   { id: 'embassies', titleKey: 'embassies', icon: Landmark, href: '/services/embassies' },
 ];
 
-
+// Эмнэлгийн хуудсан доторх дэд ангиллууд
 export const HOSPITAL_CATEGORIES: HospitalCategory[] = [
   { id: 'traditional', titleKey: 'hospitalCategoryTraditional', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'doctors patient', href: '#' },
   { id: 'innermongolia', titleKey: 'hospitalCategoryInnerMongolia', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'hospital building', href: '#' },
@@ -38,11 +43,13 @@ export const HOSPITAL_CATEGORIES: HospitalCategory[] = [
   { id: 'all', titleKey: 'allCategories', Icon: Grid3x3, href: '#' , isSpecial: true},
 ];
 
+// Элчин сайдын яамны хуудсан доторх дэд ангиллууд
 export const EMBASSY_SERVICE_CATEGORIES: EmbassyCategoryItem[] = [
   { id: 'mfa', titleKey: 'embassyMFA', imageUrl: 'https://placehold.co/150x100.png', dataAiHint: 'government building emblem', href: '#' },
   { id: 'consulate', titleKey: 'embassyConsulate', imageUrl: 'https://placehold.co/150x100.png', dataAiHint: 'official building emblem', href: '#' },
 ];
 
+// WeChat үйлчилгээний хуудсан доторх дэд ангиллууд
 export const WECHAT_CATEGORIES: WeChatCategoryItem[] = [
   { id: 'bus', titleKey: 'wechatBus', iconType: 'lucide', iconNameOrUrl: 'BusFront', href: '#' },
   { id: 'taxi', titleKey: 'wechatTaxi', iconType: 'lucide', iconNameOrUrl: 'CarTaxiFront',  href: '#' },
@@ -52,6 +59,7 @@ export const WECHAT_CATEGORIES: WeChatCategoryItem[] = [
   { id: 'allCategories', titleKey: 'wechatAllCategories', iconType: 'lucide', iconNameOrUrl: 'Grid3x3', href: '#' },
 ];
 
+// WeChat хуудсанд ашиглагдах түр загвар өгөгдөл
 export const WECHAT_PLACEHOLDER_ITEMS: RecommendedItem[] = [
   { id: 'lejuSandal', name: 'LEJU Сандал', imageUrl: 'https://placehold.co/400x250.png', dataAiHint: 'sandal furniture', location: 'Foshan / Фошан' },
   { id: 'boshengTavilga', name: 'Bosheng тавилга', imageUrl: 'https://placehold.co/400x250.png', dataAiHint: 'furniture home',  location: 'Foshan / Фошан' },
@@ -59,6 +67,7 @@ export const WECHAT_PLACEHOLDER_ITEMS: RecommendedItem[] = [
   { id: 'shurSuvdanGoyol', name: 'Шүр сувдан гоёл', imageUrl: 'https://placehold.co/400x250.png', dataAiHint: 'jewelry pearl',  location: 'Guangzhou / Гуанж...' },
 ];
 
+// Доод навигацийн цэсний өгөгдөл (одоо ашиглагдахгүй байгаа, BottomNav.tsx дотор шууд тодорхойлсон)
 export const NAV_ITEMS = [
   { href: "/services", labelKey: "home", icon: Landmark }, 
   { href: "/main/orders", labelKey: "orders", icon: ShoppingCart },
@@ -67,6 +76,7 @@ export const NAV_ITEMS = [
   { href: "/main/profile", labelKey: "user", icon: Users } 
 ];
 
+// Орчуулагчийн анкетын "орчуулгын чиглэл" талбарын сонголтууд
 export const TranslationFields: TranslationField[] = [
   'tourism', 'medical', 'equipment', 'exhibition', 
   'official_documents', 'official_speech', 'machinery'
